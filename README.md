@@ -15,3 +15,81 @@ You have complete control over how you run this repo. All your members will have
 Please use good version control practices, such as feature branching, both to make it easier for markers to see your group's history and to lower the chances of you tripping over each other during development
 
 ![](./Delightful%20Dogs.png)
+
+# Algo-Platform
+
+## Setup & Run
+
+> The following command should be executed in the project root directory.
+
+### [Run (Development)](https://www.electronforge.io/#starting-your-app)
+
+```bash
+npm start
+```
+
+### [Building Distributables](https://www.electronforge.io/#building-distributables)
+
+```bash
+npm run make
+```
+
+## Architecture
+
+```
+src/
+├── electron/                # Electron-specific code
+│   ├── main.ts              # Main process entry point
+│   ├── preload.ts           # Limited preload script (if needed)
+│   └── window.ts            # Window management functions
+│
+├── frontend/                # React.js application
+│   ├── components/          # Reusable UI components
+│   │   ├── common/          # Shared UI elements (buttons, inputs)
+│   │   ├── layout/          # Layout components (header, sidebar)
+│   │   └── problems/        # Problem-specific components
+│   ├── pages/               # Page components
+│   │   ├── Home.tsx
+│   │   ├── ProblemList.tsx  # Puzzles list (from MVP)
+│   │   ├── ProblemDetail.tsx # View specific puzzle (from MVP)
+│   │   └── Submission.tsx   # Submit solutions (from MVP)
+│   ├── hooks/               # Custom React hooks
+│   │   └── useApi.ts        # Hook for API communication
+│   ├── styles/              # CSS/styling
+│   ├── App.tsx              # Main React component
+│   └── index.tsx            # React entry point
+│
+├── backend/                 # Backend services
+│   ├── api/                 # Express router setup
+│   │   ├── routes/          # API route definitions
+│   │   │   ├── problems.ts
+│   │   │   ├── languages.ts
+│   │   │   ├── testcases.ts
+│   │   │   └── submissions.ts
+│   │   ├── middleware/      # Express middleware
+│   │   └── index.ts         # Express app setup
+│   │
+│   ├── db/                  # Database layer
+│   │   ├── prisma/          # Prisma ORM
+│   │   │   ├── schema.prisma  # DB schema definition
+│   │   │   └── migrations/    # DB migrations
+│   │   │
+│   │   └── crud/            # Database operations
+│   │       ├── problems.ts
+│   │       ├── users.ts
+│   │       ├── testcases.ts
+│   │       ├── languages.ts
+│   │       └── submissions.ts
+│   │
+│   ├── services/            # Business logic
+│   │   └── judge/           # Code execution engine (key MVP component)
+│   │       ├── executor.ts   # Code execution
+│   │       ├── comparator.ts # Output comparison
+│   │       └── languages/    # Language-specific runners
+│   │
+│   └── utils/               # Utility functions
+│
+└── shared/                  # Shared code
+    ├── types/               # TypeScript type definitions
+    └── constants.ts         # Shared constants
+```
