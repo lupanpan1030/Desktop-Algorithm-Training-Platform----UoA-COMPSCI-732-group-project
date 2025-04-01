@@ -93,3 +93,55 @@ src/
     ├── types/               # TypeScript type definitions
     └── constants.ts         # Shared constants
 ```
+---
+
+### RESTful API Design for Delightful Dogs (Revised)
+
+---
+
+#### 1. CRUD Endpoints
+
+**Problems**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/problems` | List all problems | - | `Array<{problemId: number, title: string, difficulty: "EASY"\|"MEDIUM"\|"HARD", tags: string[]}>` |
+| `GET` | `/problems/{id}` | Get problem details | - | `{problemId: number, title: string, description: string, difficulty: enum, tags: string[], createdAt: ISO8601}` |
+| `POST` | `/problems` | Create problem | `{title: string, description: string, difficulty: enum, tags: string[]}` | `201` + same as GET details |
+| `PUT` | `/problems/{id}` | Update problem | `{title?: string, description?: string, difficulty?: enum, tags?: string[]}` | `200` + updated details |
+| `DELETE` | `/problems/{id}` | Delete problem | - | `204` |
+
+---
+
+**Programming Languages**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/languages` | List languages | - | `Array<{languageId: number, name: string, compilerCmd: string, runtimeCmd: string}>` |
+| `POST` | `/languages` | Add language | `{name: string, compilerCmd: string, runtimeCmd: string}` | `201` + created language object |
+| `PUT` | `/languages/{id}` | Update language | `{name?: string, compilerCmd?: string, runtimeCmd?: string}` | `200` + updated language object |
+| `DELETE` | `/languages/{id}` | Remove language | - | `204` |
+
+---
+
+**Test Cases**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/problems/{id}/testcases` | List test cases | - | `Array<{testcaseId: number, input: string, expectedOutput: string, isHidden: boolean}>` |
+| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, isHidden: boolean}` | `201` + created test case |
+| `DELETE` | `/testcases/{id}` | Delete test case | - | `204` |
+
+---
+
+**Submissions**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/submissions` | List submissions | - | `Array<{submissionId: number, problemId: number, userId: number, status: "PENDING"\|"ACCEPTED"\|"REJECTED", createdAt: ISO8601}>` |
+| `GET` | `/submissions/{id}` | Get submission | - | `{submissionId: number, code: string, languageId: number, results: Array<{testcaseId: number, passed: boolean, executionIime: number}>}` |
+
+---
+
+#### 2. Execution Endpoints
+
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `POST` | `/problems/{id}/run` | Test code against first 3 cases | `{code: string, languageId: number, userId: number}` | `{status: "SUCCESS"\|"COMPILE_ERROR"\|"RUNTIME_ERROR", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number, actualOutput: string, expectedOutput: string}>}` |
+| `POST` | `/problems/{id}/submit` | Submit for full evaluation | `{code: string, languageId: number, userId: number}` | `{submissionId: number, overallStatus: "ACCEPTED"\|"WRONG_ANSWER"\|"TIME_LIMIT_EXCEEDED", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number}>}` |
