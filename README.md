@@ -45,8 +45,13 @@ Run the following commands
     ```
 
 - Insert Predefined Data
+-- First-time Database Setup
     ```bash
-    npx ts-node src/backend/db/seeds/init-db.ts
+    npx ts-node src/backend/db/seeds/init-db_first.ts
+    ```
+-- Reset and Reinitialize the Database
+    ```bash
+    npx ts-node src/backend/db/seeds/init-db+drop.ts
     ```
 
 ## Architecture

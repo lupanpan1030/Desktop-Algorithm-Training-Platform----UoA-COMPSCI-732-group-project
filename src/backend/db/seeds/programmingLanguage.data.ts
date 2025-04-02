@@ -1,6 +1,10 @@
+
+// 引入 Prisma 客户端实例
+// Import Prisma client instance
 import prisma from '../prismaClient'
 
-// seedLanguage.ts
+//向 programmingLanguage 表中批量插入编程语言数据
+//Seed multiple programming languages into the "programmingLanguage" table
 export async function seedLanguage() {
     await prisma.programmingLanguage.createMany({
     data: [

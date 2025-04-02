@@ -1,5 +1,10 @@
+
+// 引入 Prisma 客户端
+// Import Prisma client
 import prisma from '../prismaClient'
 
+//批量插入提交结果数据
+//Seed multiple submission results
 export async function seedSubmissionResults() {
     await prisma.submissionResult.createMany({
         data: [
