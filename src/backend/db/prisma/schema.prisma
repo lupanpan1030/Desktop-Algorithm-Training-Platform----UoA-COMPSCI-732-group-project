@@ -69,7 +69,7 @@ model SubmissionResult {
     submission_id        Int
     user                 User        @relation(fields: [user_id], references: [user_id])
     user_id              Int
-    status               SubmissionStatus
+    status               SubmissionStatus @default(PENDING)
     output               String?
     runtime_ms           Int
     memory_kb            Int

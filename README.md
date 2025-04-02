@@ -3,6 +3,7 @@
 Welcome to the CS732 project. We look forward to seeing the amazing things you create this semester! This is your team's repository.
 
 Your team members are:
+
 - Manling Chen _(mche600@aucklanduni.ac.nz)_
 - Xinyang Guo _(xguo339@aucklanduni.ac.nz)_
 - Yimei Zhang _(byhz331@aucklanduni.ac.nz)_
@@ -33,6 +34,20 @@ npm start
 ```bash
 npm run make
 ```
+
+## DB initialization
+
+Run the following commands
+
+- Create Tables
+    ```bash
+    npx prisma generate --schema=src/backend/db/prisma/schema.prisma
+    ```
+
+- Insert Predefined Data
+    ```bash
+    npx ts-node src/backend/db/seeds/init-db.ts
+    ```
 
 ## Architecture
 
@@ -93,6 +108,7 @@ src/
     ├── types/               # TypeScript type definitions
     └── constants.ts         # Shared constants
 ```
+
 ---
 
 ### RESTful API Design for Delightful Dogs (Revised)
@@ -141,7 +157,7 @@ src/
 
 #### 2. Execution Endpoints
 
-| Method | Path | Description | Request Body (Types) | Response Format (Types) |
-|--------|------|-------------|-----------------------|--------------------------|
-| `POST` | `/problems/{id}/run` | Test code against first 3 cases | `{code: string, languageId: number, userId: number}` | `{status: "SUCCESS"\|"COMPILE_ERROR"\|"RUNTIME_ERROR", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number, actualOutput: string, expectedOutput: string}>}` |
-| `POST` | `/problems/{id}/submit` | Submit for full evaluation | `{code: string, languageId: number, userId: number}` | `{submissionId: number, overallStatus: "ACCEPTED"\|"WRONG_ANSWER"\|"TIME_LIMIT_EXCEEDED", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number}>}` |
+| Method | Path                    | Description                     | Request Body (Types)                                 | Response Format (Types)                                                                                                                                                                                  |
+| ------ | ----------------------- | ------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/problems/{id}/run`    | Test code against first 3 cases | `{code: string, languageId: number, userId: number}` | `{status: "SUCCESS"\|"COMPILE_ERROR"\|"RUNTIME_ERROR", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number, actualOutput: string, expectedOutput: string}>}` |
+| `POST` | `/problems/{id}/submit` | Submit for full evaluation      | `{code: string, languageId: number, userId: number}` | `{submissionId: number, overallStatus: "ACCEPTED"\|"WRONG_ANSWER"\|"TIME_LIMIT_EXCEEDED", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number}>}`            |
