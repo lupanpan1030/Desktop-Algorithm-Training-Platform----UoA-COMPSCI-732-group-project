@@ -32,8 +32,7 @@ async function main() {
 
   console.log('--- Seeding new data ---')
   // 插入顺序：先父表，再子表，确保外键依赖顺序正确
-  // Insert order: parent tables first, then child tables (due to foreign key constraints)
-  await seedUsers()               
+  // Insert order: parent tables first, then child tables (due to foreign key constraints)            
   await seedUsers()
   await seedLanguage()
   await seedTags()
