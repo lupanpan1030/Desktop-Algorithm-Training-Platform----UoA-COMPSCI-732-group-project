@@ -1,8 +1,14 @@
-    // src/backend/db/seeds/problem.seed.ts
+// src/backend/db/seeds/problem.seed.ts
+
+// 导入 Prisma 客户端实例
+// Import Prisma client instance
 import prisma from '../prismaClient'
 
+//向 problem 表中批量插入题目数据
+//Insert multiple problem records into the "problem" table
 export async function seedProblems() {
-  // createMany 一次插入多条
+    // createMany 一次插入多条
+    // Use createMany to insert multiple entries at once
     await prisma.problem.createMany({
     data: [
         {
@@ -24,11 +30,13 @@ export async function seedProblems() {
         difficulty: 'HARD',
         },
         {
+        problem_id: 4,
         title: 'Longest Substring Without Repeating Characters',
         description: ' Given a string s, find the length of the longest substring without duplicate characters.',
         difficulty: 'MEDIUM',
         },
         {
+        problem_id: 5,
         title: 'Longest Palindromic Substring',
         description: 'Given a string s, return the longest palindromic substring in s.',
         difficulty: 'MEDIUM',

@@ -1,8 +1,12 @@
 // src/backend/db/seeds/user.seed.ts
+
+// 引入 Prisma 客户端实例
+// Import Prisma client instance
 import prisma from '../prismaClient'
 
+//批量插入用户数据
+//Seed multiple users into the "user" table
 export async function seedUsers() {
-  // 也可以用 createMany，一次插多条
     await prisma.user.createMany({
     data: [
             {

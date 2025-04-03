@@ -1,6 +1,11 @@
 // src/backend/db/seeds/tag.seed.ts
+
+// 引入 Prisma 客户端实例
+// Import Prisma client instance
 import prisma from '../prismaClient'
 
+//批量插入标签数据
+//Seed multiple tags into the "tag" table
 export async function seedTags() {
     await prisma.tag.createMany({
     data: [
