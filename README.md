@@ -35,6 +35,12 @@ npm start
 npm run make
 ```
 
+### Run Unit Tests
+
+```bash
+npm test
+```
+
 ## DB initialization
 
 Run the following commands
