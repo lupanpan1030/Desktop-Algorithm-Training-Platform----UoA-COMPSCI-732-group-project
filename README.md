@@ -35,6 +35,12 @@ npm start
 npm run make
 ```
 
+### Run Unit Tests
+
+```bash
+npm test
+```
+
 ## DB initialization
 
 Run the following commands
@@ -103,15 +109,17 @@ src/
 │   │
 │   ├── services/            # Business logic
 │   │   └── judge/           # Code execution engine (key MVP component)
-│   │       ├── executor.ts   # Code execution
-│   │       ├── comparator.ts # Output comparison
-│   │       └── languages/    # Language-specific runners
+│   │       └── executor.ts   # Code execution
 │   │
 │   └── utils/               # Utility functions
 │
-└── shared/                  # Shared code
-    ├── types/               # TypeScript type definitions
-    └── constants.ts         # Shared constants
+├── shared/                  # Shared code
+│   ├── types/               # TypeScript type definitions
+│   └── constants.ts         # Shared constants
+│
+└── tests/                 # Test suite
+    ├── unit/               # Unit tests
+    └── integration/        # Integration tests
 ```
 
 ---
