@@ -1,0 +1,12 @@
+{
+    "entryFile": "src/backend/api/app.ts",
+    "noImplicitAdditionalProperties": "ignore",
+    "controllerPathGlobs": ["src/**/*Controller.ts"],
+    "spec": {
+      "outputDirectory": "build",
+      "specVersion": 3
+    },
+    "routes": {
+      "routesDir": "src/backend/api"
+    }
+  }
