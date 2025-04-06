@@ -3,7 +3,8 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
-// 获取所有编程语言 / Get all programming languages
+// 获取所有编程语言 
+// Get all programming languages
 export const getAllLanguages = () => prisma.programmingLanguage.findMany()
 
 // 创建编程语言记录 
