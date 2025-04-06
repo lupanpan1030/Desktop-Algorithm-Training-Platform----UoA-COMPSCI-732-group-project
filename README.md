@@ -46,6 +46,13 @@ npm run dev
 npm npx tsoa routes
 ```
 
+### Regenerate OpenApi Swagger.json
+Swagger UI debug page: `localhost:3000/docs` 
+
+```bash
+npm npx tsoa spec
+```
+
 ### Run Unit Tests
 
 ```bash

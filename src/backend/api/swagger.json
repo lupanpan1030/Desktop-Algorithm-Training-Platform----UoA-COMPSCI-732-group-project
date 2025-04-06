@@ -1,0 +1,200 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"_36_Enums.Difficulty": {
+				"type": "string",
+				"enum": [
+					"EASY",
+					"MEDIUM",
+					"HARD"
+				]
+			},
+			"Difficulty": {
+				"$ref": "#/components/schemas/_36_Enums.Difficulty"
+			},
+			"ProblemSummary": {
+				"properties": {
+					"problemId": {
+						"type": "number",
+						"format": "double"
+					},
+					"title": {
+						"type": "string"
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					}
+				},
+				"required": [
+					"problemId",
+					"title",
+					"difficulty"
+				],
+				"type": "object",
+				"additionalProperties": true
+			},
+			"ProblemDetails": {
+				"properties": {
+					"problemId": {
+						"type": "number",
+						"format": "double"
+					},
+					"title": {
+						"type": "string"
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					},
+					"description": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"problemId",
+					"title",
+					"difficulty",
+					"description",
+					"createdAt"
+				],
+				"type": "object",
+				"additionalProperties": true
+			},
+			"Pick_ProblemDetails.title-or-description-or-difficulty_": {
+				"properties": {
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/_36_Enums.Difficulty"
+					}
+				},
+				"required": [
+					"title",
+					"description",
+					"difficulty"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"CreateProblemParams": {
+				"$ref": "#/components/schemas/Pick_ProblemDetails.title-or-description-or-difficulty_"
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "algo-platform",
+		"version": "1.0.0",
+		"description": "My Electron application description",
+		"license": {
+			"name": "MIT"
+		},
+		"contact": {
+			"name": "Junxiao Liao",
+			"email": "huruyuanxingke66@gmail.com"
+		}
+	},
+	"paths": {
+		"/problems": {
+			"get": {
+				"operationId": "GetAllProblems",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ProblemSummary"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves a list of all problems with summary information.",
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "CreateProblem",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProblemDetails"
+								}
+							}
+						}
+					}
+				},
+				"description": "Creates a new problem.",
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The data required to create the problem.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProblemParams",
+								"description": "The data required to create the problem."
+							}
+						}
+					}
+				}
+			}
+		},
+		"/problems/{problemId}": {
+			"get": {
+				"operationId": "GetProblem",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProblemDetails"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the detailed information of a specific problem by its ID.",
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}
