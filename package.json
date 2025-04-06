@@ -11,7 +11,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "test": "vitest",
-    "dev": "ts-node-dev --respawn src/backend/api/app.ts"
+    "dev": "ts-node-dev --respawn src/backend/api/app.ts",
+    "db:push": "prisma db push --schema=src/backend/db/prisma/schema.prisma"
   },
   "keywords": [],
   "author": {
