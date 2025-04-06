@@ -34,6 +34,17 @@ npm start
 ```bash
 npm run make
 ```
+## Backend Server
+### Run Backend Server
+
+```bash
+npm run dev
+```
+### Regenerate Backend Routes.ts
+
+```bash
+npm npx tsoa routes
+```
 
 ### Run Unit Tests
 
