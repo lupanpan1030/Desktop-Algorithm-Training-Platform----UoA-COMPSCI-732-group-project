@@ -1,6 +1,6 @@
-// problem.ts
-import { ProblemsDao } from "./problem-dao";
-import { Difficulty } from '@prisma/client';
+// This file defines the types and interfaces used in the problem API.
+
+import { Difficulty } from "@prisma/client";
 
 // Summary view of a problem (for listing purposes)
 export interface ProblemSummary {
@@ -15,37 +15,39 @@ export interface ProblemDetails extends ProblemSummary {
   createdAt: string; // ISO8601 format
 }
 
-
-export class ProblemsService {
+// Request parameters for creating a problem (id and createdAt are auto-generated)
+// use @tsoa/validation decorators to validate the request body
+// run-time validation is done in the controller
+export class CreateProblemParams {
   /**
-   * Retrieves a list of all problems with summary information.
+   * @minLength 5
+   * @maxLength 100
    */
-  public async getAllProblems(): Promise<ProblemSummary[]> {
-    const problems = await ProblemsDao.getAllProblems();
-    return problems.map(problem => ({
-      problemId: problem.problem_id,
-      title: problem.title,
-      difficulty: problem.difficulty,
-    }));
-  }
+  public title!: string;
 
   /**
-   * Retrieves the detailed information of a problem by its ID.
-   * @param problemId The ID of the problem.
+   * @minLength 10
+   * @maxLength 2000
    */
-  public async getProblem(problemId: number): Promise<ProblemDetails> {
-    const problem = await ProblemsDao.getProblemById(problemId);
-    if (!problem) {
-      throw new Error("Problem not found");
-    }
-    return {
-      problemId: problem.problem_id,
-      title: problem.title,
-      description: problem.description,
-      difficulty: problem.difficulty,
-      createdAt: problem.created_at.toISOString(),
-    };
-  }
+  public description!: string;
+
+  public difficulty!: Difficulty;
+}
 
 
+// Request parameters for updating a problem (all fields are optional)
+export class UpdateProblemParams {
+  /**
+   * @minLength 5
+   * @maxLength 100
+   */
+  public title?: string;
+
+  /**
+   * @minLength 10
+   * @maxLength 2000
+   */
+  public description?: string;
+
+  public difficulty?: Difficulty;
 }
