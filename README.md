@@ -65,7 +65,7 @@ Run the following commands
 
 - Create Tables
     ```bash
-    npx prisma generate --schema=src/backend/db/prisma/schema.prisma
+    npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma 
     ```
 
 - Insert Predefined Data
@@ -73,6 +73,7 @@ Run the following commands
     ```bash
     npx ts-node src/backend/db/seeds/init-db_first.ts
     ```
+- Insert Predefined Data
 -- Reset and Reinitialize the Database
     ```bash
     npx ts-node src/backend/db/seeds/init-db+drop.ts
