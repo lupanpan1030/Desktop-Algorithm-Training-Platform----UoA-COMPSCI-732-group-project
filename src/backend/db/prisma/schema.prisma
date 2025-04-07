@@ -34,7 +34,7 @@ model TestCase {
     expected_output String
     time_limit      Int
     memory_limit    Int
-    problem         Problem  @relation(fields: [problem_id], references: [problem_id])
+    problem         Problem  @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id      Int
 }
 
@@ -52,7 +52,7 @@ model Submission {
     submission_id Int                @id @default(autoincrement())
     user          User               @relation(fields: [user_id], references: [user_id])
     user_id       Int
-    problem       Problem            @relation(fields: [problem_id], references: [problem_id])
+    problem       Problem            @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id    Int
     language      ProgrammingLanguage           @relation(fields: [language_id], references: [language_id])
     language_id   Int
@@ -83,7 +83,7 @@ model Tag {
 }
 
 model ProblemTag {
-    problem   Problem @relation(fields: [problem_id], references: [problem_id])
+    problem   Problem @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id Int
     tag       Tag     @relation(fields: [tag_id], references: [tag_id])
     tag_id    Int

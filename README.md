@@ -46,6 +46,13 @@ npm run dev
 npm npx tsoa routes
 ```
 
+### Regenerate OpenApi Swagger.json
+Swagger UI debug page: `localhost:3000/docs` 
+
+```bash
+npm npx tsoa spec
+```
+
 ### Run Unit Tests
 
 ```bash
@@ -141,14 +148,20 @@ src/
 
 #### 1. CRUD Endpoints
 
+
+---
+
+---
+
 **Problems**
-| Method | Path | Description | Request Body (Types) | Response Format (Types) |
-|--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/problems` | List all problems | - | `Array<{problemId: number, title: string, difficulty: "EASY"\|"MEDIUM"\|"HARD", tags: string[]}>` |
-| `GET` | `/problems/{id}` | Get problem details | - | `{problemId: number, title: string, description: string, difficulty: enum, tags: string[], createdAt: ISO8601}` |
-| `POST` | `/problems` | Create problem | `{title: string, description: string, difficulty: enum, tags: string[]}` | `201` + same as GET details |
-| `PUT` | `/problems/{id}` | Update problem | `{title?: string, description?: string, difficulty?: enum, tags?: string[]}` | `200` + updated details |
-| `DELETE` | `/problems/{id}` | Delete problem | - | `204` |
+
+| Method | Path                | Description                                        | Request Body (Types & Validation)                                                                                                                                      | Response Format (Types & Status Codes)                                                                                                                                                                                                                          |
+|--------|---------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | `/problems`         | List all problems                                  | _None_                                                                                                                                                                 | **200 OK:** Array of problem summaries<br>`Array<{ problemId: number, title: string, difficulty: "EASY" \| "MEDIUM" \| "HARD", tags: string[] }>`                                                                                                            |
+| GET    | `/problems/{id}`    | Retrieve problem details by ID                     | _None_                                                                                                                                                                 | **200 OK:** Detailed problem object<br>`{ problemId: number, title: string, description: string, difficulty: enum, tags: string[], createdAt: ISO8601 }`<br>**404 Not Found:** `{ "message": "Problem not found" }`                                            |
+| POST   | `/problems`         | Create a new problem                               | **Required:**<br>`{ title: string, description: string, difficulty: enum, tags: string[] }`<br>• `title` must be 5–100 characters<br>• `description` must be 10–2000 characters | **201 Created:** Detailed problem object (same as GET details)<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                                                                      |
+| PUT    | `/problems/{id}`    | Update an existing problem                         | **Optional:**<br>`{ title?: string, description?: string, difficulty?: enum, tags?: string[] }`<br>If provided, `title` must be 5–100 characters and `description` 10–2000 characters | **200 OK:** Updated detailed problem object<br>**404 Not Found:** `{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                         |
+| DELETE | `/problems/{id}`    | Delete a problem by ID                             | _None_                                                                                                                                                                 | **204 No Content:** _No body_                                                                                                                       |
 
 ---
 

@@ -1,0 +1,571 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"_36_Enums.Difficulty": {
+				"type": "string",
+				"enum": [
+					"EASY",
+					"MEDIUM",
+					"HARD"
+				]
+			},
+			"Difficulty": {
+				"$ref": "#/components/schemas/_36_Enums.Difficulty"
+			},
+			"ProblemSummary": {
+				"properties": {
+					"problemId": {
+						"type": "number",
+						"format": "double"
+					},
+					"title": {
+						"type": "string"
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					}
+				},
+				"required": [
+					"problemId",
+					"title",
+					"difficulty"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProblemDetails": {
+				"properties": {
+					"problemId": {
+						"type": "number",
+						"format": "double"
+					},
+					"title": {
+						"type": "string"
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					},
+					"description": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"problemId",
+					"title",
+					"difficulty",
+					"description",
+					"createdAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NotFoundError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidateError": {
+				"properties": {
+					"message": {
+						"type": "string",
+						"enum": [
+							"Validation failed"
+						],
+						"nullable": false
+					},
+					"details": {
+						"properties": {},
+						"additionalProperties": {},
+						"type": "object"
+					}
+				},
+				"required": [
+					"message",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateProblemParams": {
+				"properties": {
+					"title": {
+						"type": "string",
+						"minLength": 5,
+						"maxLength": 100
+					},
+					"description": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 2000
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					}
+				},
+				"required": [
+					"title",
+					"description",
+					"difficulty"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateProblemParams": {
+				"properties": {
+					"title": {
+						"type": "string",
+						"minLength": 5,
+						"maxLength": 100
+					},
+					"description": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 2000
+					},
+					"difficulty": {
+						"$ref": "#/components/schemas/Difficulty"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ProgrammingLanguage": {
+				"properties": {
+					"language_id": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"suffix": {
+						"type": "string"
+					},
+					"version": {
+						"type": "string"
+					},
+					"compile_command": {
+						"type": "string"
+					},
+					"run_command": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"language_id",
+					"name",
+					"suffix",
+					"version",
+					"compile_command",
+					"run_command"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateLanguageDto": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"suffix": {
+						"type": "string"
+					},
+					"version": {
+						"type": "string"
+					},
+					"compile_command": {
+						"type": "string"
+					},
+					"run_command": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"suffix",
+					"version",
+					"compile_command",
+					"run_command"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Partial_CreateLanguageDto_": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"suffix": {
+						"type": "string"
+					},
+					"version": {
+						"type": "string"
+					},
+					"compile_command": {
+						"type": "string"
+					},
+					"run_command": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"description": "Make all properties in T optional"
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "algo-platform",
+		"version": "1.0.0",
+		"description": "My Electron application description",
+		"license": {
+			"name": "MIT"
+		},
+		"contact": {
+			"name": "Junxiao Liao",
+			"email": "huruyuanxingke66@gmail.com"
+		}
+	},
+	"paths": {
+		"/problems": {
+			"get": {
+				"operationId": "GetAllProblems",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ProblemSummary"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves a list of all problems with summary information.",
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "CreateProblem",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProblemDetails"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Creates a new problem.",
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The data required to create the problem.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProblemParams",
+								"description": "The data required to create the problem."
+							}
+						}
+					}
+				}
+			}
+		},
+		"/problems/{problemId}": {
+			"get": {
+				"operationId": "GetProblem",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProblemDetails"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the detailed information of a specific problem by its ID.",
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateProblem",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProblemDetails"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Updates an existing problem.",
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem to update.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The updated problem data.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProblemParams",
+								"description": "The updated problem data."
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteProblem",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Deletes a problem by its ID.",
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem to delete.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/language": {
+			"get": {
+				"operationId": "GetLanguages",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ProgrammingLanguage"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"ProgrammingLanguage"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProgrammingLanguage"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"ProgrammingLanguage"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateLanguageDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/language/{id}": {
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProgrammingLanguage"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"ProgrammingLanguage"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Partial_CreateLanguageDto_"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Remove",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"ProgrammingLanguage"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}
