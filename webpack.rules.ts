@@ -19,6 +19,16 @@ export const rules: Required<ModuleOptions>['rules'] = [
     },
   },
   {
+    test: /\.jsx?$/,
+    exclude: /(node_modules|\.webpack)/,
+    use: {
+      loader: 'babel-loader',
+      options: {
+        presets: ['@babel/preset-env', '@babel/preset-react']
+      }
+    }
+  },
+  {
     test: /\.tsx?$/,
     exclude: /(node_modules|\.webpack)/,
     use: {
