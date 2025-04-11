@@ -51,7 +51,7 @@ npm npx tsoa routes
 
 ### Regenerate OpenApi Swagger.json
 
-Swagger UI debug page: `localhost:3000/docs`
+Swagger UI debug page: `localhost:6785/docs`
 
 ```bash
 npm npx tsoa spec
