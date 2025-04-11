@@ -40,7 +40,6 @@ model ProgrammingLanguage {
 
 model Submission {
     submission_id Int                @id @default(autoincrement())
-    user_id       Int
     problem       Problem            @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id    Int
     language      ProgrammingLanguage @relation(fields: [language_id], references: [language_id], onDelete: Cascade)
@@ -56,7 +55,6 @@ model SubmissionResult {
     submission_result_id Int         @id @default(autoincrement())
     submission           Submission  @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
     submission_id        Int
-    user_id              Int
     status               SubmissionStatus @default(PENDING)
     output               String?
     runtime_ms           Int
