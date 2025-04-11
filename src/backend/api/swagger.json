@@ -7,6 +7,115 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"TestCase": {
+				"properties": {
+					"testcaseId": {
+						"type": "number",
+						"format": "double"
+					},
+					"input": {
+						"type": "string"
+					},
+					"expectedOutput": {
+						"type": "string"
+					},
+					"timeLimit": {
+						"type": "number",
+						"format": "double"
+					},
+					"memoryLimit": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"testcaseId",
+					"input",
+					"expectedOutput",
+					"timeLimit",
+					"memoryLimit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NotFoundError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"name",
+					"message",
+					"statusCode"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidateError": {
+				"properties": {
+					"message": {
+						"type": "string",
+						"enum": [
+							"Validation failed"
+						],
+						"nullable": false
+					},
+					"details": {
+						"properties": {},
+						"additionalProperties": {},
+						"type": "object"
+					}
+				},
+				"required": [
+					"message",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTestCaseParams": {
+				"properties": {
+					"input": {
+						"type": "string",
+						"minLength": 1
+					},
+					"expectedOutput": {
+						"type": "string",
+						"minLength": 1
+					},
+					"timeLimit": {
+						"type": "number",
+						"format": "double",
+						"minimum": 1,
+						"maximum": 10
+					},
+					"memoryLimit": {
+						"type": "number",
+						"format": "double",
+						"minimum": 16,
+						"maximum": 1024
+					}
+				},
+				"required": [
+					"input",
+					"expectedOutput",
+					"timeLimit",
+					"memoryLimit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"_36_Enums.Difficulty": {
 				"type": "string",
 				"enum": [
@@ -64,52 +173,6 @@
 					"difficulty",
 					"description",
 					"createdAt"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"NotFoundError": {
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"message": {
-						"type": "string"
-					},
-					"stack": {
-						"type": "string"
-					},
-					"statusCode": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"name",
-					"message",
-					"statusCode"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ValidateError": {
-				"properties": {
-					"message": {
-						"type": "string",
-						"enum": [
-							"Validation failed"
-						],
-						"nullable": false
-					},
-					"details": {
-						"properties": {},
-						"additionalProperties": {},
-						"type": "object"
-					}
-				},
-				"required": [
-					"message",
-					"details"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -255,6 +318,164 @@
 		}
 	},
 	"paths": {
+		"/problems/{problemId}/testcases": {
+			"get": {
+				"operationId": "GetTestCases",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TestCase"
+									},
+									"type": "array"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves all test cases for a given problem.",
+				"tags": [
+					"TestCases"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateTestCase",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestCase"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Creates a new test case for a given problem.",
+				"tags": [
+					"TestCases"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The test case data.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTestCaseParams",
+								"description": "The test case data."
+							}
+						}
+					}
+				}
+			}
+		},
+		"/problems/{problemId}/testcases/{testcaseId}": {
+			"delete": {
+				"operationId": "DeleteTestCase",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Deletes a test case for a given problem.",
+				"tags": [
+					"TestCases"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "The ID of the test case to delete.",
+						"in": "path",
+						"name": "testcaseId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
 		"/problems": {
 			"get": {
 				"operationId": "GetAllProblems",
@@ -274,6 +495,9 @@
 					}
 				},
 				"description": "Retrieves a list of all problems with summary information.",
+				"tags": [
+					"Problems"
+				],
 				"security": [],
 				"parameters": []
 			},
@@ -302,6 +526,9 @@
 					}
 				},
 				"description": "Creates a new problem.",
+				"tags": [
+					"Problems"
+				],
 				"security": [],
 				"parameters": [],
 				"requestBody": {
@@ -344,6 +571,9 @@
 					}
 				},
 				"description": "Retrieves the detailed information of a specific problem by its ID.",
+				"tags": [
+					"Problems"
+				],
 				"security": [],
 				"parameters": [
 					{
@@ -393,6 +623,9 @@
 					}
 				},
 				"description": "Updates an existing problem.",
+				"tags": [
+					"Problems"
+				],
 				"security": [],
 				"parameters": [
 					{
@@ -427,6 +660,9 @@
 					}
 				},
 				"description": "Deletes a problem by its ID.",
+				"tags": [
+					"Problems"
+				],
 				"security": [],
 				"parameters": [
 					{
