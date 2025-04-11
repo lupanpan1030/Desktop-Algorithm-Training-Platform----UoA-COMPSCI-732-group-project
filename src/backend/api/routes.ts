@@ -4,6 +4,8 @@
 import type { TsoaRoute } from '@tsoa/runtime';
 import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TestCaseController } from './testcase/testcase-controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemsController } from './problems/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
@@ -14,6 +16,49 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "TestCase": {
+        "dataType": "refObject",
+        "properties": {
+            "testcaseId": {"dataType":"double","required":true},
+            "input": {"dataType":"string","required":true},
+            "expectedOutput": {"dataType":"string","required":true},
+            "timeLimit": {"dataType":"double","required":true},
+            "memoryLimit": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NotFoundError": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "message": {"dataType":"string","required":true},
+            "stack": {"dataType":"string"},
+            "statusCode": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ValidateError": {
+        "dataType": "refObject",
+        "properties": {
+            "message": {"dataType":"enum","enums":["Validation failed"],"required":true},
+            "details": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateTestCaseParams": {
+        "dataType": "refObject",
+        "properties": {
+            "input": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "expectedOutput": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "timeLimit": {"dataType":"double","required":true,"validators":{"minimum":{"value":1},"maximum":{"value":10}}},
+            "memoryLimit": {"dataType":"double","required":true,"validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "_36_Enums.Difficulty": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EASY"]},{"dataType":"enum","enums":["MEDIUM"]},{"dataType":"enum","enums":["HARD"]}],"validators":{}},
@@ -42,26 +87,6 @@ const models: TsoaRoute.Models = {
             "difficulty": {"ref":"Difficulty","required":true},
             "description": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "NotFoundError": {
-        "dataType": "refObject",
-        "properties": {
-            "name": {"dataType":"string","required":true},
-            "message": {"dataType":"string","required":true},
-            "stack": {"dataType":"string"},
-            "statusCode": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ValidateError": {
-        "dataType": "refObject",
-        "properties": {
-            "message": {"dataType":"enum","enums":["Validation failed"],"required":true},
-            "details": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -133,6 +158,98 @@ export function RegisterRoutes(app: Router) {
 
 
     
+        const argsTestCaseController_getTestCases: Record<string, TsoaRoute.ParameterSchema> = {
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
+        };
+        app.get('/problems/:problemId/testcases',
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController)),
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController.prototype.getTestCases)),
+
+            async function TestCaseController_getTestCases(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTestCaseController_getTestCases, request, response });
+
+                const controller = new TestCaseController();
+
+              await templateService.apiHandler({
+                methodName: 'getTestCases',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTestCaseController_createTestCase: Record<string, TsoaRoute.ParameterSchema> = {
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"CreateTestCaseParams"},
+        };
+        app.post('/problems/:problemId/testcases',
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController)),
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController.prototype.createTestCase)),
+
+            async function TestCaseController_createTestCase(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTestCaseController_createTestCase, request, response });
+
+                const controller = new TestCaseController();
+
+              await templateService.apiHandler({
+                methodName: 'createTestCase',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTestCaseController_deleteTestCase: Record<string, TsoaRoute.ParameterSchema> = {
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
+                testcaseId: {"in":"path","name":"testcaseId","required":true,"dataType":"double"},
+        };
+        app.delete('/problems/:problemId/testcases/:testcaseId',
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController)),
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController.prototype.deleteTestCase)),
+
+            async function TestCaseController_deleteTestCase(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTestCaseController_deleteTestCase, request, response });
+
+                const controller = new TestCaseController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteTestCase',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProblemsController_getAllProblems: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/problems',
