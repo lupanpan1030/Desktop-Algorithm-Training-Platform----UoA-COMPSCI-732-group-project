@@ -7,16 +7,6 @@ generator client {
     provider = "prisma-client-js"
 }
 
-model User {
-    user_id           Int                 @id @default(autoincrement())
-    username          String
-    email             String              @unique
-    password_hash     String
-    created_at        DateTime            @default(now())
-    submissions       Submission[]
-    submission_results SubmissionResult[]
-}
-
 model Problem {
     problem_id   Int          @id @default(autoincrement())
     title        String
@@ -50,11 +40,10 @@ model ProgrammingLanguage {
 
 model Submission {
     submission_id Int                @id @default(autoincrement())
-    user          User               @relation(fields: [user_id], references: [user_id])
     user_id       Int
     problem       Problem            @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id    Int
-    language      ProgrammingLanguage           @relation(fields: [language_id], references: [language_id])
+    language      ProgrammingLanguage @relation(fields: [language_id], references: [language_id], onDelete: Cascade)
     language_id   Int
     code          String
     status        SubmissionStatus
@@ -65,9 +54,8 @@ model Submission {
 
 model SubmissionResult {
     submission_result_id Int         @id @default(autoincrement())
-    submission           Submission  @relation(fields: [submission_id], references: [submission_id])
+    submission           Submission  @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
     submission_id        Int
-    user                 User        @relation(fields: [user_id], references: [user_id])
     user_id              Int
     status               SubmissionStatus @default(PENDING)
     output               String?
@@ -85,7 +73,7 @@ model Tag {
 model ProblemTag {
     problem   Problem @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id Int
-    tag       Tag     @relation(fields: [tag_id], references: [tag_id])
+    tag       Tag     @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade)
     tag_id    Int
 
     @@id([problem_id, tag_id])
