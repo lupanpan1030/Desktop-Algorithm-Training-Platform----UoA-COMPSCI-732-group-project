@@ -46,7 +46,6 @@ model Submission {
     language_id   Int
     code          String
     status        SubmissionStatus
-    output        String?
     submitted_at  DateTime           @default(now())
     results       SubmissionResult[]
 }
