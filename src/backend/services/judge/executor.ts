@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { SubmissionStatus } from '@prisma/client';
 const execAsync = promisify(exec);
 
 const TIME_LIMIT = 10 * 1000;
@@ -20,7 +21,7 @@ interface JudgeOptions {
 }
 
 // Utility function to run a command with platform consideration, timeout, and tuple error handling
-async function runCommand(command: string): Promise<[boolean, number, string]> {
+async function runCommand(command: string): Promise<[boolean, number, string, SubmissionStatus]> {
     const startTime = Date.now();
     // Adjust command for Windows
     if (process.platform === 'win32') {
@@ -29,18 +30,18 @@ async function runCommand(command: string): Promise<[boolean, number, string]> {
     try {
         const { stdout, stderr } = await execAsync(command, { timeout: TIME_LIMIT });
         const elapsed = Date.now() - startTime;
-        return [true, elapsed, stdout || stderr];
+        return [true, elapsed, stdout || stderr, SubmissionStatus.ACCEPTED];
     } catch (error: any) {
         const elapsed = Date.now() - startTime;
         if (error.killed) {
-            return [false, TIME_LIMIT, 'time limit exceed'];
+            return [false, TIME_LIMIT, 'time limit exceed', SubmissionStatus.TIME_LIMIT_EXCEEDED];
         }
-        return [false, elapsed, error.message];
+        return [false, elapsed, error.message, SubmissionStatus.RUNTIME_ERROR];
     }
 }
 
 // Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, file: string, testCase: string): Promise<[boolean, number, string]> {
+async function interprete(interpretCmd: string, file: string, testCase: string): Promise<[boolean, number, string, SubmissionStatus]> {
     const command = `echo "${testCase}" | ${interpretCmd} ${file}`;
     return runCommand(command);
 }
@@ -48,14 +49,14 @@ async function interprete(interpretCmd: string, file: string, testCase: string):
 // Function to compile a source file
 async function compile(compileCmd: string, file: string): Promise<void> {
     const command = `${compileCmd} ${file}`;
-    const [success, , msg] = await runCommand(command);
+    const [success, , msg, ] = await runCommand(command);
     if (!success) {
         throw new Error(msg);
     }
 }
 
 // Function to run a compiled executable with test case input piped in
-async function runExecutable(executable: string, testCase: string): Promise<[boolean, number, string]> {
+async function runExecutable(executable: string, testCase: string): Promise<[boolean, number, string, SubmissionStatus]> {
     const command = `echo "${testCase}" | ${executable}`;
     return runCommand(command);
 }
@@ -66,8 +67,8 @@ async function runExecutable(executable: string, testCase: string): Promise<[boo
 export async function judgeSolution(
     mode: ExecutionMode,
     options: JudgeOptions
-): Promise<Array<[boolean, number, string]>> {
-    const results: Array<[boolean, number, string]> = [];
+): Promise<Array<[boolean, number, string, SubmissionStatus]>> {
+    const results: Array<[boolean, number, string, SubmissionStatus]> = [];
     if (mode === ExecutionMode.Interprete) {
         if (!options.interpretCmd) 
             throw new Error("interpretCmd is required for interprete mode.");
@@ -76,13 +77,16 @@ export async function judgeSolution(
             results.push(output);
         }
     } else if (mode === ExecutionMode.Compiled) {
-        if (!options.compileCmd || !options.executable) 
+        if (!options.compileCmd || !options.executable){
+
             throw new Error("compileCmd and executable are required for compiled mode.");
+        }
         // Compile once.
         await compile(options.compileCmd, options.file);
         for (const testCase of options.testCases) {
             const output = await runExecutable(options.executable, testCase);
             results.push(output);
+        
         }
     }
     return results;
