@@ -191,8 +191,8 @@ src/
 **Submissions**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/submissions` | List submissions | - | `Array<{submissionId: number, problemId: number, status: "PENDING"\|"ACCEPTED"\|"REJECTED", createdAt: ISO8601}>` |
-| `GET` | `/submissions/{id}` | Get submission | - | `{submissionId: number, code: string, languageId: number, results: Array<{testcaseId: number, passed: boolean, executionIime: number}>}` |
+| `GET` | `/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
+| `GET` | `/submissions/{id}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[success: boolean, executionTime: number, result: string]> }` |
 
 ---
 
