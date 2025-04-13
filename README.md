@@ -192,7 +192,7 @@ src/
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
 | `GET` | `/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
-| `GET` | `/submissions/{id}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[success: boolean, executionTime: number, result: string]> }` |
+| `GET` | `/submissions/{id}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
 
 ---
 
@@ -200,5 +200,5 @@ src/
 
 | Method | Path                     | Description                                                           | Request Body                                 | Response Format                                                                                                                       |
 | ------ | ------------------------ | --------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/problems/{id}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[success: boolean, executionTime: number, result: string]> }`                                         |
-| `POST` | `/problems/{id}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[success: boolean, executionTime: number, result: string]> }`              |
+| `POST` | `/problems/{id}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
+| `POST` | `/problems/{id}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
