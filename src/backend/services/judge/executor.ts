@@ -15,6 +15,7 @@ export enum ExecutionMode {
 export interface ExecutionResult {
     succeeded: boolean;
     executionTime: number;
+    executionMemoryKb: number; // new field for memory in KB
     output: string;
     status: SubmissionStatus;
 }
@@ -38,26 +39,31 @@ async function runCommand(command: string): Promise<ExecutionResult> {
     try {
         const { stdout, stderr } = await execAsync(command, { timeout: TIME_LIMIT });
         const elapsed = Date.now() - startTime;
+        const memoryKb = Math.round(process.memoryUsage().rss / 1024); // record memory usage
         return {
             succeeded: true,
-            executionTime: elapsed, 
-            output: stdout || stderr, 
+            executionTime: elapsed,
+            executionMemoryKb: memoryKb,
+            output: stdout || stderr,
             status: SubmissionStatus.ACCEPTED
         };
     } catch (error: any) {
         const elapsed = Date.now() - startTime;
+        const memoryKb = Math.round(process.memoryUsage().rss / 1024); // record memory usage
         if (error.killed) {
             return {
-                succeeded: false, 
-                executionTime: TIME_LIMIT, 
-                output: 'time limit exceed', 
+                succeeded: false,
+                executionTime: TIME_LIMIT,
+                executionMemoryKb: memoryKb,
+                output: 'time limit exceed',
                 status: SubmissionStatus.TIME_LIMIT_EXCEEDED
             };
         }
         return {
-            succeeded: false, 
-            executionTime: elapsed, 
-            output: error.message, 
+            succeeded: false,
+            executionTime: elapsed,
+            executionMemoryKb: memoryKb,
+            output: error.message,
             status: SubmissionStatus.RUNTIME_ERROR
         };
     }

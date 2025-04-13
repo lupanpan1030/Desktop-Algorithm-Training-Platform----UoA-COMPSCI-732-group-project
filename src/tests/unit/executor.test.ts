@@ -34,9 +34,9 @@ if __name__ == '__main__':
 		// Cleanup temporary file
 		fs.unlinkSync(tempPyFile);
 		expect(results.length).toBe(1);
-		const [success, , output] = results[0];
-		expect(success).toBe(true);
-		expect(output.trim()).toBe("5");
+		const result = results[0];
+		expect(result.succeeded).toBe(true);
+		expect(result.output.trim()).toBe("5");
 	});
 
 	// Test for compiled mode using rustc.
@@ -74,8 +74,8 @@ fn main() {
 		fs.unlinkSync(tempRsFile);
 		fs.unlinkSync(tempExecutable);
 		expect(results.length).toBe(1);
-		const [success, , output] = results[0];
-		expect(success).toBe(true);
-		expect(output.trim()).toBe("9");
+		const result = results[0];
+		expect(result.succeeded).toBe(true);
+		expect(result.output.trim()).toBe("9");
 	});
 });
