@@ -126,7 +126,6 @@ src/
 │   │   │
 │   │   └── crud/            # Database operations
 │   │       ├── problems.ts
-│   │       ├── users.ts
 │   │       ├── testcases.ts
 │   │       ├── languages.ts
 │   │       └── submissions.ts
@@ -192,7 +191,7 @@ src/
 **Submissions**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/submissions` | List submissions | - | `Array<{submissionId: number, problemId: number, userId: number, status: "PENDING"\|"ACCEPTED"\|"REJECTED", createdAt: ISO8601}>` |
+| `GET` | `/submissions` | List submissions | - | `Array<{submissionId: number, problemId: number, status: "PENDING"\|"ACCEPTED"\|"REJECTED", createdAt: ISO8601}>` |
 | `GET` | `/submissions/{id}` | Get submission | - | `{submissionId: number, code: string, languageId: number, results: Array<{testcaseId: number, passed: boolean, executionIime: number}>}` |
 
 ---
@@ -201,5 +200,5 @@ src/
 
 | Method | Path                    | Description                     | Request Body (Types)                                 | Response Format (Types)                                                                                                                                                                                  |
 | ------ | ----------------------- | ------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/problems/{id}/run`    | Test code against first 3 cases | `{code: string, languageId: number, userId: number}` | `{status: "SUCCESS"\|"COMPILE_ERROR"\|"RUNTIME_ERROR", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number, actualOutput: string, expectedOutput: string}>}` |
-| `POST` | `/problems/{id}/submit` | Submit for full evaluation      | `{code: string, languageId: number, userId: number}` | `{submissionId: number, overallStatus: "ACCEPTED"\|"WRONG_ANSWER"\|"TIME_LIMIT_EXCEEDED", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number}>}`            |
+| `POST` | `/problems/{id}/run`    | Test code against first 3 cases | `{code: string, languageId: number}` | `{status: "SUCCESS"\|"COMPILE_ERROR"\|"RUNTIME_ERROR", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number, actualOutput: string, expectedOutput: string}>}` |
+| `POST` | `/problems/{id}/submit` | Submit for full evaluation      | `{code: string, languageId: number}` | `{submissionId: number, overallStatus: "ACCEPTED"\|"WRONG_ANSWER"\|"TIME_LIMIT_EXCEEDED", results: Array<{testcaseId: number, passed: boolean, executionTime: number, memoryUsage: number}>}`            |
