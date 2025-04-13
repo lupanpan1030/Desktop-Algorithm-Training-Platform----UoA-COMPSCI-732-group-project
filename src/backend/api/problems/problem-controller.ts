@@ -12,6 +12,7 @@ import {
   Path,
   Response,
   SuccessResponse,
+  Tags,
 } from "tsoa";
 import {
   ProblemSummary,
@@ -24,13 +25,14 @@ import { ValidateError } from "../../utils/errors/validation-error";
 import { NotFoundError } from "../../utils/errors/not-found-error";
 
 @Route("problems")
+@Tags("Problems")
 export class ProblemsController extends Controller {
   private problemsService = new ProblemsService();
 
   /**
    * Retrieves a list of all problems with summary information.
    */
-  @SuccessResponse('200', 'OK')
+  @SuccessResponse("200", "OK")
   @Get()
   public async getAllProblems(): Promise<ProblemSummary[]> {
     return this.problemsService.getAllProblems();
@@ -41,7 +43,7 @@ export class ProblemsController extends Controller {
    * @param problemId The ID of the problem.
    */
   @Response<NotFoundError>(404, "Problem not found")
-  @SuccessResponse('200', 'OK')
+  @SuccessResponse("200", "OK")
   @Get("{problemId}")
   public async getProblem(@Path() problemId: number): Promise<ProblemDetails> {
     return this.problemsService.getProblem(problemId);
@@ -52,7 +54,7 @@ export class ProblemsController extends Controller {
    * @param requestBody The data required to create the problem.
    */
   @Response<ValidateError>(422, "Validation Failed")
-  @SuccessResponse('201', 'Created')
+  @SuccessResponse("201", "Created")
   @Post()
   public async createProblem(
     @Body() requestBody: CreateProblemParams
@@ -68,7 +70,7 @@ export class ProblemsController extends Controller {
    */
   @Response<NotFoundError>(404, "Problem not found")
   @Response<ValidateError>(422, "Validation Failed")
-  @Put('{problemId}')
+  @Put("{problemId}")
   public async updateProblem(
     @Path() problemId: number,
     @Body() requestBody: UpdateProblemParams
@@ -80,8 +82,8 @@ export class ProblemsController extends Controller {
    * Deletes a problem by its ID.
    * @param problemId The ID of the problem to delete.
    */
-  @SuccessResponse('204', 'No Content')
-  @Delete('{problemId}')
+  @SuccessResponse("204", "No Content")
+  @Delete("{problemId}")
   public async deleteProblem(@Path() problemId: number): Promise<void> {
     await this.problemsService.deleteProblem(problemId);
     this.setStatus(204);

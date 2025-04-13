@@ -34,12 +34,15 @@ npm start
 ```bash
 npm run make
 ```
+
 ## Backend Server
+
 ### Run Backend Server
 
 ```bash
 npm run dev
 ```
+
 ### Regenerate Backend Routes.ts
 
 ```bash
@@ -47,7 +50,8 @@ npm npx tsoa routes
 ```
 
 ### Regenerate OpenApi Swagger.json
-Swagger UI debug page: `localhost:3000/docs` 
+
+Swagger UI debug page: `localhost:6785/docs`
 
 ```bash
 npm npx tsoa spec
@@ -64,20 +68,21 @@ npm test
 Run the following commands
 
 - Create Tables
-    ```bash
-    npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma 
-    ```
+
+  ```bash
+  npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma
+  ```
 
 - Insert Predefined Data
--- First-time Database Setup
-    ```bash
+  -- First-time Database Setup
+  `bash
     npx ts-node src/backend/db/seeds/init-db_first.ts
-    ```
+    `
 - Insert Predefined Data
--- Reset and Reinitialize the Database
-    ```bash
+  -- Reset and Reinitialize the Database
+  `bash
     npx ts-node src/backend/db/seeds/init-db+drop.ts
-    ```
+    `
 
 ## Architecture
 
@@ -149,20 +154,19 @@ src/
 
 #### 1. CRUD Endpoints
 
-
 ---
 
 ---
 
 **Problems**
 
-| Method | Path                | Description                                        | Request Body (Types & Validation)                                                                                                                                      | Response Format (Types & Status Codes)                                                                                                                                                                                                                          |
-|--------|---------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GET    | `/problems`         | List all problems                                  | _None_                                                                                                                                                                 | **200 OK:** Array of problem summaries<br>`Array<{ problemId: number, title: string, difficulty: "EASY" \| "MEDIUM" \| "HARD", tags: string[] }>`                                                                                                            |
-| GET    | `/problems/{id}`    | Retrieve problem details by ID                     | _None_                                                                                                                                                                 | **200 OK:** Detailed problem object<br>`{ problemId: number, title: string, description: string, difficulty: enum, tags: string[], createdAt: ISO8601 }`<br>**404 Not Found:** `{ "message": "Problem not found" }`                                            |
-| POST   | `/problems`         | Create a new problem                               | **Required:**<br>`{ title: string, description: string, difficulty: enum, tags: string[] }`<br>• `title` must be 5–100 characters<br>• `description` must be 10–2000 characters | **201 Created:** Detailed problem object (same as GET details)<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                                                                      |
-| PUT    | `/problems/{id}`    | Update an existing problem                         | **Optional:**<br>`{ title?: string, description?: string, difficulty?: enum, tags?: string[] }`<br>If provided, `title` must be 5–100 characters and `description` 10–2000 characters | **200 OK:** Updated detailed problem object<br>**404 Not Found:** `{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                         |
-| DELETE | `/problems/{id}`    | Delete a problem by ID                             | _None_                                                                                                                                                                 | **204 No Content:** _No body_                                                                                                                       |
+| Method | Path             | Description                    | Request Body (Types & Validation)                                                                                                                                                     | Response Format (Types & Status Codes)                                                                                                                                                                              |
+| ------ | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/problems`      | List all problems              | _None_                                                                                                                                                                                | **200 OK:** Array of problem summaries<br>`Array<{ problemId: number, title: string, difficulty: "EASY" \| "MEDIUM" \| "HARD", tags: string[] }>`                                                                   |
+| GET    | `/problems/{id}` | Retrieve problem details by ID | _None_                                                                                                                                                                                | **200 OK:** Detailed problem object<br>`{ problemId: number, title: string, description: string, difficulty: enum, tags: string[], createdAt: ISO8601 }`<br>**404 Not Found:** `{ "message": "Problem not found" }` |
+| POST   | `/problems`      | Create a new problem           | **Required:**<br>`{ title: string, description: string, difficulty: enum, tags: string[] }`<br>• `title` must be 5–100 characters<br>• `description` must be 10–2000 characters       | **201 Created:** Detailed problem object (same as GET details)<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                               |
+| PUT    | `/problems/{id}` | Update an existing problem     | **Optional:**<br>`{ title?: string, description?: string, difficulty?: enum, tags?: string[] }`<br>If provided, `title` must be 5–100 characters and `description` 10–2000 characters | **200 OK:** Updated detailed problem object<br>**404 Not Found:** `{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                       |
+| DELETE | `/problems/{id}` | Delete a problem by ID         | _None_                                                                                                                                                                                | **204 No Content:** _No body_                                                                                                                                                                                       |
 
 ---
 
@@ -179,9 +183,9 @@ src/
 **Test Cases**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/problems/{id}/testcases` | List test cases | - | `Array<{testcaseId: number, input: string, expectedOutput: string, isHidden: boolean}>` |
-| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, isHidden: boolean}` | `201` + created test case |
-| `DELETE` | `/testcases/{id}` | Delete test case | - | `204` |
+| `GET` | `/problems/{id}/testcases` | List test cases | - | **200 OK:** `Array<{testcaseId: number, input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}>` <br>**404 Not Found:** `{ "message": "Problem not found" }` |
+| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}` | **201 Created:**  Detailed testcase object `{testcaseId: number, input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}` <br>**404 Not Found:**`{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`    |
+|`DELETE`|`/problems/{id}/testcases/{id}`| Delete test case | - |**204 No Content:** _No body_ <br>**404 Not Found:**`{ "message": "Problem not found" }` |
 
 ---
 
