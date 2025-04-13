@@ -1,6 +1,10 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { SubmissionStatus } from '@prisma/client';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 const execAsync = promisify(exec);
 
 const TIME_LIMIT = 10 * 1000;
@@ -20,9 +24,9 @@ export interface ExecutionResult {
     status: SubmissionStatus;
 }
 
-// Define JudgeOptions interface
 interface JudgeOptions {
-    file: string;
+    code: string;
+    fileSuffix: string;
     interpretCmd?: string;
     compileCmd?: string;
     executable?: string;
@@ -70,15 +74,15 @@ async function runCommand(command: string): Promise<ExecutionResult> {
 }
 
 // Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, file: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${interpretCmd} ${file}`;
+async function interprete(interpretCmd: string, code: string, testCase: string): Promise<ExecutionResult> {
+    const command = `echo "${testCase}" | ${interpretCmd} ${code}`;
     return runCommand(command);
 }
 
 // Function to compile a source file
-async function compile(compileCmd: string, file: string): Promise<void> {
-    const command = `${compileCmd} ${file}`;
-    const result = await runCommand(command);
+async function compile(compileCmd: string, code: string): Promise<void> {
+    const command = `${compileCmd} ${code}`;
+    await runCommand(command);
 }
 
 // Function to run a compiled executable with test case input piped in
@@ -95,22 +99,36 @@ export async function judgeSolution(
     options: JudgeOptions
 ): Promise<Array<ExecutionResult>> {
     const results: Array<ExecutionResult> = [];
-    if (mode === ExecutionMode.Interprete) {
-        if (!options.interpretCmd) 
-            throw new Error("interpretCmd is required for interprete mode.");
-        for (const testCase of options.testCases) {
-            const output = await interprete(options.interpretCmd, options.file, testCase);
-            results.push(output);
+    // Create a temporary source file using code and fileSuffix.
+    const tempFile = path.join(os.tmpdir(), `temp_${Date.now()}.${options.fileSuffix}`);
+    fs.writeFileSync(tempFile, options.code);
+    try {
+        if (mode === ExecutionMode.Interprete) {
+            if (!options.interpretCmd) 
+                throw new Error("interpretCmd is required for interprete mode.");
+            for (const testCase of options.testCases) {
+                const output = await interprete(options.interpretCmd, tempFile, testCase);
+                results.push(output);
+            }
+        } else if (mode === ExecutionMode.Compiled) {
+            if (!options.compileCmd || !options.executable){
+                throw new Error("compileCmd and executable are required for compiled mode.");
+            }
+            // Compile using the temporary file.
+            await compile(options.compileCmd, tempFile);
+            for (const testCase of options.testCases) {
+                const output = await runExecutable(options.executable, testCase);
+                results.push(output);
+            }
+            // Cleanup the executable after running.
+            if (fs.existsSync(options.executable)) {
+                fs.unlinkSync(options.executable);
+            }
         }
-    } else if (mode === ExecutionMode.Compiled) {
-        if (!options.compileCmd || !options.executable){
-            throw new Error("compileCmd and executable are required for compiled mode.");
-        }
-        // Compile once.
-        await compile(options.compileCmd, options.file);
-        for (const testCase of options.testCases) {
-            const output = await runExecutable(options.executable, testCase);
-            results.push(output);
+    } finally {
+        // Cleanup the temporary source file.
+        if (fs.existsSync(tempFile)) {
+            fs.unlinkSync(tempFile);
         }
     }
     return results;
