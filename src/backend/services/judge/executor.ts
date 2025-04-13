@@ -11,6 +11,14 @@ export enum ExecutionMode {
     Compiled = 'compiled'
 }
 
+// Define ExecutionResult interface for named tuple
+export interface ExecutionResult {
+    succeeded: boolean;
+    executionTime: number;
+    output: string;
+    status: SubmissionStatus;
+}
+
 // Define JudgeOptions interface
 interface JudgeOptions {
     file: string;
@@ -21,7 +29,7 @@ interface JudgeOptions {
 }
 
 // Utility function to run a command with platform consideration, timeout, and tuple error handling
-async function runCommand(command: string): Promise<[boolean, number, string, SubmissionStatus]> {
+async function runCommand(command: string): Promise<ExecutionResult> {
     const startTime = Date.now();
     // Adjust command for Windows
     if (process.platform === 'win32') {
@@ -30,18 +38,33 @@ async function runCommand(command: string): Promise<[boolean, number, string, Su
     try {
         const { stdout, stderr } = await execAsync(command, { timeout: TIME_LIMIT });
         const elapsed = Date.now() - startTime;
-        return [true, elapsed, stdout || stderr, SubmissionStatus.ACCEPTED];
+        return {
+            succeeded: true,
+            executionTime: elapsed, 
+            output: stdout || stderr, 
+            status: SubmissionStatus.ACCEPTED
+        };
     } catch (error: any) {
         const elapsed = Date.now() - startTime;
         if (error.killed) {
-            return [false, TIME_LIMIT, 'time limit exceed', SubmissionStatus.TIME_LIMIT_EXCEEDED];
+            return {
+                succeeded: false, 
+                executionTime: TIME_LIMIT, 
+                output: 'time limit exceed', 
+                status: SubmissionStatus.TIME_LIMIT_EXCEEDED
+            };
         }
-        return [false, elapsed, error.message, SubmissionStatus.RUNTIME_ERROR];
+        return {
+            succeeded: false, 
+            executionTime: elapsed, 
+            output: error.message, 
+            status: SubmissionStatus.RUNTIME_ERROR
+        };
     }
 }
 
 // Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, file: string, testCase: string): Promise<[boolean, number, string, SubmissionStatus]> {
+async function interprete(interpretCmd: string, file: string, testCase: string): Promise<ExecutionResult> {
     const command = `echo "${testCase}" | ${interpretCmd} ${file}`;
     return runCommand(command);
 }
@@ -49,14 +72,11 @@ async function interprete(interpretCmd: string, file: string, testCase: string):
 // Function to compile a source file
 async function compile(compileCmd: string, file: string): Promise<void> {
     const command = `${compileCmd} ${file}`;
-    const [success, , msg, ] = await runCommand(command);
-    if (!success) {
-        throw new Error(msg);
-    }
+    const result = await runCommand(command);
 }
 
 // Function to run a compiled executable with test case input piped in
-async function runExecutable(executable: string, testCase: string): Promise<[boolean, number, string, SubmissionStatus]> {
+async function runExecutable(executable: string, testCase: string): Promise<ExecutionResult> {
     const command = `echo "${testCase}" | ${executable}`;
     return runCommand(command);
 }
@@ -67,8 +87,8 @@ async function runExecutable(executable: string, testCase: string): Promise<[boo
 export async function judgeSolution(
     mode: ExecutionMode,
     options: JudgeOptions
-): Promise<Array<[boolean, number, string, SubmissionStatus]>> {
-    const results: Array<[boolean, number, string, SubmissionStatus]> = [];
+): Promise<Array<ExecutionResult>> {
+    const results: Array<ExecutionResult> = [];
     if (mode === ExecutionMode.Interprete) {
         if (!options.interpretCmd) 
             throw new Error("interpretCmd is required for interprete mode.");
@@ -78,7 +98,6 @@ export async function judgeSolution(
         }
     } else if (mode === ExecutionMode.Compiled) {
         if (!options.compileCmd || !options.executable){
-
             throw new Error("compileCmd and executable are required for compiled mode.");
         }
         // Compile once.
@@ -86,7 +105,6 @@ export async function judgeSolution(
         for (const testCase of options.testCases) {
             const output = await runExecutable(options.executable, testCase);
             results.push(output);
-        
         }
     }
     return results;
