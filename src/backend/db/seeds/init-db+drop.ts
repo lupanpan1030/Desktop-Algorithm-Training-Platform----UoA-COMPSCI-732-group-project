@@ -13,7 +13,6 @@ import { clearTestCases, seedTestCases } from './testCase.data'
 import { clearTags, seedTags } from './tag.data'
 import { clearProblems, seedProblems } from './problem.data'
 import { clearLanguage, seedLanguage } from './programmingLanguage.data'
-import { clearUsers, seedUsers } from './user.data'
 
 // 主函数入口，负责种子数据的写入
 // Main function to seed the database
@@ -28,12 +27,10 @@ async function main() {
   await clearTags()
   await clearProblems()
   await clearLanguage()
-  await clearUsers()
 
   console.log('--- Seeding new data ---')
   // 插入顺序：先父表，再子表，确保外键依赖顺序正确
-  // Insert order: parent tables first, then child tables (due to foreign key constraints)            
-  await seedUsers()
+  // Insert order: parent tables first, then child tables (due to foreign key constraints)
   await seedLanguage()
   await seedTags()
   await seedProblems()
