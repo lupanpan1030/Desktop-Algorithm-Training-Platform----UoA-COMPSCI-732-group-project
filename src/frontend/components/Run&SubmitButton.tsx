@@ -7,11 +7,32 @@ import { useApi } from '../hooks/useApi';
 interface CodeSubmissionProps {
   problemId: number;
   code: string;
+  languageId: number; 
 }
 
-const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
+interface TestResult {
+  status: string;
+  output?: string;
+  runtimeMs: number;
+  memoryKb: number;
+}
+
+interface RunResponse {
+  status: string;
+  results: TestResult[];
+}
+
+interface SubmitResponse {
+  submissionId: number;
+  overallStatus: string;
+  results: TestResult[];
+}
+
+const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, languageId }) => {
   const { fetchData, loading, error } = useApi();
-  const [result, setResult] = useState<any>(null);
+  //const [result, setResult] = useState<any>(null);
+  const [runResults, setRunResults] = useState<RunResponse | null>(null);
+  const [submitResults, setSubmitResults] = useState<SubmitResponse | null>(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [severity, setSeverity] = useState<'success' | 'error' | 'info'>('info');
@@ -25,12 +46,12 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
       return;
     }
 
-    const response = await fetchData<any>({
-      url: '/api/run-code',
+    const response = await fetchData<RunResponse>({
+      url: `http://localhost:6785/docs/problems/${problemId}/run`,
       method: 'POST',
       body: {
-        problemId,
-        code,       
+        code,  
+        languageId     
       },
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +59,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
     });
 
     if (response) {
-      setResult(response);
+      setRunResults(response);
       setSnackbarMessage('sucess');
       setSeverity('info');
       setOpenSnackbar(true);
@@ -54,13 +75,12 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
       return;
     }
 
-    const response = await fetchData<any>({
-      url: 'localhost://submissions',
+    const response = await fetchData<SubmitResponse>({
+      url: `http://localhost:6785/docs/problems/${problemId}/submit`,
       method: 'POST',
       body: {
-        problemId,
         code,
-        
+        languageId        
       },
       headers: {
         'Content-Type': 'application/json',
@@ -68,9 +88,9 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
     });
 
     if (response) {
-      setResult(response);
-      setSnackbarMessage(response.accepted ? 'sucess！' : 'fail');
-      setSeverity(response.accepted ? 'success' : 'error');
+      setSubmitResults(response);
+      setSnackbarMessage('success！');
+      setSeverity('info');
       setOpenSnackbar(true);
     }
   };
@@ -92,6 +112,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
         >
           {loading ? <CircularProgress size={24} /> : 'Run'}
         </Button>
+
         <Button
           variant="contained"
           color="success"
@@ -103,24 +124,50 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
         </Button>
       </Box>
 
-      {result && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: result.status === 'success' ? '#f0f7ff' : '#fff5f5' }}>
-          <Typography variant="h6" gutterBottom>
-            Result
-          </Typography>
-          <Box sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', overflow: 'auto', maxHeight: '300px', p: 1, bgcolor: '#f5f5f5' }}>
-            {result.output}
+      {/* result */}
+      {runResults && (
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: '#f0f7ff' }}>
+        <Typography variant="h6" gutterBottom>
+          Run Results
+        </Typography>
+        {runResults?.results.map((test, index) => (
+          <Box key={index} sx={{ mb: 1 }}>
+            <Typography variant="body2">Status: {test.status}</Typography>
+            {test.output && (
+              <Typography variant="body2">Output: {test.output}</Typography>
+            )}
+            <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
+            <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
+            <hr />
           </Box>
-          {result.executionTime && (
-            <Typography variant="body2">excute time: {result.executionTime} ms</Typography>
-          )}
-          {result.passedTestCases !== undefined && result.totalTestCases !== undefined && (
-            <Typography variant="body2">
-            Past case: {result.passedTestCases}/{result.totalTestCases}
-            </Typography>
-          )}
+          
+        ))}
         </Paper>
       )}
+
+      {submitResults && (
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: submitResults.overallStatus === 'Accepted' ? '#e6ffe6' : '#fff0f0' }}>
+          <Typography variant="h6" gutterBottom>
+            Submit Results
+          </Typography>
+          <Typography variant="subtitle1" gutterBottom>
+            Overall Status: {submitResults.overallStatus}
+          </Typography>
+          {submitResults.results.map((test, index) => (
+            <Box key={index} sx={{ mb: 1 }}>
+              <Typography variant="body2">Status: {test.status}</Typography>
+              {test.output && (
+                <Typography variant="body2">Output: {test.output}</Typography>
+              )}
+              <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
+              <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
+              <hr />
+            </Box>
+          ))}
+        </Paper>
+      )}
+
+
 
       {/* Error message */}
       {error && (

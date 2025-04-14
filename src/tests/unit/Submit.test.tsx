@@ -15,51 +15,69 @@ afterEach(() => {
 describe("Run Button", () => {
   //test run result
     test('Show run result', async () => {
-        mock.onPost('/api/run-code')
+        mock.onPost('http://localhost:6785/docs/problems/1/run')
             .reply(200, {
                 status: 'success',
-                output: 'Hello World!',
-                executionTime: 120,
-                memoryUsage: 15
+                results: [
+                  {
+                    status: 'Passed',
+                    output: 'Hello World!',
+                    runtimeMs: 100,
+                    memoryKb: 200
+                  }
+                ]
         });
         
-        render(<CodeSubmission code="console.log('Hello World!')" problemId={1}/>);
+        render(<CodeSubmission code="console.log('Hello World!')" problemId={1} languageId={1}/>);
     
         // Click the run button
         fireEvent.click(screen.getByText('Run'));
         
         // show result
         await waitFor(() => {
-          expect(screen.getByText('Hello World!')).exist;
-          expect(screen.getByText(/excute time: 120 ms/)).exist;
+          expect(screen.getByText((content) => content.includes('Status: Passed'))).exist;
+          expect(screen.getByText(/Output: Hello World!/i)).exist;
+          expect(screen.getByText(/Runtime: 100 ms/)).exist;
+          expect(screen.getByText(/Memory: 200 KB/)).exist
         });
       });
 
-})
+    })
+ 
 
 
 describe("Submit Button", () => {
   //test submit result
   test('Submit Button', async () => {
-    mock.onPost('localhost://submissions').reply(200, {
-      passedTestCases: 10,
-      totalTestCases: 10,
-      executionTime: 150,
+    mock.onPost('http://localhost:6785/docs/problems/1/submit').reply(200, {
+      submissionId: 2,
+      overallStatus: 'sucess',
+      results: [
+        {
+          status: 'Passed',
+          output: '20',
+          runtimeMs: 100,
+          memoryKb: 200
+        }
+      ]
     });
 
-    render(<CodeSubmission code="function solution(n) { return n*2; }" problemId={1} />);
+    render(<CodeSubmission code="function solution(n) { return n*2; }" problemId={1} languageId={1} />);
 
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {
-      const passed = screen.queryByText('Past case: 10/10');
-      expect(passed).exist;
+      expect(screen.getByText((content) => content.includes('Status: Passed'))).exist;
+      expect(screen.getByText(/Output: 20/)).exist;
+      expect(screen.getByText(/Runtime: 100 ms/)).exist;
+      expect(screen.getByText(/Memory: 200 KB/)).exist
     });
   });
+})
 
 describe("None input", () => {
   test('None input', () => {
-    render(<CodeSubmission code="" problemId={9} />);
+    render(<CodeSubmission code="" problemId={9} languageId={2}/>);
     
     fireEvent.click(screen.getByText('Run'));
     
@@ -71,15 +89,13 @@ describe("Excute error", () => {
   test('Error', async () => {
     mock.onPost('/api/run-code').reply(500);
 
-    render(<CodeSubmission code="console.log('test')" problemId={8} />);
+    render(<CodeSubmission code="console.log('test')" problemId={8} languageId={2}/>);
     
     fireEvent.click(screen.getByText('Run'));
     
-    // 等待并验证错误信息显示
     await waitFor(() => {
       expect(screen.getByText(/Failed/)).exist;
     });
   });
 })
 
-})
