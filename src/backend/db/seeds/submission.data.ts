@@ -5,7 +5,6 @@ export async function seedSubmission() {
         data: [
             {
             submission_id: 1,
-            user_id: 1,
             problem_id: 1,
             language_id: 1,
             code: 'print("Hello, World!")',
@@ -13,7 +12,6 @@ export async function seedSubmission() {
         },
         {
         submission_id: 2,
-        user_id: 1,
         problem_id: 5,
         language_id: 2,
         code: `
