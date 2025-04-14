@@ -1,7 +1,7 @@
 {
     "entryFile": "src/backend/api/app.ts",
     "noImplicitAdditionalProperties": "silently-remove-extras",
-    "controllerPathGlobs": ["src/**/*Controller.ts"],
+    "controllerPathGlobs": ["src/backend/api/**/*-controller.ts"],
     "spec": {
       "outputDirectory": "src/backend/api",
       "specVersion": 3
