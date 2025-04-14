@@ -116,6 +116,175 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SubmissionListItemDto": {
+				"properties": {
+					"submissionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"submittedAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"submissionId",
+					"code",
+					"languageId",
+					"status",
+					"submittedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmissionResultDto": {
+				"properties": {
+					"status": {
+						"type": "string"
+					},
+					"output": {
+						"type": "string"
+					},
+					"runtimeMs": {
+						"type": "number",
+						"format": "double"
+					},
+					"memoryKb": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"status",
+					"runtimeMs",
+					"memoryKb"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmissionDetailDto": {
+				"properties": {
+					"submissionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"submittedAt": {
+						"type": "string"
+					},
+					"results": {
+						"items": {
+							"$ref": "#/components/schemas/SubmissionResultDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"submissionId",
+					"code",
+					"languageId",
+					"status",
+					"submittedAt",
+					"results"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RunCodeResponseDto": {
+				"properties": {
+					"status": {
+						"type": "string"
+					},
+					"results": {
+						"items": {
+							"$ref": "#/components/schemas/SubmissionResultDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"status",
+					"results"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RunCodeDto": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"code",
+					"languageId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmitCodeResponseDto": {
+				"properties": {
+					"submissionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"overallStatus": {
+						"type": "string"
+					},
+					"results": {
+						"items": {
+							"$ref": "#/components/schemas/SubmissionResultDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"submissionId",
+					"overallStatus",
+					"results"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmitCodeDto": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"code",
+					"languageId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"_36_Enums.Difficulty": {
 				"type": "string",
 				"enum": [
@@ -474,6 +643,161 @@
 						}
 					}
 				]
+			}
+		},
+		"/submissions": {
+			"get": {
+				"operationId": "GetSubmissions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SubmissionListItemDto"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get all submissions",
+				"tags": [
+					"Submissions"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/submissions/{id}": {
+			"get": {
+				"operationId": "GetSubmission",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubmissionDetailDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Submission not found"
+					}
+				},
+				"description": "Get a specific submission by ID",
+				"tags": [
+					"Submissions"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The submission ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/problems/{id}/run": {
+			"post": {
+				"operationId": "RunCode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RunCodeResponseDto"
+								}
+							}
+						}
+					}
+				},
+				"description": "Run code against a subset of test cases without saving the submission",
+				"tags": [
+					"Problems"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The problem ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The code and language ID",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RunCodeDto",
+								"description": "The code and language ID"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/problems/{id}/submit": {
+			"post": {
+				"operationId": "SubmitCode",
+				"responses": {
+					"201": {
+						"description": "Code submitted successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubmitCodeResponseDto"
+								}
+							}
+						}
+					}
+				},
+				"description": "Submit code for full evaluation and save the submission",
+				"tags": [
+					"Problems"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The problem ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The code and language ID",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubmitCodeDto",
+								"description": "The code and language ID"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/problems": {

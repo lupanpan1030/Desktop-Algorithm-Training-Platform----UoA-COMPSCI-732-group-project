@@ -6,6 +6,10 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TestCaseController } from './testcase/testcase-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { SubmissionController } from './submission/submission-controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ProblemSubmissionController } from './submission/submission-controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemsController } from './problems/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
@@ -55,6 +59,79 @@ const models: TsoaRoute.Models = {
             "expectedOutput": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "timeLimit": {"dataType":"double","required":true,"validators":{"minimum":{"value":1},"maximum":{"value":10}}},
             "memoryLimit": {"dataType":"double","required":true,"validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SubmissionListItemDto": {
+        "dataType": "refObject",
+        "properties": {
+            "submissionId": {"dataType":"double","required":true},
+            "code": {"dataType":"string","required":true},
+            "languageId": {"dataType":"double","required":true},
+            "status": {"dataType":"string","required":true},
+            "submittedAt": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SubmissionResultDto": {
+        "dataType": "refObject",
+        "properties": {
+            "status": {"dataType":"string","required":true},
+            "output": {"dataType":"string"},
+            "runtimeMs": {"dataType":"double","required":true},
+            "memoryKb": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SubmissionDetailDto": {
+        "dataType": "refObject",
+        "properties": {
+            "submissionId": {"dataType":"double","required":true},
+            "code": {"dataType":"string","required":true},
+            "languageId": {"dataType":"double","required":true},
+            "status": {"dataType":"string","required":true},
+            "submittedAt": {"dataType":"string","required":true},
+            "results": {"dataType":"array","array":{"dataType":"refObject","ref":"SubmissionResultDto"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RunCodeResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "status": {"dataType":"string","required":true},
+            "results": {"dataType":"array","array":{"dataType":"refObject","ref":"SubmissionResultDto"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RunCodeDto": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"string","required":true},
+            "languageId": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SubmitCodeResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "submissionId": {"dataType":"double","required":true},
+            "overallStatus": {"dataType":"string","required":true},
+            "results": {"dataType":"array","array":{"dataType":"refObject","ref":"SubmissionResultDto"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SubmitCodeDto": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"string","required":true},
+            "languageId": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -244,6 +321,127 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSubmissionController_getSubmissions: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/submissions',
+            ...(fetchMiddlewares<RequestHandler>(SubmissionController)),
+            ...(fetchMiddlewares<RequestHandler>(SubmissionController.prototype.getSubmissions)),
+
+            async function SubmissionController_getSubmissions(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSubmissionController_getSubmissions, request, response });
+
+                const controller = new SubmissionController();
+
+              await templateService.apiHandler({
+                methodName: 'getSubmissions',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSubmissionController_getSubmission: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/submissions/:id',
+            ...(fetchMiddlewares<RequestHandler>(SubmissionController)),
+            ...(fetchMiddlewares<RequestHandler>(SubmissionController.prototype.getSubmission)),
+
+            async function SubmissionController_getSubmission(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSubmissionController_getSubmission, request, response });
+
+                const controller = new SubmissionController();
+
+              await templateService.apiHandler({
+                methodName: 'getSubmission',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProblemSubmissionController_runCode: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                dto: {"in":"body","name":"dto","required":true,"ref":"RunCodeDto"},
+        };
+        app.post('/problems/:id/run',
+            ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController)),
+            ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController.prototype.runCode)),
+
+            async function ProblemSubmissionController_runCode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProblemSubmissionController_runCode, request, response });
+
+                const controller = new ProblemSubmissionController();
+
+              await templateService.apiHandler({
+                methodName: 'runCode',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProblemSubmissionController_submitCode: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                dto: {"in":"body","name":"dto","required":true,"ref":"SubmitCodeDto"},
+        };
+        app.post('/problems/:id/submit',
+            ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController)),
+            ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController.prototype.submitCode)),
+
+            async function ProblemSubmissionController_submitCode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProblemSubmissionController_submitCode, request, response });
+
+                const controller = new ProblemSubmissionController();
+
+              await templateService.apiHandler({
+                methodName: 'submitCode',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
               });
             } catch (err) {
                 return next(err);
