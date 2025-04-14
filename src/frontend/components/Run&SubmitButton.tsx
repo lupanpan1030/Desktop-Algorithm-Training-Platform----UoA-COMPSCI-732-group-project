@@ -5,9 +5,8 @@ import SendIcon from '@mui/icons-material/Send';
 import { useApi } from '../hooks/useApi';
 
 interface CodeSubmissionProps {
-  problemId: string;
+  problemId: number;
   code: string;
-  language: string;
 }
 
 const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
@@ -17,10 +16,10 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [severity, setSeverity] = useState<'success' | 'error' | 'info'>('info');
 
-  // 运行代码
+  // run
   const handleRunCode = async () => {
     if (!code.trim()) {
-      setSnackbarMessage('请先编写代码');
+      setSnackbarMessage('Please set your code!');
       setSeverity('error');
       setOpenSnackbar(true);
       return;
@@ -31,8 +30,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
       method: 'POST',
       body: {
         problemId,
-        code,
-        
+        code,       
       },
       headers: {
         'Content-Type': 'application/json',
@@ -41,23 +39,23 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
 
     if (response) {
       setResult(response);
-      setSnackbarMessage('代码运行完成');
+      setSnackbarMessage('sucess');
       setSeverity('info');
       setOpenSnackbar(true);
     }
   };
 
-  // 提交代码
+  // submit
   const handleSubmitCode = async () => {
     if (!code.trim()) {
-      setSnackbarMessage('请先编写代码');
+      setSnackbarMessage('Please set your code!');
       setSeverity('error'); 
       setOpenSnackbar(true);
       return;
     }
 
     const response = await fetchData<any>({
-      url: 'localhost:3000//submissions',
+      url: 'localhost://submissions',
       method: 'POST',
       body: {
         problemId,
@@ -71,7 +69,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
 
     if (response) {
       setResult(response);
-      setSnackbarMessage(response.accepted ? '提交成功！' : '提交失败');
+      setSnackbarMessage(response.accepted ? 'sucess！' : 'fail');
       setSeverity(response.accepted ? 'success' : 'error');
       setOpenSnackbar(true);
     }
@@ -83,7 +81,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* 按钮组 */}
+      {/* button */}
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <Button
           variant="contained"
@@ -92,7 +90,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
           onClick={handleRunCode}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : '运行代码'}
+          {loading ? <CircularProgress size={24} /> : 'Run'}
         </Button>
         <Button
           variant="contained"
@@ -101,20 +99,37 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code }) => {
           onClick={handleSubmitCode}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : '提交'}
+          {loading ? <CircularProgress size={24} /> : 'Submit'}
         </Button>
       </Box>
 
-      
+      {result && (
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: result.status === 'success' ? '#f0f7ff' : '#fff5f5' }}>
+          <Typography variant="h6" gutterBottom>
+            Result
+          </Typography>
+          <Box sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', overflow: 'auto', maxHeight: '300px', p: 1, bgcolor: '#f5f5f5' }}>
+            {result.output}
+          </Box>
+          {result.executionTime && (
+            <Typography variant="body2">excute time: {result.executionTime} ms</Typography>
+          )}
+          {result.passedTestCases !== undefined && result.totalTestCases !== undefined && (
+            <Typography variant="body2">
+            Past case: {result.passedTestCases}/{result.totalTestCases}
+            </Typography>
+          )}
+        </Paper>
+      )}
 
-      {/* 错误信息 */}
+      {/* Error message */}
       {error && (
         <Alert severity="error" sx={{ mt: 2 }}>
-          {error.message || '操作失败，请稍后重试'}
+          Failed: {error.message || 'Try later!'}
         </Alert>
       )}
 
-      {/* 通知提示 */}
+      {/* Notification */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
