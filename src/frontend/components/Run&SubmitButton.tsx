@@ -39,7 +39,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
   // run
   const handleRunCode = async () => {
-    if (!code.trim()) {
+    if (!code?.trim()) {
       setSnackbarMessage('Please set your code!');
       setSeverity('error');
       setOpenSnackbar(true);
@@ -68,7 +68,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
   // submit
   const handleSubmitCode = async () => {
-    if (!code.trim()) {
+    if (!code?.trim()) {
       setSnackbarMessage('Please set your code!');
       setSeverity('error'); 
       setOpenSnackbar(true);
@@ -89,7 +89,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
     if (response) {
       setSubmitResults(response);
-      setSnackbarMessage('success！');
+      setSnackbarMessage('success!');
       setSeverity('info');
       setOpenSnackbar(true);
     }
@@ -129,8 +129,8 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
         <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: '#f0f7ff' }}>
         <Typography variant="h6" gutterBottom>
           Run Results
-        </Typography>
-        {runResults?.results.map((test, index) => (
+        </Typography>       
+        {runResults?.results?.map((test, index) => (
           <Box key={index} sx={{ mb: 1 }}>
             <Typography variant="body2">Status: {test.status}</Typography>
             {test.output && (
@@ -153,7 +153,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
           <Typography variant="subtitle1" gutterBottom>
             Overall Status: {submitResults.overallStatus}
           </Typography>
-          {submitResults.results.map((test, index) => (
+          {submitResults?.results?.map((test, index) => (
             <Box key={index} sx={{ mb: 1 }}>
               <Typography variant="body2">Status: {test.status}</Typography>
               {test.output && (

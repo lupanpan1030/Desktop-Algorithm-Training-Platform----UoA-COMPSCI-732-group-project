@@ -6,6 +6,7 @@ import NavBar from './components/common/NavBar';
 import HomePage from './pages/HomePage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
+import CodeSubmit from './components/Run&SubmitButton'
 
 function App() {
     // 从 localStorage 读取 Dark Mode 设置
@@ -30,7 +31,9 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/problems/:id" element={<DetailPage />} />
+                        
                     </Routes>
+                <CodeSubmit/>
                 </Container>
             </ThemeProvider>
         </BrowserRouter>
