@@ -1,23 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ProblemContent from "../components/ProblemContent";
 import Editor from "../components/Editor";
 import Result from "../components/Result";
 import { Grid, Container } from "@mui/material";
-import allProblems from '../problems.json';
 import { useParams } from "react-router-dom";
 
 export default function DetailPage () {
     const { id } = useParams();
-    const problem = allProblems.find((prob) => prob.id===parseInt(id));
+    const [problem, setProblem] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchProblem() {
+            try {
+                const response = await fetch(`http://localhost:6785/problems/${id}`);
+                if (!response.ok) {
+                    throw new Error('Problem not found');
+                }
+                const data = await response.json();
+                setProblem(data);
+            } catch (error) {
+                console.error('Error fetching problem:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchProblem();
+    }, [id]);
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4 }}>
             <Grid container spacing={2}>
-                {/* 左半部分：题目内容 */}
+                {/* Left half：Problem content */}
                 <Grid item xs={6}>
-                    {problem ? <ProblemContent problem={problem} /> : <p>加载中...</p>}
+                    {loading ? <p>Loading...</p> : problem ? <ProblemContent problem={problem} /> : <p>Problem does not exist.</p>}
                 </Grid>
 
-                {/* 右半部分：代码编辑器和执行结果 */}
+                {/* Right half：Code Editor and Running Result */}
                 <Grid item xs={6} container direction="column" spacing={2}>
                     <Grid item>
                         <Editor />
