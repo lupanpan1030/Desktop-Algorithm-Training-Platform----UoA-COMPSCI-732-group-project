@@ -4,8 +4,8 @@ export interface TestCase {
   testcaseId: number;
   input: string;
   expectedOutput: string;
-  timeLimit: number;
-  memoryLimit: number;
+  timeLimitMs: number;
+  memoryLimitMb: number;
 }
 
 export class CreateTestCaseParams {
@@ -20,14 +20,14 @@ export class CreateTestCaseParams {
   expectedOutput!: string;
 
     /**
-     * @minimum 1
-     * @maximum 10
+     * @minimum 100
+     * @maximum 10000
      */
-  timeLimit!: number;
+  timeLimitMs!: number;
 
     /**
-     * @minimum 16
-     * @maximum 1024
+     * @minimum 16 * 1024
+     * @maximum 1024 * 1024
      */
-  memoryLimit!: number;
+  memoryLimitMb!: number;
 }

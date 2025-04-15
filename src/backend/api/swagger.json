@@ -19,11 +19,11 @@
 					"expectedOutput": {
 						"type": "string"
 					},
-					"timeLimit": {
+					"timeLimitMs": {
 						"type": "number",
 						"format": "double"
 					},
-					"memoryLimit": {
+					"memoryLimitMb": {
 						"type": "number",
 						"format": "double"
 					}
@@ -32,8 +32,8 @@
 					"testcaseId",
 					"input",
 					"expectedOutput",
-					"timeLimit",
-					"memoryLimit"
+					"timeLimitMs",
+					"memoryLimitMb"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -94,13 +94,13 @@
 						"type": "string",
 						"minLength": 1
 					},
-					"timeLimit": {
+					"timeLimitMs": {
 						"type": "number",
 						"format": "double",
-						"minimum": 1,
-						"maximum": 10
+						"minimum": 100,
+						"maximum": 10000
 					},
-					"memoryLimit": {
+					"memoryLimitMb": {
 						"type": "number",
 						"format": "double",
 						"minimum": 16,
@@ -110,8 +110,8 @@
 				"required": [
 					"input",
 					"expectedOutput",
-					"timeLimit",
-					"memoryLimit"
+					"timeLimitMs",
+					"memoryLimitMb"
 				],
 				"type": "object",
 				"additionalProperties": false
