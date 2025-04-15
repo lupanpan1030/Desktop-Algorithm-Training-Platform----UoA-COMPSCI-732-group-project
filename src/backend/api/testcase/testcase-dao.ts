@@ -22,14 +22,14 @@ export class TestCaseDao {
    */
   public static async createTestCase(
     problemId: number,
-    params: { input: string; expectedOutput: string; timeLimit: number; memoryLimit: number }
+    params: { input: string; expectedOutput: string; timeLimitMs: number; memoryLimitMb: number }
   ): Promise<TestCase> {
     return prisma.testCase.create({
       data: {
         input_data: params.input,
         expected_output: params.expectedOutput,
-        time_limit: params.timeLimit,
-        memory_limit: params.memoryLimit,
+        time_limit_ms: params.timeLimitMs,
+        memory_limit_mb: params.memoryLimitMb,
         problem: {
           connect: { problem_id: problemId },
         },

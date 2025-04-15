@@ -46,7 +46,7 @@ npm run dev
 ### Regenerate Backend Routes.ts
 
 ```bash
-npm npx tsoa routes
+npx tsoa routes
 ```
 
 ### Regenerate OpenApi Swagger.json
@@ -54,7 +54,7 @@ npm npx tsoa routes
 Swagger UI debug page: `localhost:6785/docs`
 
 ```bash
-npm npx tsoa spec
+npx tsoa spec
 ```
 
 ### Run Unit Tests
@@ -182,8 +182,8 @@ src/
 **Test Cases**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/problems/{id}/testcases` | List test cases | - | **200 OK:** `Array<{testcaseId: number, input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}>` <br>**404 Not Found:** `{ "message": "Problem not found" }` |
-| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}` | **201 Created:**  Detailed testcase object `{testcaseId: number, input: string, expectedOutput: string, timeLimit: number, memoryLimit: number}` <br>**404 Not Found:**`{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`    |
+| `GET` | `/problems/{id}/testcases` | List test cases | - | **200 OK:** `Array<{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}>` <br>**404 Not Found:** `{ "message": "Problem not found" }` |
+| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` | **201 Created:**  Detailed testcase object `{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` <br>**404 Not Found:**`{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`    |
 |`DELETE`|`/problems/{id}/testcases/{id}`| Delete test case | - |**204 No Content:** _No body_ <br>**404 Not Found:**`{ "message": "Problem not found" }` |
 
 ---

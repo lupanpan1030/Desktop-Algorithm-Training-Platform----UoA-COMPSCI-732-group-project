@@ -15,8 +15,8 @@ export class TestCaseService {
       testcaseId: tc.testcase_id,
       input: tc.input_data,
       expectedOutput: tc.expected_output,
-      timeLimit: tc.time_limit,
-      memoryLimit: tc.memory_limit,
+      timeLimitMs: tc.time_limit_ms,
+      memoryLimitMb: tc.memory_limit_mb,
     }));
   }
 
@@ -34,8 +34,8 @@ export class TestCaseService {
       testcaseId: testcase.testcase_id,
       input: testcase.input_data,
       expectedOutput: testcase.expected_output,
-      timeLimit: testcase.time_limit,
-      memoryLimit: testcase.memory_limit,
+      timeLimitMs: testcase.time_limit_ms,
+      memoryLimitMb: testcase.memory_limit_mb,
     };
   }
 
