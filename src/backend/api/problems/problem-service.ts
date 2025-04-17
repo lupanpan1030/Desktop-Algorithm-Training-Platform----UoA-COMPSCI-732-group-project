@@ -47,7 +47,6 @@ export class ProblemsService {
   public async createProblem(
     params: CreateProblemParams
   ): Promise<ProblemDetails> {
-    console.log("createProblem");
     const problem = await ProblemsDao.createProblem(params);
     return {
       problemId: problem.problem_id,

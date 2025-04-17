@@ -1,6 +1,6 @@
 // This file interacts with the database to perform CRUD operations on problems.
 
-import { PrismaClient, Problem, Difficulty, Prisma } from "@prisma/client";
+import { PrismaClient, Problem, Difficulty } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
