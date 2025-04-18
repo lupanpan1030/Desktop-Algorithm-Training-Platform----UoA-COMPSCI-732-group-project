@@ -5,7 +5,7 @@ import { ProblemsDao } from "../../backend/api/problems/problem-dao";
 import { NotFoundError } from "../../backend/utils/errors/not-found-error";
 
 // mock the entire ProblemDao module
-vi.mock("../../backend/api/problem/problem-dao", () => {
+vi.mock("../../backend/api/problems/problem-dao", () => {
   return {
     ProblemsDao: {
       getAllProblems: vi.fn(),
