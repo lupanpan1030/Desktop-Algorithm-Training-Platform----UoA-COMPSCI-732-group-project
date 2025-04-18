@@ -5,7 +5,7 @@ let backendProcess: ChildProcess | undefined;
 
 export function startBackend(): void {
   if (process.env.NODE_ENV === 'development') {
-    backendProcess = spawn('ts-node-dev', ['--respawn', 'src/backend/api/app.ts'], {
+    backendProcess = spawn('ts-node-dev', ['--respawn', 'src/backend/api/server.ts'], {
       shell: true,
       stdio: 'inherit',
     });
