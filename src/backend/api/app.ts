@@ -62,12 +62,3 @@ export async function createApp() {
   });
   return app;
 }
-
-// initialize the database before starting the server
-// import { initializeDatabase } from "../db/prisma/initialize-database";
-// initializeDatabase();
-
-// const port = process.env.PORT || 6785;
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-// });
