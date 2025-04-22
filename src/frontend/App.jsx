@@ -6,20 +6,20 @@ import NavBar from './components/common/NavBar';
 import HomePage from './pages/HomePage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
-import CodeSubmit from './components/Run&SubmitButton'
+import './styles/global.css';
 
 function App() {
-    // 从 localStorage 读取 Dark Mode 设置
+    // Read state of Dark Mode from localStorage and set it to darkMode
     const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem("darkMode") === "true";
     });
 
-    // 监听 darkMode 变化，存入 localStorage
+    // Listen to the change of darkMode，and store into localStorage
     useEffect(() => {
         localStorage.setItem("darkMode", darkMode);
     }, [darkMode]);
 
-    // 主题
+    // theme
     const theme = useAppTheme(darkMode);
 
     return (
@@ -31,9 +31,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/problems/:id" element={<DetailPage />} />
-                        
                     </Routes>
-                <CodeSubmit/>
                 </Container>
             </ThemeProvider>
         </BrowserRouter>
