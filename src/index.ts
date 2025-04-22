@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import { startBackend, waitForBackend } from './backendManager';
 import { spawn, ChildProcess } from 'child_process';
 import * as http from 'http';
@@ -22,7 +22,21 @@ const createWindow = (): void => {
     width: 800,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      webSecurity: true, // 保持安全性启用，但我们会配置CSP
+      allowRunningInsecureContent: false,
     },
+  });
+
+  // 设置CSP以允许Monaco编辑器加载
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:*; img-src 'self' data:;"
+        ]
+      }
+    });
   });
 
   // and load the index.html of the app.

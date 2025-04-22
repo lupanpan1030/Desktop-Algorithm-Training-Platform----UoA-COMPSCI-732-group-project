@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ProblemContent from "../components/ProblemContent";
-import Editor from "../components/Editor";
+import CodeEditor from "../components/Editor";
 import Result from "../components/Result";
-import { Grid, Container } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { Paper, Box, Typography, CircularProgress } from "@mui/material";
+import "../styles/DetailPage.css"; 
 
 export default function DetailPage () {
     const { id } = useParams();
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [editorState, setEditorState] = useState({ code: '', language: 'python' });
 
     useEffect(() => {
         async function fetchProblem() {
@@ -28,24 +30,38 @@ export default function DetailPage () {
         fetchProblem();
     }, [id]);
 
-    return (
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Grid container spacing={2}>
-                {/* Left half：Problem content */}
-                <Grid item xs={6}>
-                    {loading ? <p>Loading...</p> : problem ? <ProblemContent problem={problem} /> : <p>Problem does not exist.</p>}
-                </Grid>
+    const handleCodeChange = useCallback((newState) => {
+        setEditorState(newState);
+    }, []);
 
-                {/* Right half：Code Editor and Running Result */}
-                <Grid item xs={6} container direction="column" spacing={2}>
-                    <Grid item>
-                        <Editor />
-                    </Grid>
-                    <Grid item>
-                        <Result />
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Container>
+    return (
+        <div className="detail-page-container">
+            <div className="detail-content">
+                {/* Left half: Problem content */}
+                <Paper className="problem-content" elevation={2}>
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : problem ? (
+                        <ProblemContent problem={problem} />
+                    ) : (
+                        <Box sx={{ p: 3 }}>
+                            <Typography>Problem not found or server connection error.</Typography>
+                        </Box>
+                    )}
+                </Paper>
+
+                {/* Right half: Code Editor and Running Result */}
+                <div className="editor-result-container">
+                    <Paper className="editor-section" elevation={2}>
+                        <CodeEditor onCodeChange={handleCodeChange} />
+                    </Paper>
+                    <Paper className="result-section" elevation={2}>
+                        <Result code={editorState.code} language={editorState.language} />
+                    </Paper>
+                </div>
+            </div>
+        </div>
     );
 }
