@@ -26,13 +26,27 @@ function App() {
         <BrowserRouter basename="/main_window">
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
-                <Container>
-                    <Routes>
-                        <Route path="/" element={<HomePage />} />
-                        <Route path="/problems/:id" element={<DetailPage />} />
-                    </Routes>
-                </Container>
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: '100vh', 
+                    width: '100vw',
+                    overflow: 'hidden'
+                }}>
+                    <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+                    <div style={{ 
+                        flex: 1, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        width: '100%',
+                        overflow: 'hidden'
+                    }}>
+                        <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/problems/:id" element={<DetailPage />} />
+                        </Routes>
+                    </div>
+                </div>
             </ThemeProvider>
         </BrowserRouter>
     );
