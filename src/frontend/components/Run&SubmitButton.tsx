@@ -3,6 +3,7 @@ import { Button, Box, CircularProgress, Snackbar, Alert, Paper, Typography } fro
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SendIcon from '@mui/icons-material/Send';
 import { useApi } from '../hooks/useApi';
+import { useTheme } from '@mui/material/styles';
 
 interface CodeSubmissionProps {
   problemId: number;
@@ -36,6 +37,9 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [severity, setSeverity] = useState<'success' | 'error' | 'info'>('info');
+  const [activeView, setActiveView] = useState<'run' | 'submit' | null>(null);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   // run
   const handleRunCode = async () => {
@@ -47,7 +51,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
     }
 
     const response = await fetchData<RunResponse>({
-      url: `http://localhost:6785/docs/problems/${problemId}/run`,
+      url: `http://localhost:6785/problems/${problemId}/run`,
       method: 'POST',
       body: {
         code,  
@@ -60,6 +64,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
     if (response) {
       setRunResults(response);
+      setActiveView('run'); // Set active view to run
       setSnackbarMessage('sucess');
       setSeverity('info');
       setOpenSnackbar(true);
@@ -76,7 +81,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
     }
 
     const response = await fetchData<SubmitResponse>({
-      url: `http://localhost:6785/docs/problems/${problemId}/submit`,
+      url: `http://localhost:6785/problems/${problemId}/submit`,
       method: 'POST',
       body: {
         code,
@@ -89,6 +94,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
     if (response) {
       setSubmitResults(response);
+      setActiveView('submit'); // Set active view to submit
       setSnackbarMessage('success!');
       setSeverity('info');
       setOpenSnackbar(true);
@@ -125,8 +131,9 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       </Box>
 
       {/* result */}
-      {runResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: '#f0f7ff' }}>
+      {activeView === 'run' && runResults && (
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#f0f0f0',
+          color: isDark ? '#ffffff' : '#000000' }}>
         <Typography variant="h6" gutterBottom>
           Run Results
         </Typography>       
@@ -145,8 +152,9 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
         </Paper>
       )}
 
-      {submitResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: submitResults.overallStatus === 'Accepted' ? '#e6ffe6' : '#fff0f0' }}>
+      {activeView === 'submit' && submitResults && (
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#f0f0f0',
+          color: isDark ? '#ffffff' : '#000000' }}>
           <Typography variant="h6" gutterBottom>
             Submit Results
           </Typography>
