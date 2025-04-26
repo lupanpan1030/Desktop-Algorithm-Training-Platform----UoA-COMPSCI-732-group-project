@@ -93,9 +93,7 @@ export default function DetailPage () {
                 {/* Right half: Code Editor and Running Result */}
                 <div className="editor-result-container">
                     <Paper className="editor-section" elevation={2}>
-                        <CodeEditor onCodeChange={handleCodeChange}
-                        availableLanguages={languages}
-                         />
+                        <CodeEditor onCodeChange={handleCodeChange} />
                     </Paper>
                     <Paper className="result-section" elevation={2}>
                     {problem && (
