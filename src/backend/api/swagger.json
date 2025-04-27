@@ -650,7 +650,7 @@
 				"operationId": "GetSubmissions",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -671,12 +671,12 @@
 				"parameters": []
 			}
 		},
-		"/submissions/{id}": {
+		"/submissions/{submissionId}": {
 			"get": {
 				"operationId": "GetSubmission",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -686,7 +686,14 @@
 						}
 					},
 					"404": {
-						"description": "Submission not found"
+						"description": "Submission not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
 					}
 				},
 				"description": "Get a specific submission by ID",
@@ -698,7 +705,7 @@
 					{
 						"description": "The submission ID",
 						"in": "path",
-						"name": "id",
+						"name": "submissionId",
 						"required": true,
 						"schema": {
 							"format": "double",
@@ -708,16 +715,36 @@
 				]
 			}
 		},
-		"/problems/{id}/run": {
+		"/problems/{problemId}/run": {
 			"post": {
 				"operationId": "RunCode",
 				"responses": {
-					"200": {
-						"description": "Ok",
+					"201": {
+						"description": "Code ran successfully",
 						"content": {
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/RunCodeResponseDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Submission not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
 								}
 							}
 						}
@@ -732,7 +759,7 @@
 					{
 						"description": "The problem ID",
 						"in": "path",
-						"name": "id",
+						"name": "problemId",
 						"required": true,
 						"schema": {
 							"format": "double",
@@ -754,7 +781,7 @@
 				}
 			}
 		},
-		"/problems/{id}/submit": {
+		"/problems/{problemId}/submit": {
 			"post": {
 				"operationId": "SubmitCode",
 				"responses": {
@@ -764,6 +791,26 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/SubmitCodeResponseDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Submission not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
 								}
 							}
 						}
@@ -778,7 +825,7 @@
 					{
 						"description": "The problem ID",
 						"in": "path",
-						"name": "id",
+						"name": "problemId",
 						"required": true,
 						"schema": {
 							"format": "double",

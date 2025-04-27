@@ -43,13 +43,13 @@ export class SubmissionController extends Controller {
 
   /**
    * Get a specific submission by ID
-   * @param id The submission ID
+   * @param submissionId The submission ID
    */
   @Response<NotFoundError>(404, 'Submission not found')
   @SuccessResponse(200, 'OK')
-  @Get('{id}')
-  public async getSubmission(@Path() id: number): Promise<SubmissionDetailDto> {
-    return await this.service.getSubmissionById(id);
+  @Get('{submissionId}')
+  public async getSubmission(@Path() submissionId: number): Promise<SubmissionDetailDto> {
+    return await this.service.getSubmissionById(submissionId);
   }
 }
 
@@ -65,34 +65,34 @@ export class ProblemSubmissionController extends Controller {
 
   /**
    * Run code against a subset of test cases without saving the submission
-   * @param id The problem ID
+   * @param problemId The problem ID
    * @param dto The code and language ID
    */
   @Response<NotFoundError>(404, 'Submission not found')
   @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse(201, 'Code ran successfully')
-  @Post('{id}/run')
+  @Post('{problemId}/run')
   public async runCode(
-    @Path() id: number,
+    @Path() problemId: number,
     @Body() dto: RunCodeDto
   ): Promise<RunCodeResponseDto> {
-    return await this.service.runCode(id, dto);
+    return await this.service.runCode(problemId, dto);
   }
 
   /**
    * Submit code for full evaluation and save the submission
-   * @param id The problem ID
+   * @param problemId The problem ID
    * @param dto The code and language ID
    */
   @Response<NotFoundError>(404, 'Submission not found')
   @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse(201, 'Code submitted successfully')
-  @Post('{id}/submit')
+  @Post('{problemId}/submit')
   public async submitCode(
-    @Path() id: number,
+    @Path() problemId: number,
     @Body() dto: SubmitCodeDto
   ): Promise<SubmitCodeResponseDto> {
     this.setStatus(201);
-    return await this.service.submitCode(id, dto);
+    return await this.service.submitCode(problemId, dto);
   }
 }
