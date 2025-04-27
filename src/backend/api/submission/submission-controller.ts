@@ -18,6 +18,8 @@ import {
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
+import { ValidateError } from '../../utils/errors/validation-error';
+import { NotFoundError } from '../../utils/errors/not-found-error';
 
 
 @Route('submissions')
@@ -33,6 +35,7 @@ export class SubmissionController extends Controller {
   /**
    * Get all submissions
    */
+  @SuccessResponse(200, 'OK')
   @Get('/')
   public async getSubmissions(): Promise<SubmissionListItemDto[]> {
     return await this.service.getAllSubmissions();
@@ -42,7 +45,8 @@ export class SubmissionController extends Controller {
    * Get a specific submission by ID
    * @param id The submission ID
    */
-  @Response(404, 'Submission not found')
+  @Response<NotFoundError>(404, 'Submission not found')
+  @SuccessResponse(200, 'OK')
   @Get('{id}')
   public async getSubmission(@Path() id: number): Promise<SubmissionDetailDto> {
     return await this.service.getSubmissionById(id);
@@ -64,6 +68,9 @@ export class ProblemSubmissionController extends Controller {
    * @param id The problem ID
    * @param dto The code and language ID
    */
+  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse(201, 'Code ran successfully')
   @Post('{id}/run')
   public async runCode(
     @Path() id: number,
@@ -77,6 +84,8 @@ export class ProblemSubmissionController extends Controller {
    * @param id The problem ID
    * @param dto The code and language ID
    */
+  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse(201, 'Code submitted successfully')
   @Post('{id}/submit')
   public async submitCode(

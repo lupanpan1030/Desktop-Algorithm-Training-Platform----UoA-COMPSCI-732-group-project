@@ -12,6 +12,7 @@ import {
   SubmissionDetailDto
 } from './submission';
 import { ExecutionMode, judgeSolution } from '../../services/judge/executor';
+import { NotFoundError } from "../../utils/errors/not-found-error";
 import * as os from 'os';
 import * as path from 'path';
 
@@ -37,7 +38,7 @@ export class SubmissionService {
   async getSubmissionById(id: number): Promise<SubmissionDetailDto> {
     const submission = await SubmissionDao.getSubmissionById(id);
     if (!submission) {
-      throw new Error(`Submission with ID ${id} not found`);
+      throw new NotFoundError(`Submission with ID ${id} not found`);
     }
     return submission;
   }
@@ -48,9 +49,15 @@ export class SubmissionService {
   async runCode(problemId: number, dto: RunCodeDto, testCaseLimit = 3): Promise<RunCodeResponseDto> {
     // Get language details
     const language = await this.languageService.getLanguageById(dto.languageId);
+    if (!language) {
+      throw new NotFoundError(`Language with ID ${dto.languageId} not found`);
+    }
     
     // Get test cases for the problem (limited to first few)
     const testCases = await this.testCaseService.getTestCases(problemId);
+    if (!testCases || testCases.length === 0) {
+      throw new NotFoundError(`No test cases found for problem ID ${problemId}`);
+    }
     const limitedTestCases = testCases.slice(0, testCaseLimit);
     
     // Determine execution mode based on language
@@ -106,9 +113,15 @@ export class SubmissionService {
   async submitCode(problemId: number, dto: SubmitCodeDto): Promise<SubmitCodeResponseDto> {
     // Get language details
     const language = await this.languageService.getLanguageById(dto.languageId);
+    if (!language) {
+      throw new NotFoundError(`Language with ID ${dto.languageId} not found`);
+    }
     
     // Get all test cases for the problem
     const testCases = await this.testCaseService.getTestCases(problemId);
+    if (!testCases || testCases.length === 0) {
+      throw new NotFoundError(`No test cases found for problem ID ${problemId}`);
+    }
     
     // Create submission record with initial pending status
     const submission = await SubmissionDao.createSubmission(
