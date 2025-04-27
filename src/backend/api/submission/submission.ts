@@ -1,10 +1,10 @@
 // DTOs for request bodies
-export interface RunCodeDto {
+export class RunCodeDto {
   code: string;
   languageId: number;
 }
 
-export interface SubmitCodeDto {
+export class SubmitCodeDto {
   code: string;
   languageId: number;
 }
