@@ -5,12 +5,15 @@ import Result from "../components/Result";
 import { useParams } from "react-router-dom";
 import { Paper, Box, Typography, CircularProgress } from "@mui/material";
 import "../styles/DetailPage.css"; 
+import CodeSubmission from "../components/Run&SubmitButton";
 
 export default function DetailPage () {
     const { id } = useParams();
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editorState, setEditorState] = useState({ code: '', language: 'python' });
+    const [languageMap, setLanguageMap] = useState({});
+    const [languages, setLanguages] = useState([]);
 
     useEffect(() => {
         async function fetchProblem() {
@@ -30,9 +33,44 @@ export default function DetailPage () {
         fetchProblem();
     }, [id]);
 
+    // Get a list of supported programming languages and create a mapping
+    useEffect(() => {
+        async function fetchLanguages() {
+            try {
+                const response = await fetch('http://localhost:6785/language');
+                if (response.ok) {
+                    const data = await response.json();
+                    setLanguages(data);
+                    
+                    // Creating Language Name to ID Mappings
+                    const mapping = {};
+                    data.forEach(lang => {
+                        mapping[lang.name.toLowerCase()] = lang.language_id;
+                    });
+                    setLanguageMap(mapping);
+                }
+            } catch (error) {
+                console.error('Error fetching languages:', error);
+                // Use the default mapping as a fallback
+                setLanguageMap({
+                    'python': 1,
+                    'javascript': 2,
+                    'java': 3,
+                    'c++': 4
+                });
+            }
+        }
+        fetchLanguages();
+    }, []);
+
     const handleCodeChange = useCallback((newState) => {
         setEditorState(newState);
     }, []);
+
+    // Get languageId
+    const getLanguageId = () => {
+        return languageMap[editorState.language.toLowerCase()] || 1; 
+    };
 
     return (
         <div className="detail-page-container">
@@ -58,7 +96,14 @@ export default function DetailPage () {
                         <CodeEditor onCodeChange={handleCodeChange} />
                     </Paper>
                     <Paper className="result-section" elevation={2}>
-                        <Result code={editorState.code} language={editorState.language} />
+                    {problem && (
+                            <CodeSubmission 
+                                problemId={id} 
+                                code={editorState.code} 
+                                languageId={getLanguageId()} 
+                            />
+                        )}
+                   
                     </Paper>
                 </div>
             </div>
