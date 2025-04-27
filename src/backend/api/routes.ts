@@ -349,7 +349,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
@@ -357,9 +357,9 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSubmissionController_getSubmission: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                submissionId: {"in":"path","name":"submissionId","required":true,"dataType":"double"},
         };
-        app.get('/submissions/:id',
+        app.get('/submissions/:submissionId',
             ...(fetchMiddlewares<RequestHandler>(SubmissionController)),
             ...(fetchMiddlewares<RequestHandler>(SubmissionController.prototype.getSubmission)),
 
@@ -379,7 +379,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
@@ -387,10 +387,10 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProblemSubmissionController_runCode: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
                 dto: {"in":"body","name":"dto","required":true,"ref":"RunCodeDto"},
         };
-        app.post('/problems/:id/run',
+        app.post('/problems/:problemId/run',
             ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController)),
             ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController.prototype.runCode)),
 
@@ -410,7 +410,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 201,
               });
             } catch (err) {
                 return next(err);
@@ -418,10 +418,10 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProblemSubmissionController_submitCode: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
                 dto: {"in":"body","name":"dto","required":true,"ref":"SubmitCodeDto"},
         };
-        app.post('/problems/:id/submit',
+        app.post('/problems/:problemId/submit',
             ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController)),
             ...(fetchMiddlewares<RequestHandler>(ProblemSubmissionController.prototype.submitCode)),
 
