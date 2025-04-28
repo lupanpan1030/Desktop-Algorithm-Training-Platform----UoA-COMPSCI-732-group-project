@@ -3,7 +3,7 @@ name: test
 # Trigger on push to main/dev branches or on any pull request
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev-*]
   pull_request:
 
 jobs:
