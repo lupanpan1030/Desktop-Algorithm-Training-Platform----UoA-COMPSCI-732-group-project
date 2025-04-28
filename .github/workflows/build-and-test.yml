@@ -1,0 +1,36 @@
+name: test
+
+# Trigger on push to main/dev branches or on any pull request
+on:
+  push:
+    branches: [main, dev-*]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Set up and cache the specified Node.js version and npm dependencies
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'               # Automatically cache ~/.npm
+
+      # Install dependencies
+      - run: npm ci
+
+      # Run backend tests (Node environment)
+      - name: Run backend tests
+        run: npm run test:back
+
+      # Run frontend tests (jsdom environment)
+      - name: Run frontend tests
+        run: npm run test:front
+

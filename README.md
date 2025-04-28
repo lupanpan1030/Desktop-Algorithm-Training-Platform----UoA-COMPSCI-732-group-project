@@ -57,10 +57,22 @@ Swagger UI debug page: `localhost:6785/docs`
 npx tsoa spec
 ```
 
-### Run Unit Tests
+### Run All Tests
 
 ```bash
-npm test
+npm run test
+```
+
+### Run Frontend Tests
+
+```bash
+npm run test:front
+```
+
+### Run Backend Tests
+
+```bash
+npm run test:back
 ```
 
 ## DB initialization
@@ -140,9 +152,14 @@ src/
 │   ├── types/               # TypeScript type definitions
 │   └── constants.ts         # Shared constants
 │
-└── tests/                 # Test suite
-    ├── unit/               # Unit tests
-    └── integration/        # Integration tests
+└── tests/
+    ├── frontend/  
+    │   ├── unit/
+    │   └── integration/
+    └── backend/
+        ├── unit/
+        └── integration/
+
 ```
 
 ---
