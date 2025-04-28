@@ -5,7 +5,7 @@ import {
   teardownTestDB,
   dropAndSeedProblems,
 } from "../utils/setupTestDB";
-import { createApp } from "../../backend/api/app";
+import { createApp } from "../../../backend/api/app";
 
 let app: import("express").Application;
 

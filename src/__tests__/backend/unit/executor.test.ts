@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { judgeSolution, ExecutionMode } from '../../backend/services/judge/executor';
+import { judgeSolution, ExecutionMode } from '../../../backend/services/judge/executor';
 import * as os from 'os';
 import * as path from 'path';
 

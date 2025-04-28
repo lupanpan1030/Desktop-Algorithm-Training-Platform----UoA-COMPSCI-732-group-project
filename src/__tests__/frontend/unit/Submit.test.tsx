@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import CodeSubmission from '../../frontend/components/Run&SubmitButton';
+import CodeSubmission from '../../../frontend/components/Run&SubmitButton';
 import { afterEach, describe,  expect,  test } from 'vitest';
 
 const mock = new MockAdapter(axios);

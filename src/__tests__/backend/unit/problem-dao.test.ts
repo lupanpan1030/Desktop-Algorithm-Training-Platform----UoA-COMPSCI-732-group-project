@@ -4,7 +4,7 @@ import {
   dropAndSeedProblems,
   teardownTestDB,
 } from "../utils/setupTestDB";
-import { ProblemsDao } from "../../backend/api/problems/problem-dao";
+import { ProblemsDao } from "../../../backend/api/problems/problem-dao";
 import { PrismaClient, Problem} from "@prisma/client";
 
 let testPrisma: PrismaClient;

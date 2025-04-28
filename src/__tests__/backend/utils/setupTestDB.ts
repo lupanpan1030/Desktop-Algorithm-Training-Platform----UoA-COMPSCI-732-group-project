@@ -19,7 +19,7 @@ export async function setupTestDB() {
   // push schema into that file
   const schemaPath = path.resolve(
     __dirname,
-    "../../backend/db/prisma/schema.prisma"
+    "../../../backend/db/prisma/schema.prisma"
   );
   execSync(`npx prisma db push --schema="${schemaPath}"`, { stdio: "inherit" });
 
