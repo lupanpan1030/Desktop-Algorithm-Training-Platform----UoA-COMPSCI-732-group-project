@@ -47,6 +47,49 @@ export class SubmissionDao {
     };
   }
 
+  // Get all submissions for a given problem
+  static async getSubmissionsByProblemId(problemId: number): Promise<SubmissionListItemDto[]> {
+    const submissions = await prisma.submission.findMany({
+      where: { problem_id: problemId },
+      orderBy: { submitted_at: 'desc' }
+    });
+    return submissions.map(sub => ({
+      submissionId: sub.submission_id,
+      code: sub.code,
+      languageId: sub.language_id,
+      status: sub.status,
+      submittedAt: sub.submitted_at.toISOString()
+    }));
+  }
+
+  // Get a single submission for a given problem
+  static async getSubmissionByProblemId(
+    problemId: number,
+    submissionId: number
+  ): Promise<SubmissionDetailDto | null> {
+    const submission = await prisma.submission.findFirst({
+      where: {
+        submission_id: submissionId,
+        problem_id: problemId
+      },
+      include: { results: true }
+    });
+    if (!submission) return null;
+    return {
+      submissionId: submission.submission_id,
+      code: submission.code,
+      languageId: submission.language_id,
+      status: submission.status,
+      submittedAt: submission.submitted_at.toISOString(),
+      results: submission.results.map(r => ({
+        status: r.status,
+        output: r.output || undefined,
+        runtimeMs: r.runtime_ms,
+        memoryKb: r.memory_kb
+      }))
+    };
+  }
+
   /**
    * Create a new submission
    */

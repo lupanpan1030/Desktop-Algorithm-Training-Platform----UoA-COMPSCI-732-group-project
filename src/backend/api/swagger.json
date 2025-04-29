@@ -116,36 +116,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SubmissionListItemDto": {
-				"properties": {
-					"submissionId": {
-						"type": "number",
-						"format": "double"
-					},
-					"code": {
-						"type": "string"
-					},
-					"languageId": {
-						"type": "number",
-						"format": "double"
-					},
-					"status": {
-						"type": "string"
-					},
-					"submittedAt": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"submissionId",
-					"code",
-					"languageId",
-					"status",
-					"submittedAt"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SubmissionResultDto": {
 				"properties": {
 					"status": {
@@ -167,43 +137,6 @@
 					"status",
 					"runtimeMs",
 					"memoryKb"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SubmissionDetailDto": {
-				"properties": {
-					"submissionId": {
-						"type": "number",
-						"format": "double"
-					},
-					"code": {
-						"type": "string"
-					},
-					"languageId": {
-						"type": "number",
-						"format": "double"
-					},
-					"status": {
-						"type": "string"
-					},
-					"submittedAt": {
-						"type": "string"
-					},
-					"results": {
-						"items": {
-							"$ref": "#/components/schemas/SubmissionResultDto"
-						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"submissionId",
-					"code",
-					"languageId",
-					"status",
-					"submittedAt",
-					"results"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -281,6 +214,73 @@
 				"required": [
 					"code",
 					"languageId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmissionListItemDto": {
+				"properties": {
+					"submissionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"submittedAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"submissionId",
+					"code",
+					"languageId",
+					"status",
+					"submittedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SubmissionDetailDto": {
+				"properties": {
+					"submissionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"code": {
+						"type": "string"
+					},
+					"languageId": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"submittedAt": {
+						"type": "string"
+					},
+					"results": {
+						"items": {
+							"$ref": "#/components/schemas/SubmissionResultDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"submissionId",
+					"code",
+					"languageId",
+					"status",
+					"submittedAt",
+					"results"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -405,7 +405,8 @@
 						"type": "string"
 					},
 					"compile_command": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"run_command": {
 						"type": "string"
@@ -434,7 +435,8 @@
 						"type": "string"
 					},
 					"compile_command": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"run_command": {
 						"type": "string"
@@ -645,76 +647,6 @@
 				]
 			}
 		},
-		"/submissions": {
-			"get": {
-				"operationId": "GetSubmissions",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/SubmissionListItemDto"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"description": "Get all submissions",
-				"tags": [
-					"Submissions"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/submissions/{submissionId}": {
-			"get": {
-				"operationId": "GetSubmission",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SubmissionDetailDto"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Submission not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/NotFoundError"
-								}
-							}
-						}
-					}
-				},
-				"description": "Get a specific submission by ID",
-				"tags": [
-					"Submissions"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"description": "The submission ID",
-						"in": "path",
-						"name": "submissionId",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
 		"/problems/{problemId}/run": {
 			"post": {
 				"operationId": "RunCode",
@@ -845,6 +777,104 @@
 						}
 					}
 				}
+			}
+		},
+		"/problems/{problemId}/submissions": {
+			"get": {
+				"operationId": "GetSubmissionsByProblem",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SubmissionListItemDto"
+									},
+									"type": "array"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "List submissions for a problem",
+				"tags": [
+					"Problems"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/problems/{problemId}/submissions/{submissionId}": {
+			"get": {
+				"operationId": "GetSubmissionByProblem",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubmissionDetailDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Submission not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get a specific submission for a problem",
+				"tags": [
+					"Problems"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "path",
+						"name": "submissionId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			}
 		},
 		"/problems": {

@@ -42,6 +42,29 @@ export class SubmissionService {
   }
 
   /**
+   * Get submissions for a specific problem
+   */
+  async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
+    return await SubmissionDao.getSubmissionsByProblemId(problemId);
+  }
+
+  /**
+   * Get a specific submission under a specific problem
+   */
+  async getSubmissionByProblem(
+    problemId: number,
+    submissionId: number
+  ): Promise<SubmissionDetailDto> {
+    const submission = await SubmissionDao.getSubmissionByProblemId(problemId, submissionId);
+    if (!submission) {
+      throw new NotFoundError(
+        `Submission with ID ${submissionId} for problem ${problemId} not found`
+      );
+    }
+    return submission;
+  }
+
+  /**
    * Run code against a subset of test cases (first 3 by default)
    */
   async runCode(problemId: number, dto: RunCodeDto, testCaseLimit = 3): Promise<RunCodeResponseDto> {

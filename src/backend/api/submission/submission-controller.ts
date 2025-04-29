@@ -22,37 +22,6 @@ import { ValidateError } from '../../utils/errors/validation-error';
 import { NotFoundError } from '../../utils/errors/not-found-error';
 
 
-@Route('submissions')
-@Tags('Submissions')
-export class SubmissionController extends Controller {
-  private service: SubmissionService;
-  
-  constructor() {
-    super();
-    this.service = new SubmissionService();
-  }
-
-  /**
-   * Get all submissions
-   */
-  @SuccessResponse(200, 'OK')
-  @Get('/')
-  public async getSubmissions(): Promise<SubmissionListItemDto[]> {
-    return await this.service.getAllSubmissions();
-  }
-
-  /**
-   * Get a specific submission by ID
-   * @param submissionId The submission ID
-   */
-  @Response<NotFoundError>(404, 'Submission not found')
-  @SuccessResponse(200, 'OK')
-  @Get('{submissionId}')
-  public async getSubmission(@Path() submissionId: number): Promise<SubmissionDetailDto> {
-    return await this.service.getSubmissionById(submissionId);
-  }
-}
-
 @Route('problems')
 @Tags('Problems')
 export class ProblemSubmissionController extends Controller {
@@ -94,5 +63,30 @@ export class ProblemSubmissionController extends Controller {
   ): Promise<SubmitCodeResponseDto> {
     this.setStatus(201);
     return await this.service.submitCode(problemId, dto);
+  }
+
+  /**
+   * List submissions for a problem
+   */
+  @Response<NotFoundError>(404, 'Problem not found')
+  @SuccessResponse(200, 'OK')
+  @Get('{problemId}/submissions')
+  public async getSubmissionsByProblem(
+    @Path() problemId: number
+  ): Promise<SubmissionListItemDto[]> {
+    return await this.service.getSubmissionsByProblem(problemId);
+  }
+
+  /**
+   * Get a specific submission for a problem
+   */
+  @Response<NotFoundError>(404, 'Submission not found')
+  @SuccessResponse(200, 'OK')
+  @Get('{problemId}/submissions/{submissionId}')
+  public async getSubmissionByProblem(
+    @Path() problemId: number,
+    @Path() submissionId: number
+  ): Promise<SubmissionDetailDto> {
+    return await this.service.getSubmissionByProblem(problemId, submissionId);
   }
 }
