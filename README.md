@@ -208,8 +208,8 @@ src/
 **Submissions**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
-| `GET` | `/submissions/{submissionId}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
+| `GET` | `/problems/{problemId}/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
+| `GET` | `/problems/{problemId}/submissions/{submissionId}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
 
 ---
 
