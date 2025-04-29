@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { judgeSolution, ExecutionMode } from '../../../backend/services/judge/executor';
+import { judgeSolution, ExecutionMode, EXECUTABLE_NAME } from '../../../backend/services/judge/executor';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -54,8 +54,8 @@ fn main() {
 		const options = {
 			code: rustCode,
 			fileSuffix: 'rs',
-			compileCmd: `rustc -o ${tempExecutable}`,
-			executable: tempExecutable,
+			compileCmd: `rustc -o main`,
+			executable: EXECUTABLE_NAME,
 			testCases
 		};
 		const results = await judgeSolution(ExecutionMode.Compiled, options);

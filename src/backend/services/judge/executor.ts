@@ -9,6 +9,8 @@ const execAsync = promisify(exec);
 
 const TIME_LIMIT = 10 * 1000;
 
+export const EXECUTABLE_NAME = "main";
+
 // Define ExecutionMode enum
 export enum ExecutionMode {
     Interprete = 'interprete',
@@ -87,7 +89,14 @@ async function compile(compileCmd: string, code: string): Promise<void> {
 
 // Function to run a compiled executable with test case input piped in
 async function runExecutable(executable: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${executable}`;
+    let command: string;
+    if (process.platform === 'win32') {
+        // Ensure .exe extension for Windows
+        const exePath = executable.endsWith('.exe') ? executable : `${executable}.exe`;
+        command = `echo "${testCase}" | .\\${path.basename(exePath)}`;
+    } else {
+        command = `echo "${testCase}" | ./${path.basename(executable)}`;
+    }
     return runCommand(command);
 }
 
@@ -121,8 +130,17 @@ export async function judgeSolution(
                 results.push(output);
             }
             // Cleanup the executable after running.
-            if (fs.existsSync(options.executable)) {
-                fs.unlinkSync(options.executable);
+            if (process.platform === 'win32') {
+                const exePath = options.executable.endsWith('.exe')
+                    ? options.executable
+                    : options.executable + '.exe';
+                if (fs.existsSync(exePath)) {
+                    fs.unlinkSync(exePath);
+                }
+            } else {
+                if (fs.existsSync(options.executable)) {
+                    fs.unlinkSync(options.executable);
+                }
             }
         }
     } finally {
