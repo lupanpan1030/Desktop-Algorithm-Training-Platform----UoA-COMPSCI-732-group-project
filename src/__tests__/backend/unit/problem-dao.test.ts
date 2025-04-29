@@ -5,13 +5,15 @@ import {
   teardownTestDB,
 } from "../utils/setupTestDB";
 import { ProblemsDao } from "../../../backend/api/problems/problem-dao";
-import { PrismaClient, Problem} from "@prisma/client";
+import type { PrismaClient, Problem} from "@prisma/client";
+import { setPrisma } from "../../../backend/db/prisma/prisma";
 
 let testPrisma: PrismaClient;
 
 beforeAll(async () => {
   // setup the test database
   testPrisma = await setupTestDB();
+  setPrisma(testPrisma);
 });
 
 beforeEach(async () => {
@@ -22,6 +24,7 @@ beforeEach(async () => {
 afterAll(async () => {
   // disconnect from the test database and remove the temporary file
   await teardownTestDB();
+  setPrisma(undefined);
 });
 
 describe("ProblemsDao", () => {

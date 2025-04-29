@@ -11,7 +11,7 @@ export function initializeDatabase() {
     console.log("Database file not found. Initializing...");
     try {
       // Generate the Prisma client
-      execSync("npx prisma migrate dev", { stdio: "inherit" });
+      execSync("npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma", { stdio: "inherit" });
 
       // Run seed initialization script
       execSync("npx ts-node src/backend/db/seeds/init-db_first.ts", {
