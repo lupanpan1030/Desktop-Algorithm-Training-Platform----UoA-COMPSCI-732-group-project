@@ -6,7 +6,7 @@ export interface ProgrammingLanguage {
     name: string;
     suffix: string;
     version: string;
-    compile_command: string;
+    compile_command: string | null;
     run_command: string;
 }
 
@@ -16,6 +16,6 @@ export interface CreateLanguageDto {
     name: string;
     suffix: string;
     version: string;
-    compile_command: string;
+    compile_command: string | null;
     run_command: string;
 }

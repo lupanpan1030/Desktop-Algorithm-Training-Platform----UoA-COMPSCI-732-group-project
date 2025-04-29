@@ -405,7 +405,8 @@
 						"type": "string"
 					},
 					"compile_command": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"run_command": {
 						"type": "string"
@@ -434,7 +435,8 @@
 						"type": "string"
 					},
 					"compile_command": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"run_command": {
 						"type": "string"
