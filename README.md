@@ -220,38 +220,80 @@ src/
 | `POST` | `/problems/{problemId}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
 | `POST` | `/problems/{problemId}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
 
-## One Example Solution for ACM Mode
+## Example Solutions for ACM Mode
 
-This is an example Python solution for the "Fibonacci Number" puzzle
+1. An example Python solution for the "Fibonacci Number" puzzle
 
-```python
-def fibonacci(n):
-  """
-  Calculates the nth Fibonacci number.
+    ```python
+    def fibonacci(n):
+      """
+      Calculates the nth Fibonacci number.
 
-  Args:
-    n: The index of the Fibonacci number to calculate (non-negative integer).
+      Args:
+        n: The index of the Fibonacci number to calculate (non-negative integer).
 
-  Returns:
-    The nth Fibonacci number.
-  """
-  if n <= 1:
-    return n
-  else:
-    a = 0
-    b = 1
-    for _ in range(2, n + 1):
-      a, b = b, a + b
-    return b
+      Returns:
+        The nth Fibonacci number.
+      """
+      if n <= 1:
+        return n
+      else:
+        a = 0
+        b = 1
+        for _ in range(2, n + 1):
+          a, b = b, a + b
+        return b
 
-if __name__ == "__main__":
-  # Read input from stdin
-  n = int(input())
+    if __name__ == "__main__":
+      # Read input from stdin
+      n = int(input())
 
-  # Calculate the nth Fibonacci number
-  result = fibonacci(n)
+      # Calculate the nth Fibonacci number
+      result = fibonacci(n)
 
-  # Print the result to stdout
-  print(result)
+      # Print the result to stdout
+      print(result)
 
-```
+    ```
+
+2. An example C++ solution for the "Fibonacci Number" puzzle
+
+    ```cpp
+    #include <iostream>
+
+    /**
+    * Calculates the nth Fibonacci number.
+    * 
+    * @param n The index of the Fibonacci number to calculate (non-negative integer).
+    * @return The nth Fibonacci number.
+    */
+    long long fibonacci(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        
+        long long a = 0;
+        long long b = 1;
+        for (int i = 2; i <= n; i++) {
+            long long temp = b;
+            b = a + b;
+            a = temp;
+        }
+        return b;
+    }
+
+    int main() {
+        // Fast I/O optimization
+        std::ios_base::sync_with_stdio(false);
+        std::cin.tie(NULL);
+        
+        int n;
+        std::cin >> n;
+        
+        long long result = fibonacci(n);
+        std::cout << result << std::endl;
+        
+        return 0;
+    }
+
+    ```

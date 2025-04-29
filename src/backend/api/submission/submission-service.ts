@@ -11,10 +11,8 @@ import {
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
-import { ExecutionMode, judgeSolution } from '../../services/judge/executor';
+import { ExecutionMode, judgeSolution, EXECUTABLE_NAME } from '../../services/judge/executor';
 import { NotFoundError } from "../../utils/errors/not-found-error";
-import * as os from 'os';
-import * as path from 'path';
 
 export class SubmissionService {
   private languageService: LanguageService;
@@ -62,8 +60,6 @@ export class SubmissionService {
     
     // Determine execution mode based on language
     const mode = language.compile_command ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    // If compiled language, create a temporary executable
-    const tempExecutable = path.join(os.tmpdir(), `temp_exec_${Date.now()}`);
     
     // Execute code against test cases
     const executionResults = await judgeSolution(mode, {
@@ -71,7 +67,7 @@ export class SubmissionService {
       fileSuffix: language.suffix,
       interpretCmd: language.run_command,
       compileCmd: language.compile_command,
-      executable: tempExecutable,
+      executable: EXECUTABLE_NAME,
       testCases: limitedTestCases.map(tc => tc.input)
     });
 
@@ -133,8 +129,6 @@ export class SubmissionService {
 
     // Determine execution mode based on language
     const mode = language.compile_command ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    // If compiled language, create a temporary executable
-    const tempExecutable = path.join(os.tmpdir(), `temp_exec_${Date.now()}`);
     
     // Execute code against all test cases
     const executionResults = await judgeSolution(mode, {
@@ -142,7 +136,7 @@ export class SubmissionService {
       fileSuffix: language.suffix,
       interpretCmd: language.run_command,
       compileCmd: language.compile_command,
-      executable: tempExecutable,
+      executable: EXECUTABLE_NAME,
       testCases: testCases.map(tc => tc.input)
     });
 
