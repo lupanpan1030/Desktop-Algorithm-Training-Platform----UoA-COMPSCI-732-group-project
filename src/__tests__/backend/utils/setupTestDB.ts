@@ -5,6 +5,7 @@ import os from "os";
 import fs from "fs/promises";
 
 let tmpFile: string;
+let originalDbUrl: string | undefined;
 export let testPrisma: PrismaClient;
 
 // Create a new Prisma Client instance with a temporary SQLite database
@@ -14,6 +15,7 @@ export async function setupTestDB() {
 
   // override the DATABASE_URL env so Prisma CLI and client agree
   const url = `file:${tmpFile}`;
+  originalDbUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = url;
 
   // push schema into that file
@@ -24,7 +26,9 @@ export async function setupTestDB() {
   execSync(`npx prisma db push --schema="${schemaPath}"`, { stdio: "inherit" });
 
   // instantiate the client pointing at the same file
-  testPrisma = new PrismaClient();
+  testPrisma = new PrismaClient({
+    datasources: { db: { url } },
+  });
   await testPrisma.$connect();
 
   // seed the database
@@ -44,6 +48,11 @@ export async function teardownTestDB() {
   }
   if (tmpFile) {
     await fs.unlink(tmpFile).catch(() => {});
+  }
+  if (originalDbUrl !== undefined) {
+    process.env.DATABASE_URL = originalDbUrl;
+  } else {
+    delete process.env.DATABASE_URL;
   }
 }
 
