@@ -48,7 +48,7 @@ async function runCommand(command: string): Promise<ExecutionResult> {
             succeeded: true,
             executionTime: elapsed,
             executionMemoryKb: memoryKb,
-            output: stdout || stderr,
+            output: (stdout || stderr).trim(),
             status: SubmissionStatus.ACCEPTED
         };
     } catch (error: any) {

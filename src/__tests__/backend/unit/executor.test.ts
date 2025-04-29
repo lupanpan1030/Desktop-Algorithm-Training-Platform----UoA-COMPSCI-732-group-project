@@ -29,7 +29,7 @@ if __name__ == '__main__':
 		expect(results.length).toBe(1);
 		const result = results[0];
 		expect(result.succeeded).toBe(true);
-		expect(result.output.trim()).toBe("5");
+		expect(result.output).toBe("5");
 	});
 
 	// Test for compiled mode using rustc.
@@ -62,6 +62,6 @@ fn main() {
 		expect(results.length).toBe(1);
 		const result = results[0];
 		expect(result.succeeded).toBe(true);
-		expect(result.output.trim()).toBe("9");
+		expect(result.output).toBe("9");
 	});
 });
