@@ -76,14 +76,14 @@ async function runCommand(command: string): Promise<ExecutionResult> {
 }
 
 // Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, code: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${interpretCmd} ${code}`;
+async function interprete(interpretCmd: string, codeFile: string, testCase: string): Promise<ExecutionResult> {
+    const command = `echo "${testCase}" | ${interpretCmd} ${codeFile}`;
     return runCommand(command);
 }
 
 // Function to compile a source file
-async function compile(compileCmd: string, code: string): Promise<void> {
-    const command = `${compileCmd} ${code}`;
+async function compile(compileCmd: string, codeFile: string): Promise<void> {
+    const command = `${compileCmd} ${codeFile}`;
     await runCommand(command);
 }
 
