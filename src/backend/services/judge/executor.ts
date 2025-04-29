@@ -82,9 +82,14 @@ async function interprete(interpretCmd: string, codeFile: string, testCase: stri
 }
 
 // Function to compile a source file
-async function compile(compileCmd: string, codeFile: string): Promise<void> {
+async function compile(compileCmd: string, codeFile: string): Promise<ExecutionResult> {
     const command = `${compileCmd} ${codeFile}`;
-    await runCommand(command);
+    const result = await runCommand(command);
+    // mark compile errors explicitly
+    if (!result.succeeded) {
+        result.status = SubmissionStatus.COMPILE_ERROR;
+    }
+    return result;
 }
 
 // Function to run a compiled executable with test case input piped in
@@ -120,11 +125,17 @@ export async function judgeSolution(
                 results.push(output);
             }
         } else if (mode === ExecutionMode.Compiled) {
-            if (!options.compileCmd || !options.executable){
+            if (!options.compileCmd || !options.executable) {
                 throw new Error("compileCmd and executable are required for compiled mode.");
             }
-            // Compile using the temporary file.
-            await compile(options.compileCmd, tempFile);
+            // Compile and capture any compile error.
+            const compileResult = await compile(options.compileCmd, tempFile);
+            // if compilation failed, stop here
+            if (!compileResult.succeeded) {
+                results.push(compileResult);
+                return results;
+            }
+            // otherwise run the executable on each test case
             for (const testCase of options.testCases) {
                 const output = await runExecutable(options.executable, testCase);
                 results.push(output);
