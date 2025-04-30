@@ -106,7 +106,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', display: 'flex', height: '100%', flexDirection: 'column'}}>
       {/* button */}
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <Button
@@ -131,6 +131,8 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       </Box>
 
       {/* result */}
+      <Box sx={{flex: 1, overflow: 'hidden', position: 'relative', height: 'calc(100% - 30px)', p: 2}}>
+      <Box sx={{overflowY: 'auto', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pb: 2}}>
       {activeView === 'run' && runResults && (
         <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#f0f0f0',
           color: isDark ? '#ffffff' : '#000000' }}>
@@ -147,7 +149,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
             <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
             <hr />
           </Box>
-          
+         
         ))}
         </Paper>
       )}
@@ -171,6 +173,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
               <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
               <hr />
             </Box>
+            
           ))}
         </Paper>
       )}
@@ -183,6 +186,8 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
           Failed: {error.message || 'Try later!'}
         </Alert>
       )}
+      </Box>
+      </Box>
 
       {/* Notification */}
       <Snackbar
