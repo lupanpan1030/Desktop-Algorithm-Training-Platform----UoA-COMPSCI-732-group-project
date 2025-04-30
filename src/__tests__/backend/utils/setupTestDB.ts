@@ -88,14 +88,14 @@ export async function dropAndSeedTestCases() {
     data: [
       {
         problem_id: 1,
-        input_data: "nums = [2,7,11,15], target = 9",
+        input_data: "[2,7,11,15], 9",
         expected_output: "[0,1]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,
       },
       {
         problem_id: 1,
-        input_data: "nums = [3,2,4], target = 6",
+        input_data: "[3,2,4], 6",
         expected_output: "[1,2]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,
