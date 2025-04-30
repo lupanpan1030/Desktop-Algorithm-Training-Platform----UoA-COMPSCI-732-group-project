@@ -1,8 +1,7 @@
 // This file interacts with the database to perform CRUD operations on test cases.
 
-import { PrismaClient, TestCase } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import type { PrismaClient, TestCase } from '@prisma/client';
+import { getPrisma } from '../../db/prisma/prisma';
 
 export class TestCaseDao {
   /**
@@ -10,6 +9,7 @@ export class TestCaseDao {
    * @param problemId The problem ID.
    */
   public static async getTestCasesByProblem(problemId: number): Promise<TestCase[]> {
+    const prisma: PrismaClient = getPrisma();
     return prisma.testCase.findMany({
       where: { problem_id: problemId },
     });
@@ -24,6 +24,7 @@ export class TestCaseDao {
     problemId: number,
     params: { input: string; expectedOutput: string; timeLimitMs: number; memoryLimitMb: number }
   ): Promise<TestCase> {
+    const prisma: PrismaClient = getPrisma();
     return prisma.testCase.create({
       data: {
         input_data: params.input,
@@ -44,6 +45,7 @@ export class TestCaseDao {
    */
   public static async deleteTestCase(problemId: number, testcaseId: number): Promise<void> {
     // Using deleteMany to ensure the test case belongs to the specified problem
+    const prisma: PrismaClient = getPrisma();
     await prisma.testCase.deleteMany({
       where: {
         testcase_id: testcaseId,
