@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ProblemContent from "../components/ProblemContent";
 import CodeEditor from "../components/Editor";
 import Result from "../components/Result";
@@ -13,7 +13,16 @@ export default function DetailPage () {
     const [loading, setLoading] = useState(true);
     const [editorState, setEditorState] = useState({ code: '', language: 'python' });
     const [languageMap, setLanguageMap] = useState({});
-    const [languages, setLanguages] = useState([]);
+
+    // Reference for resizable elements
+    const leftPaneRef = useRef(null);
+    const editorPaneRef = useRef(null);
+    const containerRef = useRef(null);  
+  
+    // Monitor whether the current state is being resized
+    const [resizingHorizontal, setResizingHorizontal] = useState(false);
+    const [resizingVertical, setResizingVertical] = useState(false);
+ 
 
     useEffect(() => {
         async function fetchProblem() {
@@ -63,6 +72,62 @@ export default function DetailPage () {
         fetchLanguages();
     }, []);
 
+    // Resize event handler
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+        if (resizingHorizontal && containerRef.current) {
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const newLeftWidth = e.clientX - containerRect.left;
+            
+            // Set minimum and maximum width
+            const minWidth = 200;
+            const maxWidth = containerRect.width - 300;
+
+            if (newLeftWidth >= minWidth && newLeftWidth <= maxWidth) {
+            leftPaneRef.current.style.width = `${newLeftWidth}px`;
+            }
+        }
+        
+        if (resizingVertical && editorPaneRef.current) {
+            const containerRect = editorPaneRef.current.parentElement.getBoundingClientRect();
+            const newTopHeight = e.clientY - containerRect.top;
+            
+            // Set minimum and maximum height
+            const minHeight = 100;
+            const maxHeight = containerRect.height - 100;
+            
+            if (newTopHeight >= minHeight && newTopHeight <= maxHeight) {
+            editorPaneRef.current.style.height = `${newTopHeight}px`;
+            }
+        }
+        };
+        
+        const handleMouseUp = () => {
+        setResizingHorizontal(false);
+        setResizingVertical(false);
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+        };
+        
+        if (resizingHorizontal || resizingVertical) {
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.body.style.userSelect = 'none'; 
+        
+        if (resizingHorizontal) {
+            document.body.style.cursor = 'col-resize';
+        } else if (resizingVertical) {
+            document.body.style.cursor = 'row-resize';
+        }
+        }
+        
+        return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [resizingHorizontal, resizingVertical]);
+
+
     const handleCodeChange = useCallback((newState) => {
         setEditorState(newState);
     }, []);
@@ -74,39 +139,63 @@ export default function DetailPage () {
 
     return (
         <div className="detail-page-container">
-            <div className="detail-content">
+            <Box ref={containerRef} className="detail-content">
+
                 {/* Left half: Problem content */}
-                <Paper className="problem-content" elevation={2}>
-                    {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <CircularProgress />
-                        </Box>
-                    ) : problem ? (
-                        <ProblemContent problem={problem} />
-                    ) : (
-                        <Box sx={{ p: 3 }}>
-                            <Typography>Problem not found or server connection error.</Typography>
-                        </Box>
-                    )}
-                </Paper>
+                <Box ref={leftPaneRef} className="left-pane">
+                    <Paper className="problem-content" elevation={2} >
+                        {loading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : problem ? (
+                            <ProblemContent problem={problem} />
+                        ) : (
+                            <Box sx={{ p: 3 }}>
+                                <Typography>Problem not found or server connection error.</Typography>
+                            </Box>
+                        )}
+                    </Paper>
+                </Box>
+
+                {/* Level adjustment handle */}
+                <Box className="resize-handle horizontal-handle"
+                    onMouseDown={(e) => { e.preventDefault(); setResizingHorizontal(true); }} >
+                    <Box className="handle-bar" />
+                </Box>
+
 
                 {/* Right half: Code Editor and Running Result */}
-                <div className="editor-result-container">
-                    <Paper className="editor-section" elevation={2}>
-                        <CodeEditor onCodeChange={handleCodeChange} />
-                    </Paper>
-                    <Paper className="result-section" elevation={2}>
-                    {problem && (
-                            <CodeSubmission 
-                                problemId={id} 
-                                code={editorState.code} 
-                                languageId={getLanguageId()} 
-                            />
-                        )}
-                   
-                    </Paper>
-                </div>
-            </div>
+                    <Box className="editor-result-container">
+                        <Box ref={editorPaneRef} className="editor-pane">
+                            <Paper className="editor-section" elevation={2}>
+                                <CodeEditor onCodeChange={handleCodeChange} />
+                            </Paper>
+                        </Box>
+
+                        {/* Vertical adjustment handle */}
+                        <Box className="resize-handle vertical-handle"
+                            onMouseDown={(e) => { e.preventDefault(); setResizingVertical(true); }}>
+                            <Box className="handle-bar horizontal-bar" />
+                        </Box>
+
+                        {/* Result */}
+                        <Box className="result-pane">
+                            <Paper className="result-section" elevation={2}>
+                                {problem && (
+                                    <CodeSubmission 
+                                        problemId={id} 
+                                        code={editorState.code} 
+                                        languageId={getLanguageId()} 
+                                    />
+                                )}
+                            </Paper>
+                        </Box>
+                    </Box>
+               
+                </Box>
+                
+            
         </div>
     );
 }
