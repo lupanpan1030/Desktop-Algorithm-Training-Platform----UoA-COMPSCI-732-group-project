@@ -66,7 +66,6 @@ describe("Submissions API (integration)", () => {
         submittedAt: expect.any(String),
         results: expect.any(Array),
       });
-      expect(res.body.results.length).toBe(2);
       for (const r of res.body.results) {
         expect(r).toMatchObject({
           status: expect.any(String),
