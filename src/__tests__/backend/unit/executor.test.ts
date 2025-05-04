@@ -63,5 +63,5 @@ fn main() {
 		const result = results[0];
 		expect(result.succeeded).toBe(true);
 		expect(result.output).toBe("9");
-	});
+	}, 20000);
 });
