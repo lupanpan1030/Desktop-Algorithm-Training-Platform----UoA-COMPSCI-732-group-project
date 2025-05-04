@@ -14,8 +14,8 @@ afterEach(() => {
 
 describe("Run Button", () => {
   //test run result
-    test.skip('Show run result', async () => {
-        mock.onPost('http://localhost:6785/docs/problems/1/run')
+    test('Show run result', async () => {
+        mock.onPost('http://localhost:6785/problems/1/run')
             .reply(200, {
                 status: 'success',
                 results: [
@@ -48,8 +48,8 @@ describe("Run Button", () => {
 
 describe("Submit Button", () => {
   //test submit result
-  test.skip('Submit Button', async () => {
-    mock.onPost('http://localhost:6785/docs/problems/1/submit').reply(200, {
+  test('Submit Button', async () => {
+    mock.onPost('http://localhost:6785/problems/1/submit').reply(200, {
       submissionId: 2,
       overallStatus: 'sucess',
       results: [
