@@ -111,7 +111,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <Button
           variant="contained"
-          color="primary"
+          color="info"
           startIcon={<PlayArrowIcon />}
           onClick={handleRunCode}
           disabled={loading}
@@ -134,7 +134,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       <Box sx={{flex: 1, overflow: 'hidden', position: 'relative', height: 'calc(100% - 30px)', p: 2}}>
       <Box sx={{overflowY: 'auto', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pb: 2}}>
       {activeView === 'run' && runResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#f0f0f0',
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#fff3e0',
           color: isDark ? '#ffffff' : '#000000' }}>
         <Typography variant="h6" gutterBottom>
           Run Results
@@ -155,7 +155,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       )}
 
       {activeView === 'submit' && submitResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#f0f0f0',
+        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#fff3e0',
           color: isDark ? '#ffffff' : '#000000' }}>
           <Typography variant="h6" gutterBottom>
             Submit Results
