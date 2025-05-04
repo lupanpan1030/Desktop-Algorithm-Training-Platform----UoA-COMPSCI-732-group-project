@@ -1,52 +1,10 @@
 import { PrismaClient, Submission, SubmissionResult, SubmissionStatus } from '@prisma/client';
 import { SubmissionDetailDto, SubmissionListItemDto } from './submission';
+import { getPrisma } from '../../db/prisma/prisma';
 
-const prisma = new PrismaClient();
+const prisma: PrismaClient = getPrisma();
 
 export class SubmissionDao {
-  /**
-   * Get all submissions
-   */
-  static async getAllSubmissions(): Promise<SubmissionListItemDto[]> {
-    const submissions = await prisma.submission.findMany({
-      orderBy: { submitted_at: 'desc' }
-    });
-
-    return submissions.map(submission => ({
-      submissionId: submission.submission_id,
-      code: submission.code,
-      languageId: submission.language_id,
-      status: submission.status,
-      submittedAt: submission.submitted_at.toISOString()
-    }));
-  }
-
-  /**
-   * Get a submission by ID with its results
-   */
-  static async getSubmissionById(id: number): Promise<SubmissionDetailDto | null> {
-    const submission = await prisma.submission.findUnique({
-      where: { submission_id: id },
-      include: { results: true }
-    });
-
-    if (!submission) return null;
-
-    return {
-      submissionId: submission.submission_id,
-      code: submission.code,
-      languageId: submission.language_id,
-      status: submission.status,
-      submittedAt: submission.submitted_at.toISOString(),
-      results: submission.results.map(result => ({
-        status: result.status,
-        output: result.output || null,
-        runtimeMs: result.runtime_ms,
-        memoryKb: result.memory_kb
-      }))
-    };
-  }
-
   // Get all submissions for a given problem
   static async getSubmissionsByProblemId(problemId: number): Promise<SubmissionListItemDto[]> {
     const submissions = await prisma.submission.findMany({
