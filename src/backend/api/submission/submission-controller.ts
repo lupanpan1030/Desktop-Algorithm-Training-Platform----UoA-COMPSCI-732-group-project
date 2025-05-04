@@ -18,36 +18,9 @@ import {
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
+import { ValidateError } from '../../utils/errors/validation-error';
+import { NotFoundError } from '../../utils/errors/not-found-error';
 
-
-@Route('submissions')
-@Tags('Submissions')
-export class SubmissionController extends Controller {
-  private service: SubmissionService;
-  
-  constructor() {
-    super();
-    this.service = new SubmissionService();
-  }
-
-  /**
-   * Get all submissions
-   */
-  @Get('/')
-  public async getSubmissions(): Promise<SubmissionListItemDto[]> {
-    return await this.service.getAllSubmissions();
-  }
-
-  /**
-   * Get a specific submission by ID
-   * @param id The submission ID
-   */
-  @Response(404, 'Submission not found')
-  @Get('{id}')
-  public async getSubmission(@Path() id: number): Promise<SubmissionDetailDto> {
-    return await this.service.getSubmissionById(id);
-  }
-}
 
 @Route('problems')
 @Tags('Problems')
@@ -61,29 +34,59 @@ export class ProblemSubmissionController extends Controller {
 
   /**
    * Run code against a subset of test cases without saving the submission
-   * @param id The problem ID
+   * @param problemId The problem ID
    * @param dto The code and language ID
    */
-  @Post('{id}/run')
+  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse(201, 'Code ran successfully')
+  @Post('{problemId}/run')
   public async runCode(
-    @Path() id: number,
+    @Path() problemId: number,
     @Body() dto: RunCodeDto
   ): Promise<RunCodeResponseDto> {
-    return await this.service.runCode(id, dto);
+    return await this.service.runCode(problemId, dto);
   }
 
   /**
    * Submit code for full evaluation and save the submission
-   * @param id The problem ID
+   * @param problemId The problem ID
    * @param dto The code and language ID
    */
+  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse(201, 'Code submitted successfully')
-  @Post('{id}/submit')
+  @Post('{problemId}/submit')
   public async submitCode(
-    @Path() id: number,
+    @Path() problemId: number,
     @Body() dto: SubmitCodeDto
   ): Promise<SubmitCodeResponseDto> {
     this.setStatus(201);
-    return await this.service.submitCode(id, dto);
+    return await this.service.submitCode(problemId, dto);
+  }
+
+  /**
+   * List submissions for a problem
+   */
+  @Response<NotFoundError>(404, 'Problem not found')
+  @SuccessResponse(200, 'OK')
+  @Get('{problemId}/submissions')
+  public async getSubmissionsByProblem(
+    @Path() problemId: number
+  ): Promise<SubmissionListItemDto[]> {
+    return await this.service.getSubmissionsByProblem(problemId);
+  }
+
+  /**
+   * Get a specific submission for a problem
+   */
+  @Response<NotFoundError>(404, 'Submission not found')
+  @SuccessResponse(200, 'OK')
+  @Get('{problemId}/submissions/{submissionId}')
+  public async getSubmissionByProblem(
+    @Path() problemId: number,
+    @Path() submissionId: number
+  ): Promise<SubmissionDetailDto> {
+    return await this.service.getSubmissionByProblem(problemId, submissionId);
   }
 }

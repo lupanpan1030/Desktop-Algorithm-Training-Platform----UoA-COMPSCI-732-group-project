@@ -57,10 +57,22 @@ Swagger UI debug page: `localhost:6785/docs`
 npx tsoa spec
 ```
 
-### Run Unit Tests
+### Run All Tests
 
 ```bash
-npm test
+npm run test
+```
+
+### Run Frontend Tests
+
+```bash
+npm run test:front
+```
+
+### Run Backend Tests
+
+```bash
+npm run test:back
 ```
 
 ## DB initialization
@@ -140,9 +152,14 @@ src/
 │   ├── types/               # TypeScript type definitions
 │   └── constants.ts         # Shared constants
 │
-└── tests/                 # Test suite
-    ├── unit/               # Unit tests
-    └── integration/        # Integration tests
+└── tests/
+    ├── frontend/  
+    │   ├── unit/
+    │   └── integration/
+    └── backend/
+        ├── unit/
+        └── integration/
+
 ```
 
 ---
@@ -191,8 +208,8 @@ src/
 **Submissions**
 | Method | Path | Description | Request Body (Types) | Response Format (Types) |
 |--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
-| `GET` | `/submissions/{id}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
+| `GET` | `/problems/{problemId}/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
+| `GET` | `/problems/{problemId}/submissions/{submissionId}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
 
 ---
 
@@ -200,5 +217,83 @@ src/
 
 | Method | Path                     | Description                                                           | Request Body                                 | Response Format                                                                                                                       |
 | ------ | ------------------------ | --------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/problems/{id}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
-| `POST` | `/problems/{id}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
+| `POST` | `/problems/{problemId}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
+| `POST` | `/problems/{problemId}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
+
+## Example Solutions for ACM Mode
+
+1. An example Python solution for the "Fibonacci Number" puzzle
+
+    ```python
+    def fibonacci(n):
+      """
+      Calculates the nth Fibonacci number.
+
+      Args:
+        n: The index of the Fibonacci number to calculate (non-negative integer).
+
+      Returns:
+        The nth Fibonacci number.
+      """
+      if n <= 1:
+        return n
+      else:
+        a = 0
+        b = 1
+        for _ in range(2, n + 1):
+          a, b = b, a + b
+        return b
+
+    if __name__ == "__main__":
+      # Read input from stdin
+      n = int(input())
+
+      # Calculate the nth Fibonacci number
+      result = fibonacci(n)
+
+      # Print the result to stdout
+      print(result)
+
+    ```
+
+2. An example C++ solution for the "Fibonacci Number" puzzle
+
+    ```cpp
+    #include <iostream>
+
+    /**
+    * Calculates the nth Fibonacci number.
+    * 
+    * @param n The index of the Fibonacci number to calculate (non-negative integer).
+    * @return The nth Fibonacci number.
+    */
+    long long fibonacci(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        
+        long long a = 0;
+        long long b = 1;
+        for (int i = 2; i <= n; i++) {
+            long long temp = b;
+            b = a + b;
+            a = temp;
+        }
+        return b;
+    }
+
+    int main() {
+        // Fast I/O optimization
+        std::ios_base::sync_with_stdio(false);
+        std::cin.tie(NULL);
+        
+        int n;
+        std::cin >> n;
+        
+        long long result = fibonacci(n);
+        std::cout << result << std::endl;
+        
+        return 0;
+    }
+
+    ```

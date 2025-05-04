@@ -5,6 +5,7 @@ import os from "os";
 import fs from "fs/promises";
 
 let tmpFile: string;
+let originalDbUrl: string | undefined;
 export let testPrisma: PrismaClient;
 
 // Create a new Prisma Client instance with a temporary SQLite database
@@ -14,17 +15,20 @@ export async function setupTestDB() {
 
   // override the DATABASE_URL env so Prisma CLI and client agree
   const url = `file:${tmpFile}`;
+  originalDbUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = url;
 
   // push schema into that file
   const schemaPath = path.resolve(
     __dirname,
-    "../../backend/db/prisma/schema.prisma"
+    "../../../backend/db/prisma/schema.prisma"
   );
   execSync(`npx prisma db push --schema="${schemaPath}"`, { stdio: "inherit" });
 
   // instantiate the client pointing at the same file
-  testPrisma = new PrismaClient();
+  testPrisma = new PrismaClient({
+    datasources: { db: { url } },
+  });
   await testPrisma.$connect();
 
   // seed the database
@@ -44,6 +48,11 @@ export async function teardownTestDB() {
   }
   if (tmpFile) {
     await fs.unlink(tmpFile).catch(() => {});
+  }
+  if (originalDbUrl !== undefined) {
+    process.env.DATABASE_URL = originalDbUrl;
+  } else {
+    delete process.env.DATABASE_URL;
   }
 }
 
@@ -79,14 +88,14 @@ export async function dropAndSeedTestCases() {
     data: [
       {
         problem_id: 1,
-        input_data: "nums = [2,7,11,15], target = 9",
+        input_data: "[2,7,11,15], 9",
         expected_output: "[0,1]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,
       },
       {
         problem_id: 1,
-        input_data: "nums = [3,2,4], target = 6",
+        input_data: "[3,2,4], 6",
         expected_output: "[1,2]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,

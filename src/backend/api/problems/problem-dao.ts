@@ -1,15 +1,20 @@
 // This file interacts with the database to perform CRUD operations on problems.
 
-import { PrismaClient, Problem, Difficulty } from "@prisma/client";
+import {Problem, Difficulty } from "@prisma/client";
+import { getPrisma } from "../../db/prisma/prisma";
 
-const prisma = new PrismaClient();
 
 export class ProblemsDao {
+  /** Always returns the current Prisma Client (allows tests to inject). */
+  private static get db() {
+    return getPrisma();
+  }
+
   /**
    * Retrieves all problems including their associated tags.
    */
   public static async getAllProblems(): Promise<Problem[]> {
-    return prisma.problem.findMany();
+    return this.db.problem.findMany();
   }
 
   /**
@@ -19,7 +24,7 @@ export class ProblemsDao {
   public static async getProblemById(
     problemId: number
   ): Promise<Problem | null> {
-    return prisma.problem.findUnique({
+    return this.db.problem.findUnique({
       where: {
         problem_id: problemId,
       },
@@ -35,7 +40,7 @@ export class ProblemsDao {
     description: string;
     difficulty: Difficulty;
   }): Promise<Problem> {
-    return prisma.problem.create({
+    return this.db.problem.create({
       data: {
         title: params.title,
         description: params.description,
@@ -58,7 +63,7 @@ export class ProblemsDao {
     }
   ): Promise<Problem | null> {
     try {
-      return await prisma.problem.update({
+      return await this.db.problem.update({
         where: { problem_id: problemId },
         data: {
           title: params.title,
@@ -77,7 +82,7 @@ export class ProblemsDao {
    */
   public static async deleteProblem(problemId: number): Promise<void> {
     try {
-      await prisma.problem.delete({
+      await this.db.problem.delete({
         where: { problem_id: problemId },
       });
     } catch (error) {

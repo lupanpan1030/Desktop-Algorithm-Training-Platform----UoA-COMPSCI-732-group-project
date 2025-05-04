@@ -21,7 +21,7 @@ export async function seedLanguage() {
         name: 'Java',
         suffix: 'java',
         version: '11',
-        compile_command: 'javac',  
+        compile_command: null,  
         run_command: 'java'
         },
         {
@@ -31,7 +31,23 @@ export async function seedLanguage() {
         version: '17',
         compile_command: 'g++ -o main', 
         run_command: './main'
-        }
+        },
+        {
+            language_id: 4,
+            name: 'Ocaml',
+            suffix: 'ml',
+            version: '4.14',
+            compile_command: null, 
+            run_command: 'ocaml'
+        },
+        {
+            language_id: 5,
+            name: 'Rust',
+            suffix: 'rs',
+            version: '1.86',
+            compile_command: 'rustc -o main',
+            run_command: './main'
+        },
     ],
     });
     console.log('Seeded programming languages');

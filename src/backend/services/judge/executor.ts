@@ -9,6 +9,8 @@ const execAsync = promisify(exec);
 
 const TIME_LIMIT = 10 * 1000;
 
+export const EXECUTABLE_NAME = "main";
+
 // Define ExecutionMode enum
 export enum ExecutionMode {
     Interprete = 'interprete',
@@ -48,7 +50,7 @@ async function runCommand(command: string): Promise<ExecutionResult> {
             succeeded: true,
             executionTime: elapsed,
             executionMemoryKb: memoryKb,
-            output: stdout || stderr,
+            output: (stdout || stderr).trim(),
             status: SubmissionStatus.ACCEPTED
         };
     } catch (error: any) {
@@ -74,20 +76,32 @@ async function runCommand(command: string): Promise<ExecutionResult> {
 }
 
 // Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, code: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${interpretCmd} ${code}`;
+async function interprete(interpretCmd: string, codeFile: string, testCase: string): Promise<ExecutionResult> {
+    const command = `echo "${testCase}" | ${interpretCmd} ${codeFile}`;
     return runCommand(command);
 }
 
 // Function to compile a source file
-async function compile(compileCmd: string, code: string): Promise<void> {
-    const command = `${compileCmd} ${code}`;
-    await runCommand(command);
+async function compile(compileCmd: string, codeFile: string): Promise<ExecutionResult> {
+    const command = `${compileCmd} ${codeFile}`;
+    const result = await runCommand(command);
+    // mark compile errors explicitly
+    if (!result.succeeded) {
+        result.status = SubmissionStatus.COMPILE_ERROR;
+    }
+    return result;
 }
 
 // Function to run a compiled executable with test case input piped in
 async function runExecutable(executable: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${executable}`;
+    let command: string;
+    if (process.platform === 'win32') {
+        // Ensure .exe extension for Windows
+        const exePath = executable.endsWith('.exe') ? executable : `${executable}.exe`;
+        command = `echo "${testCase}" | .\\${path.basename(exePath)}`;
+    } else {
+        command = `echo "${testCase}" | ./${path.basename(executable)}`;
+    }
     return runCommand(command);
 }
 
@@ -111,18 +125,33 @@ export async function judgeSolution(
                 results.push(output);
             }
         } else if (mode === ExecutionMode.Compiled) {
-            if (!options.compileCmd || !options.executable){
+            if (!options.compileCmd || !options.executable) {
                 throw new Error("compileCmd and executable are required for compiled mode.");
             }
-            // Compile using the temporary file.
-            await compile(options.compileCmd, tempFile);
+            // Compile and capture any compile error.
+            const compileResult = await compile(options.compileCmd, tempFile);
+            // if compilation failed, stop here
+            if (!compileResult.succeeded) {
+                results.push(compileResult);
+                return results;
+            }
+            // otherwise run the executable on each test case
             for (const testCase of options.testCases) {
                 const output = await runExecutable(options.executable, testCase);
                 results.push(output);
             }
             // Cleanup the executable after running.
-            if (fs.existsSync(options.executable)) {
-                fs.unlinkSync(options.executable);
+            if (process.platform === 'win32') {
+                const exePath = options.executable.endsWith('.exe')
+                    ? options.executable
+                    : options.executable + '.exe';
+                if (fs.existsSync(exePath)) {
+                    fs.unlinkSync(exePath);
+                }
+            } else {
+                if (fs.existsSync(options.executable)) {
+                    fs.unlinkSync(options.executable);
+                }
             }
         }
     } finally {

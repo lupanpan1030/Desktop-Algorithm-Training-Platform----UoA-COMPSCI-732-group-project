@@ -4,14 +4,17 @@ import {
   setupTestDB,
   teardownTestDB,
   dropAndSeedProblems,
+  testPrisma,
 } from "../utils/setupTestDB";
-import { createApp } from "../../backend/api/app";
+import { createApp } from "../../../backend/api/app";
+import { setPrisma } from "../../../backend/db/prisma/prisma";
 
 let app: import("express").Application;
 
 beforeAll(async () => {
   // Push your schema & connect to a temp SQLite file
-  await setupTestDB();
+  const testPrisma = await setupTestDB();
+  setPrisma(testPrisma);
   app = await createApp();
 });
 

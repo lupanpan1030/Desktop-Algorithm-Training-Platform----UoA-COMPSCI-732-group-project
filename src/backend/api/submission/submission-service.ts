@@ -11,9 +11,8 @@ import {
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
-import { ExecutionMode, judgeSolution } from '../../services/judge/executor';
-import * as os from 'os';
-import * as path from 'path';
+import { ExecutionMode, judgeSolution, EXECUTABLE_NAME } from '../../services/judge/executor';
+import { NotFoundError } from "../../utils/errors/not-found-error";
 
 export class SubmissionService {
   private languageService: LanguageService;
@@ -37,7 +36,30 @@ export class SubmissionService {
   async getSubmissionById(id: number): Promise<SubmissionDetailDto> {
     const submission = await SubmissionDao.getSubmissionById(id);
     if (!submission) {
-      throw new Error(`Submission with ID ${id} not found`);
+      throw new NotFoundError(`Submission with ID ${id} not found`);
+    }
+    return submission;
+  }
+
+  /**
+   * Get submissions for a specific problem
+   */
+  async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
+    return await SubmissionDao.getSubmissionsByProblemId(problemId);
+  }
+
+  /**
+   * Get a specific submission under a specific problem
+   */
+  async getSubmissionByProblem(
+    problemId: number,
+    submissionId: number
+  ): Promise<SubmissionDetailDto> {
+    const submission = await SubmissionDao.getSubmissionByProblemId(problemId, submissionId);
+    if (!submission) {
+      throw new NotFoundError(
+        `Submission with ID ${submissionId} for problem ${problemId} not found`
+      );
     }
     return submission;
   }
@@ -48,15 +70,19 @@ export class SubmissionService {
   async runCode(problemId: number, dto: RunCodeDto, testCaseLimit = 3): Promise<RunCodeResponseDto> {
     // Get language details
     const language = await this.languageService.getLanguageById(dto.languageId);
+    if (!language) {
+      throw new NotFoundError(`Language with ID ${dto.languageId} not found`);
+    }
     
     // Get test cases for the problem (limited to first few)
     const testCases = await this.testCaseService.getTestCases(problemId);
+    if (!testCases || testCases.length === 0) {
+      throw new NotFoundError(`No test cases found for problem ID ${problemId}`);
+    }
     const limitedTestCases = testCases.slice(0, testCaseLimit);
     
     // Determine execution mode based on language
     const mode = language.compile_command ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    // If compiled language, create a temporary executable
-    const tempExecutable = path.join(os.tmpdir(), `temp_exec_${Date.now()}`);
     
     // Execute code against test cases
     const executionResults = await judgeSolution(mode, {
@@ -64,7 +90,7 @@ export class SubmissionService {
       fileSuffix: language.suffix,
       interpretCmd: language.run_command,
       compileCmd: language.compile_command,
-      executable: tempExecutable,
+      executable: EXECUTABLE_NAME,
       testCases: limitedTestCases.map(tc => tc.input)
     });
 
@@ -106,9 +132,15 @@ export class SubmissionService {
   async submitCode(problemId: number, dto: SubmitCodeDto): Promise<SubmitCodeResponseDto> {
     // Get language details
     const language = await this.languageService.getLanguageById(dto.languageId);
+    if (!language) {
+      throw new NotFoundError(`Language with ID ${dto.languageId} not found`);
+    }
     
     // Get all test cases for the problem
     const testCases = await this.testCaseService.getTestCases(problemId);
+    if (!testCases || testCases.length === 0) {
+      throw new NotFoundError(`No test cases found for problem ID ${problemId}`);
+    }
     
     // Create submission record with initial pending status
     const submission = await SubmissionDao.createSubmission(
@@ -120,8 +152,6 @@ export class SubmissionService {
 
     // Determine execution mode based on language
     const mode = language.compile_command ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    // If compiled language, create a temporary executable
-    const tempExecutable = path.join(os.tmpdir(), `temp_exec_${Date.now()}`);
     
     // Execute code against all test cases
     const executionResults = await judgeSolution(mode, {
@@ -129,7 +159,7 @@ export class SubmissionService {
       fileSuffix: language.suffix,
       interpretCmd: language.run_command,
       compileCmd: language.compile_command,
-      executable: tempExecutable,
+      executable: EXECUTABLE_NAME,
       testCases: testCases.map(tc => tc.input)
     });
 
