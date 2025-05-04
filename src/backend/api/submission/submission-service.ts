@@ -24,24 +24,6 @@ export class SubmissionService {
   }
 
   /**
-   * Get all submissions
-   */
-  async getAllSubmissions(): Promise<SubmissionListItemDto[]> {
-    return await SubmissionDao.getAllSubmissions();
-  }
-
-  /**
-   * Get submission by ID
-   */
-  async getSubmissionById(id: number): Promise<SubmissionDetailDto> {
-    const submission = await SubmissionDao.getSubmissionById(id);
-    if (!submission) {
-      throw new NotFoundError(`Submission with ID ${id} not found`);
-    }
-    return submission;
-  }
-
-  /**
    * Get submissions for a specific problem
    */
   async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
