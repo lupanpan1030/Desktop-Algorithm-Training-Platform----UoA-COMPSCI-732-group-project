@@ -83,7 +83,7 @@ export class SubmissionDao {
       submittedAt: submission.submitted_at.toISOString(),
       results: submission.results.map(r => ({
         status: r.status,
-        output: r.output || undefined,
+        output: r.output || null,
         runtimeMs: r.runtime_ms,
         memoryKb: r.memory_kb
       }))
