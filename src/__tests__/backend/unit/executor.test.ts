@@ -33,7 +33,7 @@ if __name__ == '__main__':
 	});
 
 	// Test for compiled mode using rustc.
-	it.skip('should add two ints using Rust compiled executable', async () => {
+	it('should add two ints using Rust compiled executable', async () => {
 		const rustCode = `
 use std::io::{self, Read};
 

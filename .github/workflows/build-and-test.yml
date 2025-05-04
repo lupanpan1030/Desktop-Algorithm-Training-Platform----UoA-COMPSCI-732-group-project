@@ -16,6 +16,13 @@ jobs:
       # Checkout code
       - uses: actions/checkout@v4
 
+      # Install Rust (just rustc)
+      - name: Install rustc
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          # No components specified to keep it minimal
+
       # Set up and cache the specified Node.js version and npm dependencies
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
