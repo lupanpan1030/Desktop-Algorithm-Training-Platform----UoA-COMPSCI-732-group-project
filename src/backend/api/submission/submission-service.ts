@@ -45,7 +45,11 @@ export class SubmissionService {
    * Get submissions for a specific problem
    */
   async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
-    return await SubmissionDao.getSubmissionsByProblemId(problemId);
+    const submission = SubmissionDao.getSubmissionsByProblemId(problemId);
+    if (!submission) {
+      throw new NotFoundError(`No submissions found for problem ID ${problemId}`);
+    }
+    return submission;
   }
 
   /**
