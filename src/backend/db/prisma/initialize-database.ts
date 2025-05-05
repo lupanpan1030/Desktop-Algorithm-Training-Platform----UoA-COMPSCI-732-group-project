@@ -19,6 +19,16 @@ export function initializeDatabase() {
       });
     } catch (error) {
       console.error("Database initialization failed:", error);
+      // Fallback: drop all data and reseed using the full-reset script
+      console.log("Retrying with full reset (drop & reseed)...");
+      try {
+        execSync("npx ts-node src/backend/db/seeds/init-db+drop.ts", { stdio: "inherit" });
+        console.log("Database reset and reseeded successfully.");
+      } catch (resetError) {
+        console.error("Fallback reseed failed:", resetError);
+        // Re‑throw to propagate failure if needed
+        throw resetError;
+      }
     }
   }
 }
