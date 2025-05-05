@@ -3,7 +3,9 @@ loader.config({ paths: { vs: '/vs' } });
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Box, Typography, IconButton, Tooltip } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 
 // 一些编辑器默认设置
 const editorOptions = {
@@ -30,6 +32,10 @@ export default function CodeEditor({ onCodeChange }) {
         { language_id: 3, name: 'Java' },
         { language_id: 4, name: 'C++' }
     ]);
+    const navigate = useNavigate();
+    const handleAddLanguage = () => {
+  navigate('/languages');   // 跳转到 Language 管理页面
+};
 
     
 
@@ -37,7 +43,7 @@ export default function CodeEditor({ onCodeChange }) {
     useEffect(() => {
         const fetchLanguages = async () => {
             try {
-                const response = await fetch('http://localhost:6785/language');
+                const response = await fetch('http://localhost:6785/languages');
                 if (response.ok) {
                     const data = await response.json();
                     setLanguages(data);
@@ -145,21 +151,29 @@ export default function CodeEditor({ onCodeChange }) {
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Code Editor</Typography>
-                    <FormControl size="small">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <FormControl size="small">
                         <InputLabel>Language</InputLabel>
                         <Select
-                            value={language}
-                            label="Language"
-                            onChange={handleLanguageChange}
-                            sx={{ minWidth: 150 }}
+                          value={language}
+                          label="Language"
+                          onChange={handleLanguageChange}
+                          sx={{ minWidth: 150 }}
                         >
-                            {languages.map((lang) => (
-                                <MenuItem key={lang.language_id} value={lang.name.toLowerCase()}>
-                                    {lang.name}
-                                </MenuItem>
-                            ))}
+                          {languages.map((lang) => (
+                            <MenuItem key={lang.language_id ?? lang.languageId} value={lang.name.toLowerCase()}>
+                              {lang.name}
+                            </MenuItem>
+                          ))}
                         </Select>
-                    </FormControl>
+                      </FormControl>
+
+                      <Tooltip title="Add new language">
+                        <IconButton size="small" onClick={handleAddLanguage}>
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                 </Box>
 
                 <Box sx={{ p: 2, flex: 1, overflow: 'hidden' }}>
@@ -192,21 +206,29 @@ export default function CodeEditor({ onCodeChange }) {
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Code Editor</Typography>
-                <FormControl size="small">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FormControl size="small">
                     <InputLabel>Language</InputLabel>
                     <Select
-                        value={language}
-                        label="Language"
-                        onChange={handleLanguageChange}
-                        sx={{ minWidth: 150 }}
+                      value={language}
+                      label="Language"
+                      onChange={handleLanguageChange}
+                      sx={{ minWidth: 150 }}
                     >
-                        {languages.map((lang) => (
-                            <MenuItem key={lang.language_id} value={lang.name.toLowerCase()}>
-                                {lang.name}
-                            </MenuItem>
-                        ))}
+                      {languages.map((lang) => (
+                        <MenuItem key={lang.language_id ?? lang.languageId} value={lang.name.toLowerCase()}>
+                          {lang.name}
+                        </MenuItem>
+                      ))}
                     </Select>
-                </FormControl>
+                  </FormControl>
+
+                  <Tooltip title="Add new language">
+                    <IconButton size="small" onClick={handleAddLanguage}>
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
             </Box>
 
             <Box sx={{ 

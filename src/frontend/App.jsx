@@ -6,6 +6,7 @@ import NavBar from './components/common/NavBar';
 import HomePage from './pages/HomePage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
+import LanguageAdmin from "./pages/LanguageAdmin";
 import './styles/global.css';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/problems/:id" element={<DetailPage />} />
+                            <Route path="/languages" element={<LanguageAdmin />} />
                         </Routes>
                     </div>
                 </div>
