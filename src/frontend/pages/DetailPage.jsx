@@ -46,7 +46,7 @@ export default function DetailPage () {
     useEffect(() => {
         async function fetchLanguages() {
             try {
-                const response = await fetch('http://localhost:6785/language');
+                const response = await fetch('http://localhost:6785/languages');
                 if (response.ok) {
                     const data = await response.json();
                     setLanguages(data);
