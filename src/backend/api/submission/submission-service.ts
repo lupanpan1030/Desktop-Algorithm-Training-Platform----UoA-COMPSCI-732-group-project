@@ -24,28 +24,19 @@ export class SubmissionService {
   }
 
   /**
-   * Get all submissions
-   */
-  async getAllSubmissions(): Promise<SubmissionListItemDto[]> {
-    return await SubmissionDao.getAllSubmissions();
-  }
-
-  /**
-   * Get submission by ID
-   */
-  async getSubmissionById(id: number): Promise<SubmissionDetailDto> {
-    const submission = await SubmissionDao.getSubmissionById(id);
-    if (!submission) {
-      throw new NotFoundError(`Submission with ID ${id} not found`);
-    }
-    return submission;
-  }
-
-  /**
    * Get submissions for a specific problem
    */
   async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
-    return await SubmissionDao.getSubmissionsByProblemId(problemId);
+    try {
+      const submission = await SubmissionDao.getSubmissionsByProblemId(problemId);
+      if (!submission) {
+        throw new NotFoundError(`No submissions found for problem ID ${problemId}`);
+      }
+      return submission;
+    } catch (err) {
+      console.error('Error in getSubmissionsByProblem:', err);
+      throw err;
+    }
   }
 
   /**
@@ -55,13 +46,18 @@ export class SubmissionService {
     problemId: number,
     submissionId: number
   ): Promise<SubmissionDetailDto> {
-    const submission = await SubmissionDao.getSubmissionByProblemId(problemId, submissionId);
-    if (!submission) {
-      throw new NotFoundError(
-        `Submission with ID ${submissionId} for problem ${problemId} not found`
-      );
+    try {
+      const submission = await SubmissionDao.getSubmissionByProblemId(problemId, submissionId);
+      if (!submission) {
+        throw new NotFoundError(
+          `Submission with ID ${submissionId} for problem ${problemId} not found`
+        );
+      }
+      return submission;
+    } catch (err) {
+      console.error('Error in getSubmissionByProblem:', err);
+      throw err;
     }
-    return submission;
   }
 
   /**

@@ -24,7 +24,6 @@ beforeEach(async () => {
 afterAll(async () => {
   // disconnect from the test database and remove the temporary file
   await teardownTestDB();
-  setPrisma(undefined);
 });
 
 describe("ProblemsDao", () => {
