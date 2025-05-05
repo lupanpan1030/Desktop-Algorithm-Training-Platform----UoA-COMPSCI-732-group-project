@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import { PrismaClient } from "@prisma/client";
+import { setPrisma } from "../../../backend/db/prisma/prisma";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
@@ -54,6 +55,8 @@ export async function teardownTestDB() {
   } else {
     delete process.env.DATABASE_URL;
   }
+
+  setPrisma(undefined);
 }
 
 // --------------------------------------------

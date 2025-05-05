@@ -24,7 +24,6 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await teardownTestDB();
-  setPrisma(undefined);
 });
 
 // ────────────────────────────────────────────────────────────

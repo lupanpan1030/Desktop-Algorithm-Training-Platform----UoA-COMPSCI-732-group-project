@@ -30,7 +30,6 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await teardownTestDB();
-  setPrisma(undefined)
 });
 
 describe("Submissions API (integration)", () => {

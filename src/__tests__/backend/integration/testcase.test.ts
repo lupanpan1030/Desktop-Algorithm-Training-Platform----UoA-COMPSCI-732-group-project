@@ -25,7 +25,6 @@ beforeEach(async () => {
 afterAll(async () => {
   // Clean up the temp DB file and disconnect
   await teardownTestDB();
-  setPrisma(undefined);
 });
 
 /* ──────────────────────────────────────────────────────────
