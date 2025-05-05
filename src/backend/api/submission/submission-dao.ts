@@ -1,13 +1,15 @@
-import { PrismaClient, Submission, SubmissionResult, SubmissionStatus } from '@prisma/client';
+import { Submission, SubmissionResult, SubmissionStatus } from '@prisma/client';
 import { SubmissionDetailDto, SubmissionListItemDto } from './submission';
 import { getPrisma } from '../../db/prisma/prisma';
 
-const prisma: PrismaClient = getPrisma();
-
 export class SubmissionDao {
+  private static get db() {
+    return getPrisma();
+  }
+
   // Get all submissions for a given problem
   static async getSubmissionsByProblemId(problemId: number): Promise<SubmissionListItemDto[]> {
-    const submissions = await prisma.submission.findMany({
+    const submissions = await this.db.submission.findMany({
       where: { problem_id: problemId },
       orderBy: { submitted_at: 'desc' }
     });
@@ -25,7 +27,7 @@ export class SubmissionDao {
     problemId: number,
     submissionId: number
   ): Promise<SubmissionDetailDto | null> {
-    const submission = await prisma.submission.findFirst({
+    const submission = await this.db.submission.findFirst({
       where: {
         submission_id: submissionId,
         problem_id: problemId
@@ -57,7 +59,7 @@ export class SubmissionDao {
     code: string, 
     status: SubmissionStatus
   ): Promise<Submission> {
-    return await prisma.submission.create({
+    return await this.db.submission.create({
       data: {
         problem_id: problemId,
         language_id: languageId,
@@ -81,7 +83,7 @@ export class SubmissionDao {
   ): Promise<SubmissionResult[]> {
     const createdResults = await Promise.all(
       results.map(result => 
-        prisma.submissionResult.create({
+        this.db.submissionResult.create({
           data: {
             submission_id: submissionId,
             status: result.status,
@@ -103,7 +105,7 @@ export class SubmissionDao {
     submissionId: number,
     status: SubmissionStatus
   ): Promise<Submission> {
-    return await prisma.submission.update({
+    return await this.db.submission.update({
       where: { submission_id: submissionId },
       data: { status }
     });
