@@ -11,7 +11,8 @@ import './styles/global.css';
 function App() {
     // Read state of Dark Mode from localStorage and set it to darkMode
     const [darkMode, setDarkMode] = useState(() => {
-        return localStorage.getItem("darkMode") === "true";
+        const stored = localStorage.getItem("darkMode");
+        return stored === null ? true : stored === "true"; 
     });
 
     // Listen to the change of darkMode，and store into localStorage

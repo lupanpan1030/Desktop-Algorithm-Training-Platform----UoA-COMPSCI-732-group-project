@@ -7,15 +7,18 @@ export function useAppTheme(darkMode) {
             palette: {
                 mode: darkMode ? "dark" : "light",
                 background: {
-                    default: darkMode ? "#121212" : "#ffffff",
-                    paper: darkMode ? "#1e1e1e" : "#f5f5f5",
+                    default: darkMode ? "#121212" :"#fff3e0", 
+                    paper: darkMode ? "#1e1e1e" : "#f5ebdd",   
+                },
+                primary: {
+                    main: darkMode ? "#lelele" : "#f5ebdd",    
                 },
             },
             components: {
                 MuiPaper: {
                     styleOverrides: {
                         root: {
-                            background: darkMode ? "#1e1e1e" : "#f5f5f5",
+                            background: darkMode ? "#1e1e1e" : "#f5ebdd",
                         },
                     },
                 },
