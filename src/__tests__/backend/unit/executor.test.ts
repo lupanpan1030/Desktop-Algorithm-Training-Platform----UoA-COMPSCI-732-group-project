@@ -32,35 +32,38 @@ if __name__ == '__main__':
 		expect(result.output).toBe("5");
 	});
 
-	// Test for compiled mode using rustc.
-	it('should add two ints using Rust compiled executable', async () => {
-		const rustCode = `
-use std::io::{self, Read};
+	// Test for compiled mode using gcc.
+	it('should add two ints using C compiled executable', async () => {
+		const cCode = `
+#include <stdio.h>
+#include <stdlib.h>
 
-fn main() {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input).unwrap();
-    let nums: Vec<i32> = input.split_whitespace()
-                              .filter_map(|s| s.parse().ok())
-                              .collect();
-    if nums.len() >= 2 {
-        println!("{}", nums[0] + nums[1]);
-    }
+int main() {
+	char input[100];
+	int a, b;
+	if (fgets(input, sizeof(input), stdin) != NULL) {
+		if (sscanf(input, "%d %d", &a, &b) == 2) {
+			printf("%d", a + b); // Remove newline for strict output match
+		}
+	}
+	return 0;
 }
 		`.trim();
 		const testCases = ['4 5'];
-		// Create a temporary executable path.
-		const tempExecutable = path.join(os.tmpdir(), `temp_exec_${Date.now()}`);
 		const options = {
-			code: rustCode,
-			fileSuffix: 'rs',
-			compileCmd: `rustc -o main`,
+			code: cCode,
+			fileSuffix: 'c',
+			compileCmd: `gcc -o main`,
 			executable: EXECUTABLE_NAME,
 			testCases
 		};
 		const results = await judgeSolution(ExecutionMode.Compiled, options);
 		expect(results.length).toBe(1);
 		const result = results[0];
+		// Debug output for troubleshooting
+		if (!result.succeeded) {
+			console.error('C code execution failed:', result);
+		}
 		expect(result.succeeded).toBe(true);
 		expect(result.output).toBe("9");
 	}, 20000);
