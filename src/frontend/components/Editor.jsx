@@ -34,7 +34,7 @@ export default function CodeEditor({ onCodeChange }) {
     ]);
     const navigate = useNavigate();
     const handleAddLanguage = () => {
-  navigate('/languages');   // 跳转到 Language 管理页面
+        navigate('/languages');   // 跳转到 Language 管理页面
 };
 
     
