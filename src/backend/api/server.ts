@@ -1,4 +1,4 @@
-// src/server.ts
+import 'dotenv/config';
 import { createApp } from './app';
 import { initializeDatabase } from '../db/prisma/initialize-database';
 
