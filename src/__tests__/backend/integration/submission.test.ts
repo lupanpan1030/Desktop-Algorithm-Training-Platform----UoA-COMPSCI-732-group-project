@@ -35,13 +35,7 @@ afterAll(async () => {
 describe("Submissions API (integration)", () => {
   describe("GET /problems/:problemId/submissions", () => {
     it("returns 200 + list of submissions for a problem", async () => {
-      let res;
-      try {
-        res = await request(app).get("/problems/1/submissions");
-      }
-      catch (error) {
-        console.error("Error in GET /problems/1/submissions:", error);
-      }
+      const res = await request(app).get("/problems/1/submissions");
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
 
@@ -62,13 +56,7 @@ describe("Submissions API (integration)", () => {
 
   describe("GET /problems/:problemId/submissions/:submissionId", () => {
     it("returns 200 + submission details with results", async () => {
-      let res: any;
-      try {
-        res = await request(app).get("/problems/1/submissions/1");
-      }
-      catch (error) {
-        console.error("Error in GET /problems/1/submissions/1:", error);
-      }
+      const res = await request(app).get("/problems/1/submissions/1");
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
         submissionId: 1,
@@ -90,25 +78,13 @@ describe("Submissions API (integration)", () => {
     });
 
     it("returns 404 when submission id does not exist", async () => {
-      let res;
-      try {
-        res = await request(app).get("/problems/1/submissions/999");
-      }
-      catch (error) {
-        console.error("Error in GET /problems/1/submissions/999:", error);
-      }
+      const res = await request(app).get("/problems/1/submissions/999");
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: expect.any(String) });
     });
 
     it("returns 404 when problem id does not exist", async () => {
-      let res;
-      try {
-        res = await request(app).get("/problems/999/submissions/1");
-      }
-      catch (error) {
-        console.error("Error in GET /problems/999/submissions/1:", error);
-      }
+      const res = await request(app).get("/problems/999/submissions/1");
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({ message: expect.any(String) });
     });
