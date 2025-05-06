@@ -600,7 +600,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLanguageController_getLanguages: Record<string, TsoaRoute.ParameterSchema> = {
         };
-        app.get('/language',
+        app.get('/languages',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
             ...(fetchMiddlewares<RequestHandler>(LanguageController.prototype.getLanguages)),
 
@@ -630,7 +630,7 @@ export function RegisterRoutes(app: Router) {
         const argsLanguageController_create: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"CreateLanguageDto"},
         };
-        app.post('/language',
+        app.post('/languages',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
             ...(fetchMiddlewares<RequestHandler>(LanguageController.prototype.create)),
 
@@ -661,7 +661,7 @@ export function RegisterRoutes(app: Router) {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
                 body: {"in":"body","name":"body","required":true,"ref":"Partial_CreateLanguageDto_"},
         };
-        app.put('/language/:id',
+        app.put('/languages/:id',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
             ...(fetchMiddlewares<RequestHandler>(LanguageController.prototype.update)),
 
@@ -691,7 +691,7 @@ export function RegisterRoutes(app: Router) {
         const argsLanguageController_remove: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
         };
-        app.delete('/language/:id',
+        app.delete('/languages/:id',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
             ...(fetchMiddlewares<RequestHandler>(LanguageController.prototype.remove)),
 

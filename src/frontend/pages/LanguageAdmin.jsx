@@ -25,7 +25,6 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 /**
@@ -58,9 +57,6 @@ export default function LanguageAdmin() {
     version: ''
   });
   const [editId, setEditId] = useState(null); // current editing languageId
-  const [openSearch, setOpenSearch] = useState(false); // controls search dialog
-  const [searchValue, setSearchValue] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
 
   const [confirm, setConfirm] = useState({ open: false, id: null, name: '' }); // delete confirmation
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); // feedback
@@ -77,10 +73,55 @@ export default function LanguageAdmin() {
 
   /* Fetch all languages */
   const fetchLanguages = async () => {
-    const res = await fetch('http://localhost:6785/languages');
-    const data = await res.json();
-    setLanguages(data);
-  };
+    try {
+      const res = await fetch("http://localhost:6785/languages");
+      const raw = await res.json();
+      
+    console.log("👉 /languages raw =", raw);        // 调试用，保留
+
+    /* ① 把返回值统一折腾成数组 */
+    const list =
+      Array.isArray(raw)                     ? raw :
+      Array.isArray(raw.languages)           ? raw.languages :
+      Array.isArray(raw.data)                ? raw.data :
+      Array.isArray(raw.data?.languages)     ? raw.data.languages :
+      Object.values(raw);        /* 兜底：{1:{…},2:{…}} 这种 */
+
+    /* ② 把各种别名字段映射成组件统一用的字段名 */
+    const mapped = list.map((l) => ({
+      ...l,
+
+      /* 主键 */
+      languageId:
+        l.languageId ?? l.language_id ?? l.id ?? l.languageID,
+
+      /* 编译命令：compile_command / compileCmd / compilerCmd … */
+      compile_command:
+        l.compile_command ??
+        l.compileCmd ??
+        l.compilerCmd ??
+        l.compiledCmd ??
+        null,
+
+      /* 运行命令：run_command / runCmd / runtimeCmd … */
+      run_command:
+        l.run_command ??
+        l.runCmd ??
+        l.runtimeCmd ??
+        l.executeCmd ??
+        l.run_command ??
+        l.runCommand ??          // 👈 新增
+        l.runCmd ??
+        l.runtimeCmd ??
+        null,
+    }));
+
+    setLanguages(mapped);
+  } catch (err) {
+    console.error("Failed to fetch languages", err);
+    setLanguages([]);
+  }
+};
 
   useEffect(() => {
     fetchLanguages();
@@ -94,23 +135,6 @@ export default function LanguageAdmin() {
 
   const toggleEditMode = () => setShowEdit((prev) => !prev);
 
-  const handleOpenSearch = () => {
-    setSearchValue(searchTerm);
-    setOpenSearch(true);
-  };
-
-  const handleSearchChange = (e) => setSearchValue(e.target.value);
-
-  const performSearch = () => {
-    setSearchTerm(searchValue.trim());
-    setOpenSearch(false);
-  };
-
-  const clearSearch = () => {
-    setSearchTerm('');
-    setSearchValue('');
-    setOpenSearch(false);
-  };
 
   const handleEditClick = (lang) => {
     setEditId(lang.languageId);
@@ -135,10 +159,10 @@ export default function LanguageAdmin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editForm.name,
-          runtimeCmd: editForm.run_command,
-          compilerCmd: editForm.compile_command || null,
+          run_command: editForm.run_command,
+          compile_command: editForm.compile_command || null,
           version: editForm.version || null,
-          suffix: editForm.suffix
+          suffix: editForm.suffix,
         }),
       });
       setSnackbar({ open: true, message: `Updated "${editForm.name}"`, severity: 'success' });
@@ -164,10 +188,10 @@ export default function LanguageAdmin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name,
-          runtimeCmd: form.run_command,
-          compilerCmd: form.compile_command || null,
+          run_command: form.run_command,
+          compile_command: form.compile_command || null,
           version: form.version || null,
-          suffix: form.suffix
+          suffix: form.suffix,
         }),
       });
       setSnackbar({ open: true, message: `Added "${form.name}"`, severity: 'success' });
@@ -207,7 +231,7 @@ export default function LanguageAdmin() {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <h1 style={{ margin: 0 }}>Language Management</h1>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={2}>
           <Tooltip title="Add new language">
             <Button
               variant="contained"
@@ -240,28 +264,6 @@ export default function LanguageAdmin() {
               Edit
             </Button>
           </Tooltip>
-          <Tooltip title="Search languages">
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<SearchIcon fontSize="small" />}
-              onClick={handleOpenSearch}
-              sx={darkBtnStyle}
-            >
-              Search
-            </Button>
-          </Tooltip>
-          {searchTerm && (
-            <Tooltip title="Clear search">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={clearSearch}
-              >
-                Clear
-              </Button>
-            </Tooltip>
-          )}
           <Tooltip title="Refresh list">
             <Button
               variant="contained"
@@ -307,19 +309,9 @@ export default function LanguageAdmin() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {(searchTerm
-                ? languages.filter((lang) => {
-                    const kw = searchTerm.toLowerCase();
-                    return (
-                      lang.name.toLowerCase().includes(kw) ||
-                      (lang.suffix ?? '').toLowerCase().includes(kw) ||
-                      (lang.version ?? '').toLowerCase().includes(kw)
-                    );
-                  })
-                : languages
-              ).map((lang) => (
+              {languages.map((lang) => (
                 <TableRow
-                  key={lang.languageId}
+                  key={lang.languageId ?? lang.language_id}
                   sx={{
                     height: 46,
                     '&:nth-of-type(odd)': { backgroundColor: 'rgba(0,0,0,0.02)' },
@@ -415,8 +407,16 @@ export default function LanguageAdmin() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseAdd}>Cancel</Button>
-          <Button variant="contained" onClick={addLanguage}>Add</Button>
+          <Button variant="contained" onClick={handleCloseAdd} sx={darkBtnStyle}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={addLanguage}
+            sx={darkBtnStyle}
+          >
+            Add
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -456,39 +456,22 @@ export default function LanguageAdmin() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
+          <Button variant="contained" onClick={() => setOpenEdit(false)} sx={darkBtnStyle}>
+            Cancel
+          </Button>
           <Button variant="contained" onClick={updateLanguage}>Save</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Search dialog */}
-      <Dialog open={openSearch} onClose={() => setOpenSearch(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Search Languages</DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Keyword (name, suffix, version)"
-            size="small"
-            value={searchValue}
-            onChange={handleSearchChange}
-          />
-        </DialogContent>
-        <DialogActions>
-          {searchTerm && (
-            <Button onClick={clearSearch}>Clear</Button>
-          )}
-          <Button onClick={() => setOpenSearch(false)}>Cancel</Button>
-          <Button variant="contained" onClick={performSearch}>Search</Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={confirm.open} onClose={() => setConfirm({ ...confirm, open: false })}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>Are you sure you want to delete "{confirm.name}"?</DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirm({ ...confirm, open: false })}>Cancel</Button>
+          <Button variant="contained" onClick={() => setConfirm({ ...confirm, open: false })} sx={darkBtnStyle}>
+            Cancel
+          </Button>
           <Button color="error" variant="contained" onClick={confirmDelete}>Delete</Button>
         </DialogActions>
       </Dialog>

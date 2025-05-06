@@ -17,7 +17,7 @@ const service = new LanguageService();
 
 // 编程语言 API 控制器
 // Programming Language API Controller
-@Route('language')
+@Route('languages')
 @Tags('ProgrammingLanguage')
 export class LanguageController extends Controller {
     // 获取所有编程语言
