@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { execSync } from "child_process";
 import { PrismaClient } from "@prisma/client";
 import { setPrisma } from "../../../backend/db/prisma/prisma";
