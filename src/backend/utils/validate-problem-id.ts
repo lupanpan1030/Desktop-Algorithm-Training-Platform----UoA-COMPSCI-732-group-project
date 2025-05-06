@@ -1,6 +1,6 @@
 // middleware to validate problem id in path params
 import { Request, Response, NextFunction } from "express";
-import { ProblemsService } from "../api/problems/problem-service";
+import { ProblemsService } from "../api/problem/problem-service";
 
 export async function validateProblemId(req: Request, res: Response, next: NextFunction) {
   const problemId = Number(req.params.problemId);

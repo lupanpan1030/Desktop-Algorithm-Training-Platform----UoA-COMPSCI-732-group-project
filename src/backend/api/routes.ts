@@ -8,7 +8,7 @@ import { TestCaseController } from './testcase/testcase-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemSubmissionController } from './submission/submission-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { ProblemsController } from './problems/problem-controller';
+import { ProblemsController } from './problem/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';

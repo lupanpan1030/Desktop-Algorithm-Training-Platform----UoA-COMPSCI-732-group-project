@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
-import { ProblemsService } from "../../../backend/api/problems/problem-service";
-import { ProblemsDao } from "../../../backend/api/problems/problem-dao";
+import { ProblemsService } from "../../../backend/api/problem/problem-service";
+import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
 import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 
 // mock the entire ProblemDao module
-vi.mock("../../../backend/api/problems/problem-dao", () => {
+vi.mock("../../../backend/api/problem/problem-dao", () => {
   return {
     ProblemsDao: {
       getAllProblems: vi.fn(),
