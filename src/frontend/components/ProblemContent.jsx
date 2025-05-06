@@ -13,6 +13,28 @@ export default function ProblemContent({ problem }) {
             <Typography variant="h4" gutterBottom>
                 {problem.title}
             </Typography>
+
+            {problem.difficulty && (
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" display="inline">
+                        Difficulty:
+                    </Typography>
+                    <Typography
+                        variant="body2"
+                        display="inline"
+                        sx={{
+                            ml: 1,
+                            color: problem.difficulty.toLowerCase() === 'easy'
+                                ? 'success.main'
+                                : problem.difficulty.toLowerCase() === 'medium'
+                                    ? 'warning.main'
+                                    : 'error.main'
+                        }}
+                    >
+                        {problem.difficulty}
+                    </Typography>
+                </Box>
+            )}
             
             <Typography
               component="div"
@@ -102,27 +124,6 @@ export default function ProblemContent({ problem }) {
                 </Box>
             )}
             
-            {problem.difficulty && (
-                <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" display="inline">
-                        Difficulty:
-                    </Typography>
-                    <Typography 
-                        variant="body2" 
-                        display="inline" 
-                        sx={{ 
-                            ml: 1,
-                            color: problem.difficulty.toLowerCase() === 'easy' 
-                                ? 'success.main' 
-                                : problem.difficulty.toLowerCase() === 'medium' 
-                                ? 'warning.main' 
-                                : 'error.main'
-                        }}
-                    >
-                        {problem.difficulty}
-                    </Typography>
-                </Box>
-            )}
         </Box>
     );
 }
