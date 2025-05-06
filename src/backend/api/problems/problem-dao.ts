@@ -1,6 +1,7 @@
 // This file interacts with the database to perform CRUD operations on problems.
 
 import {Problem, Difficulty } from "@prisma/client";
+import { ProblemWithStatuses } from "./problem";
 import { getPrisma } from "../../db/prisma/prisma";
 
 
@@ -13,8 +14,15 @@ export class ProblemsDao {
   /**
    * Retrieves all problems including their associated tags.
    */
-  public static async getAllProblems(): Promise<Problem[]> {
-    return this.db.problem.findMany();
+  public static async getAllProblems(): Promise<ProblemWithStatuses[]> {
+    return this.db.problem.findMany({
+      include: {
+        submissions: {
+          select: { status: true },
+        },
+      },
+      orderBy: { problem_id: 'asc' },
+    });
   }
 
   /**

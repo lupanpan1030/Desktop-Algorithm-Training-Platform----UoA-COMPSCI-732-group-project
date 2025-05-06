@@ -4,21 +4,34 @@ import { ProblemsDao } from "./problem-dao";
 import {
   ProblemSummary,
   ProblemDetails,
+  CompletionState,
   CreateProblemParams,
   UpdateProblemParams,
 } from "./problem";
+import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError } from "../../utils/errors/not-found-error";
 
+const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
+  if (statuses.some(s => s === 'ACCEPTED')) return 'Completed';
+  if (statuses.length > 0) return 'Attempted';
+  return null;
+};
+
 export class ProblemsService {
+
   /**
    * Retrieves a list of all problems with summary information.
    */
   public async getAllProblems(): Promise<ProblemSummary[]> {
     const problems = await ProblemsDao.getAllProblems();
+    console.log("Problems retrieved:", problems);
     return problems.map((problem) => ({
       problemId: problem.problem_id,
       title: problem.title,
       difficulty: problem.difficulty,
+      completionState: deriveState(
+        problem.submissions.map((s) => s.status)
+      ),
     }));
   }
 
