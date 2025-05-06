@@ -15,7 +15,19 @@ export default function ProblemContent({ problem }) {
             </Typography>
 
             {problem.difficulty && (
-                <Box sx={{ mb: 2 }}>
+                <Box
+                    sx={{
+                        mb: 2,
+                        display: 'inline-block',
+                        px: 2,
+                        py: 1,
+                        bgcolor: 'background.paper',
+                        borderRadius: 2,
+                        boxShadow: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }}
+                >
                     <Typography variant="subtitle2" display="inline">
                         Difficulty:
                     </Typography>
@@ -35,6 +47,8 @@ export default function ProblemContent({ problem }) {
                     </Typography>
                 </Box>
             )}
+
+            <Divider sx={{ my: 2 }} />
             
             <Typography
               component="div"
@@ -45,8 +59,6 @@ export default function ProblemContent({ problem }) {
               }}
             />
 
-            <Divider sx={{ my: 2 }} />
-            
             {problem.examples && problem.examples.length > 0 && (
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h6" gutterBottom>
