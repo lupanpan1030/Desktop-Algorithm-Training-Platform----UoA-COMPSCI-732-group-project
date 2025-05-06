@@ -29,15 +29,15 @@ describe("ProblemsService", () => {
   describe("getAllProblems()", () => {
     it("maps DAO results to ProblemSummary[]", async () => {
       const raw = [
-        { problem_id: 1, title: "A", difficulty: "EASY" },
-        { problem_id: 2, title: "B", difficulty: "HARD" },
+        { problem_id: 1, title: "A", difficulty: "EASY",submissions: [{status:"ACCEPTED"}] },
+        { problem_id: 2, title: "B", difficulty: "HARD", submissions: [{status:"RUNTIME_ERROR"}] },
       ];
       (ProblemsDao.getAllProblems as Mock).mockResolvedValue(raw);
 
       const summaries = await svc.getAllProblems();
       expect(summaries).toEqual([
-        { problemId: 1, title: "A", difficulty: "EASY" },
-        { problemId: 2, title: "B", difficulty: "HARD" },
+        { problemId: 1, title: "A", difficulty: "EASY",completionState: "Completed" },
+        { problemId: 2, title: "B", difficulty: "HARD" , completionState:"Attempted"},
       ]);
       expect(ProblemsDao.getAllProblems).toHaveBeenCalledOnce();
     });

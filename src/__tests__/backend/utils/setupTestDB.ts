@@ -205,6 +205,7 @@ export async function dropAndSeedSubmissionResults() {
     data: [
       {
         submission_id: 1,
+        status: "RUNTIME_ERROR",
         output: "Hello World",
         runtime_ms: 100,
         memory_kb: 256,
