@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, Typography, Divider } from '@mui/material';
+import { marked } from 'marked';
+import DOMPurify from '../utils/dompurifyConfig';
 
 export default function ProblemContent({ problem }) {
     if (!problem) {
@@ -12,10 +14,15 @@ export default function ProblemContent({ problem }) {
                 {problem.title}
             </Typography>
             
-            <Typography variant="body1" paragraph>
-                {problem.description}
-            </Typography>
-            
+            <Typography
+              component="div"
+              variant="body1"
+              paragraph
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(marked(problem.description))
+              }}
+            />
+
             <Divider sx={{ my: 2 }} />
             
             {problem.examples && problem.examples.length > 0 && (
