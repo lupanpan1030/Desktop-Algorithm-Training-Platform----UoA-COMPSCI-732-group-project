@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, Typography, Divider } from '@mui/material';
+import { marked } from 'marked';
+import DOMPurify from '../utils/dompurifyConfig';
 
 export default function ProblemContent({ problem }) {
     if (!problem) {
@@ -11,13 +13,52 @@ export default function ProblemContent({ problem }) {
             <Typography variant="h4" gutterBottom>
                 {problem.title}
             </Typography>
-            
-            <Typography variant="body1" paragraph>
-                {problem.description}
-            </Typography>
-            
+
+            {problem.difficulty && (
+                <Box
+                    sx={{
+                        mb: 2,
+                        display: 'inline-block',
+                        px: 2,
+                        py: 1,
+                        bgcolor: 'background.paper',
+                        borderRadius: 2,
+                        boxShadow: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }}
+                >
+                    <Typography variant="subtitle2" display="inline">
+                        Difficulty:
+                    </Typography>
+                    <Typography
+                        variant="body2"
+                        display="inline"
+                        sx={{
+                            ml: 1,
+                            color: problem.difficulty.toLowerCase() === 'easy'
+                                ? 'success.main'
+                                : problem.difficulty.toLowerCase() === 'medium'
+                                    ? 'warning.main'
+                                    : 'error.main'
+                        }}
+                    >
+                        {problem.difficulty}
+                    </Typography>
+                </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
             
+            <Typography
+              component="div"
+              variant="body1"
+              paragraph
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(marked(problem.description))
+              }}
+            />
+
             {problem.examples && problem.examples.length > 0 && (
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h6" gutterBottom>
@@ -95,27 +136,6 @@ export default function ProblemContent({ problem }) {
                 </Box>
             )}
             
-            {problem.difficulty && (
-                <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" display="inline">
-                        Difficulty:
-                    </Typography>
-                    <Typography 
-                        variant="body2" 
-                        display="inline" 
-                        sx={{ 
-                            ml: 1,
-                            color: problem.difficulty.toLowerCase() === 'easy' 
-                                ? 'success.main' 
-                                : problem.difficulty.toLowerCase() === 'medium' 
-                                ? 'warning.main' 
-                                : 'error.main'
-                        }}
-                    >
-                        {problem.difficulty}
-                    </Typography>
-                </Box>
-            )}
         </Box>
     );
 }
