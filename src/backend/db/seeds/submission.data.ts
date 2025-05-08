@@ -18,6 +18,46 @@ export async function seedSubmission() {
         language_id: 1,
         status: "RUNTIME_ERROR",
       },
+      {
+        // Merge Two Sorted Lists
+        submission_id: 3,
+        problem_id: 10,
+        language_id: 1,
+        code: `function mergeTwoLists(l1, l2) {
+  // … your implementation …
+}`,
+        status: "ACCEPTED",
+        submitted_at: new Date("2025-05-09T10:00:00.000Z"),
+      },
+      {
+        // Maximum Subarray
+        submission_id: 4,
+        problem_id: 11,
+        language_id: 2,
+        code: `class Solution:
+    def maxSubArray(self, nums):
+        # … your implementation …`,
+        status: "ACCEPTED",
+        submitted_at: new Date("2025-05-09T10:05:00.000Z"),
+      },
+      {
+        // Longest Substring Without Repeating Characters
+        submission_id: 5,
+        problem_id: 12,
+        language_id: 1,
+        code: `function lengthOfLongestSubstring(s) {
+  // … your implementation …
+}`,
+        status: "ACCEPTED",
+        submitted_at: new Date("2025-05-09T10:10:00.000Z"),
+      },
+      {
+        problem_id: 4,
+        submission_id: 6,
+        code: "hello world",
+        language_id: 1,
+        status: "RUNTIME_ERROR",
+      },
     ],
   });
 }

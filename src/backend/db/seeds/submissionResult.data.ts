@@ -69,6 +69,30 @@ export async function seedSubmissionResults() {
         runtime_ms: 15,
         memory_kb: 59296,
       },
+      {
+        submission_id: 3,
+        status: 'ACCEPTED',
+        output: '1->1->2->3->4->4',
+        runtime_ms: 30,
+        memory_kb: 1024,
+        submitted_at: new Date('2025-05-09T10:00:01.000Z'),
+      },
+      {
+        submission_id: 4,
+        status: 'ACCEPTED',
+        output: '6',
+        runtime_ms: 10,
+        memory_kb: 512,
+        submitted_at: new Date('2025-05-09T10:05:01.000Z'),
+      },
+      {
+        submission_id: 5,
+        status: 'ACCEPTED',
+        output: '3',
+        runtime_ms: 15,
+        memory_kb: 600,
+        submitted_at: new Date('2025-05-09T10:10:01.000Z'),
+      },
     ],
   });
 }

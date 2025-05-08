@@ -2,7 +2,7 @@
 
 import { Difficulty, Prisma } from "@prisma/client";
 
-export type CompletionState = 'Completed' | 'Attempted' | null;
+export type CompletionState = 'Completed' | 'Attempted' | 'Unattempted';
 
 // Summary view of a problem (for listing purposes)
 export interface ProblemSummary {
