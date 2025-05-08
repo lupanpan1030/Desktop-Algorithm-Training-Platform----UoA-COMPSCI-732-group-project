@@ -24,7 +24,6 @@ export class ProblemsService {
    */
   public async getAllProblems(): Promise<ProblemSummary[]> {
     const problems = await ProblemsDao.getAllProblems();
-    console.log("Problems retrieved:", problems);
     return problems.map((problem) => ({
       problemId: problem.problem_id,
       title: problem.title,

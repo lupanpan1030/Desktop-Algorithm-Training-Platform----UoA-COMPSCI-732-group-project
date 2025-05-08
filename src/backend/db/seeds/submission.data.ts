@@ -13,7 +13,7 @@ export async function seedSubmission() {
       },
       {
         problem_id: 2,
-        submission_id: 1,
+        submission_id: 2,
         code: "hello world",
         language_id: 1,
         status: "RUNTIME_ERROR",
