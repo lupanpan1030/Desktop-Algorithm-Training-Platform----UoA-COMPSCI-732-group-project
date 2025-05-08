@@ -8,7 +8,7 @@ import { TestCaseController } from './testcase/testcase-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemSubmissionController } from './submission/submission-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { ProblemsController } from './problems/problem-controller';
+import { ProblemsController } from './problem/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
@@ -144,12 +144,18 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"_36_Enums.Difficulty","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CompletionState": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Completed"]},{"dataType":"enum","enums":["Attempted"]},{"dataType":"enum","enums":[null]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ProblemSummary": {
         "dataType": "refObject",
         "properties": {
             "problemId": {"dataType":"double","required":true},
             "title": {"dataType":"string","required":true},
             "difficulty": {"ref":"Difficulty","required":true},
+            "completionState": {"ref":"CompletionState","required":true},
         },
         "additionalProperties": false,
     },

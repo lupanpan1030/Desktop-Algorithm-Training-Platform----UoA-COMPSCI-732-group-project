@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
-import { ProblemsService } from "../../../backend/api/problems/problem-service";
-import { ProblemsDao } from "../../../backend/api/problems/problem-dao";
+import { ProblemsService } from "../../../backend/api/problem/problem-service";
+import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
 import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 
 // mock the entire ProblemDao module
-vi.mock("../../../backend/api/problems/problem-dao", () => {
+vi.mock("../../../backend/api/problem/problem-dao", () => {
   return {
     ProblemsDao: {
       getAllProblems: vi.fn(),
@@ -29,15 +29,15 @@ describe("ProblemsService", () => {
   describe("getAllProblems()", () => {
     it("maps DAO results to ProblemSummary[]", async () => {
       const raw = [
-        { problem_id: 1, title: "A", difficulty: "EASY" },
-        { problem_id: 2, title: "B", difficulty: "HARD" },
+        { problem_id: 1, title: "A", difficulty: "EASY",submissions: [{status:"ACCEPTED"}] },
+        { problem_id: 2, title: "B", difficulty: "HARD", submissions: [{status:"RUNTIME_ERROR"}] },
       ];
       (ProblemsDao.getAllProblems as Mock).mockResolvedValue(raw);
 
       const summaries = await svc.getAllProblems();
       expect(summaries).toEqual([
-        { problemId: 1, title: "A", difficulty: "EASY" },
-        { problemId: 2, title: "B", difficulty: "HARD" },
+        { problemId: 1, title: "A", difficulty: "EASY",completionState: "Completed" },
+        { problemId: 2, title: "B", difficulty: "HARD" , completionState:"Attempted"},
       ]);
       expect(ProblemsDao.getAllProblems).toHaveBeenCalledOnce();
     });
