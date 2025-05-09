@@ -22,10 +22,12 @@ import {
   DialogContent,
   DialogActions,
   Fade,
+  LinearProgress,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { useApi } from '../hooks/useApi';
 
 /**
  * Language Management Page (Add/Delete Languages)
@@ -61,6 +63,7 @@ export default function LanguageAdmin() {
   const [confirm, setConfirm] = useState({ open: false, id: null, name: '' }); // delete confirmation
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); // feedback
 
+  const { getLanguages, addLanguage, updateLanguage, deleteLanguage, loading, error } = useApi();
   const theme = useTheme();
   const darkBtnStyle =
     theme.palette.mode === 'dark'
@@ -73,59 +76,22 @@ export default function LanguageAdmin() {
 
   /* Fetch all languages */
   const fetchLanguages = async () => {
-    try {
-      const res = await fetch("http://localhost:6785/languages");
-      const raw = await res.json();
-      
-    console.log("👉 /languages raw =", raw);        // 调试用，保留
-
-    /* ① 把返回值统一折腾成数组 */
-    const list =
-      Array.isArray(raw)                     ? raw :
-      Array.isArray(raw.languages)           ? raw.languages :
-      Array.isArray(raw.data)                ? raw.data :
-      Array.isArray(raw.data?.languages)     ? raw.data.languages :
-      Object.values(raw);        /* 兜底：{1:{…},2:{…}} 这种 */
-
-    /* ② 把各种别名字段映射成组件统一用的字段名 */
-    const mapped = list.map((l) => ({
-      ...l,
-
-      /* 主键 */
-      languageId:
-        l.languageId ?? l.language_id ?? l.id ?? l.languageID,
-
-      /* 编译命令：compile_command / compileCmd / compilerCmd … */
-      compile_command:
-        l.compile_command ??
-        l.compileCmd ??
-        l.compilerCmd ??
-        l.compiledCmd ??
-        null,
-
-      /* 运行命令：run_command / runCmd / runtimeCmd … */
-      run_command:
-        l.run_command ??
-        l.runCmd ??
-        l.runtimeCmd ??
-        l.executeCmd ??
-        l.run_command ??
-        l.runCommand ??          // 👈 新增
-        l.runCmd ??
-        l.runtimeCmd ??
-        null,
-    }));
-
-    setLanguages(mapped);
-  } catch (err) {
-    console.error("Failed to fetch languages", err);
-    setLanguages([]);
-  }
-};
+    const data = await getLanguages();
+    if (data) {
+      setLanguages(data);
+    }
+  };
 
   useEffect(() => {
     fetchLanguages();
-  }, []);
+  }, [getLanguages]);
+
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      setSnackbar({ open: true, message: error.message, severity: 'error' });
+    }
+  }, [error]);
 
   /* Handle input changes */
   const handleChange = (field) => (e) =>
@@ -140,8 +106,8 @@ export default function LanguageAdmin() {
     setEditId(lang.languageId);
     setEditForm({
       name: lang.name ?? '',
-      compile_command: lang.compile_command ?? lang.compilerCmd ?? '',
-      run_command: lang.run_command ?? lang.runCmd ?? '',
+      compile_command: lang.compile_command ?? '',
+      run_command: lang.run_command ?? '',
       suffix: lang.suffix ?? '',
       version: lang.version ?? ''
     });
@@ -151,24 +117,14 @@ export default function LanguageAdmin() {
   const handleEditChange = (field) => (e) =>
     setEditForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const updateLanguage = async () => {
+  const handleUpdateLanguage = async () => {
     if (!editId) return;
-    try {
-      await fetch(`http://localhost:6785/languages/${editId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editForm.name,
-          run_command: editForm.run_command,
-          compile_command: editForm.compile_command || null,
-          version: editForm.version || null,
-          suffix: editForm.suffix,
-        }),
-      });
+    const result = await updateLanguage(editId, editForm);
+    if (result) {
       setSnackbar({ open: true, message: `Updated "${editForm.name}"`, severity: 'success' });
       setOpenEdit(false);
       fetchLanguages();
-    } catch (e) {
+    } else {
       setSnackbar({ open: true, message: 'Update failed', severity: 'error' });
     }
   };
@@ -176,24 +132,15 @@ export default function LanguageAdmin() {
   const handleOpenAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
 
-  const addLanguage = async () => {
+  const handleAddLanguage = async () => {
     if (!form.name.trim()) {
       setSnackbar({ open: true, message: 'Please enter a language name', severity: 'warning' });
       return;
     }
     if (!form.suffix.trim()) return;
-    try {
-      await fetch('http://localhost:6785/languages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          run_command: form.run_command,
-          compile_command: form.compile_command || null,
-          version: form.version || null,
-          suffix: form.suffix,
-        }),
-      });
+    
+    const result = await addLanguage(form);
+    if (result) {
       setSnackbar({ open: true, message: `Added "${form.name}"`, severity: 'success' });
       setForm({
         name: '',
@@ -204,7 +151,7 @@ export default function LanguageAdmin() {
       });
       handleCloseAdd();
       fetchLanguages();
-    } catch (e) {
+    } else {
       setSnackbar({ open: true, message: 'Add failed', severity: 'error' });
     }
   };
@@ -213,22 +160,22 @@ export default function LanguageAdmin() {
     setConfirm({ open: true, id, name });
   };
 
-  const confirmDelete = async () => {
+  const handleConfirmDelete = async () => {
     const { id, name } = confirm;
-    try {
-      await fetch(`http://localhost:6785/languages/${id}`, { method: 'DELETE' });
+    const success = await deleteLanguage(id);
+    if (success) {
       setSnackbar({ open: true, message: `Deleted "${name}"`, severity: 'success' });
       fetchLanguages();
-    } catch (e) {
+    } else {
       setSnackbar({ open: true, message: 'Delete failed', severity: 'error' });
-    } finally {
-      setConfirm({ open: false, id: null, name: '' });
-      setShowDelete(false);
     }
+    setConfirm({ open: false, id: null, name: '' });
+    setShowDelete(false);
   };
 
   return (
     <Box sx={{ p: 3 }}>
+      {loading && <LinearProgress />}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <h1 style={{ margin: 0 }}>Language Management</h1>
         <Stack direction="row" spacing={2}>
@@ -238,6 +185,7 @@ export default function LanguageAdmin() {
               size="small"
               onClick={handleOpenAdd}
               sx={darkBtnStyle}
+              aria-label="Add new language"
             >
               Add
             </Button>
@@ -249,6 +197,7 @@ export default function LanguageAdmin() {
               color={showDelete ? 'error' : 'primary'}
               onClick={toggleDeleteMode}
               sx={darkBtnStyle}
+              aria-label="Toggle delete mode"
             >
               Delete
             </Button>
@@ -260,6 +209,7 @@ export default function LanguageAdmin() {
               color={showEdit ? 'secondary' : 'primary'}
               onClick={toggleEditMode}
               sx={darkBtnStyle}
+              aria-label="Toggle edit mode"
             >
               Edit
             </Button>
@@ -347,6 +297,7 @@ export default function LanguageAdmin() {
                             color: theme.palette.getContrastText(theme.palette.secondary.light),
                             '&:hover': { bgcolor: theme.palette.secondary.main },
                           }}
+                          data-testid="EditIcon"
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -359,6 +310,7 @@ export default function LanguageAdmin() {
                           color="error"
                           size="small"
                           onClick={() => handleDeleteClick(lang.languageId, lang.name)}
+                          data-testid="DeleteIcon"
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -412,8 +364,9 @@ export default function LanguageAdmin() {
           </Button>
           <Button
             variant="contained"
-            onClick={addLanguage}
+            onClick={handleAddLanguage}
             sx={darkBtnStyle}
+            aria-label="Add"
           >
             Add
           </Button>
@@ -459,7 +412,13 @@ export default function LanguageAdmin() {
           <Button variant="contained" onClick={() => setOpenEdit(false)} sx={darkBtnStyle}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={updateLanguage}>Save</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateLanguage}
+            aria-label="Save"
+          >
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -472,7 +431,14 @@ export default function LanguageAdmin() {
           <Button variant="contained" onClick={() => setConfirm({ ...confirm, open: false })} sx={darkBtnStyle}>
             Cancel
           </Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>Delete</Button>
+          <Button 
+            color="error" 
+            variant="contained" 
+            onClick={handleConfirmDelete}
+            aria-label="Delete"
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -488,6 +454,7 @@ export default function LanguageAdmin() {
           variant="filled"
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           sx={{ width: '100%' }}
+          role="alert"
         >
           {snackbar.message}
         </Alert>

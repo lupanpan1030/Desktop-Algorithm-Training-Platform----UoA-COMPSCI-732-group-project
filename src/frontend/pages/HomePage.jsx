@@ -3,29 +3,25 @@ import { Box, Typography, Paper, IconButton } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import FiltersPanel from '../components/FiltersPanel';
 import ProblemList from '../components/ProblemList';
+import { useApi } from '../hooks/useApi';
 
 export default function HomePage() {
     const [problems, setProblems] = useState([]);
     const [difficultyFilter, setDifficultyFilter] = useState([]);   // [] = show all
-    const [statusFilter, setStatusFilter]       = useState([]);     // [] = show all
-    const [error, setError] = useState(false);
+    const [statusFilter, setStatusFilter] = useState([]);     // [] = show all
+    const { getProblems, loading, error } = useApi();
 
     const [filtersOpen, setFiltersOpen] = useState(false);   // sidebar collapsed by default
 
     useEffect(() => {
         async function fetchData() {
-            try {
-                const response = await fetch('http://localhost:6785/problems');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                if (!Array.isArray(data)) throw new Error('Invalid data');
+            const data = await getProblems();
+            if (data) {
                 setProblems(data);
-            } catch (e) {
-                setError(true);
             }
         }
         fetchData();
-    }, []);
+    }, [getProblems]);
 
     const visibleProblems = useMemo(() => {
         return problems.filter(p => {
@@ -87,7 +83,9 @@ export default function HomePage() {
         )}
 
         {/* Problem list (takes full width) */}
-        {visibleProblems.length ? (
+        {loading ? (
+          <Typography>Loading...</Typography>
+        ) : visibleProblems.length ? (
           <ProblemList problems={visibleProblems} />
         ) : (
           <Typography>No problems found</Typography>
