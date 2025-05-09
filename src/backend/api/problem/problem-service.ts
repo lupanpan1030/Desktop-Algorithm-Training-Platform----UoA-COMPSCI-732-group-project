@@ -14,7 +14,7 @@ import { NotFoundError } from "../../utils/errors/not-found-error";
 const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
   if (statuses.some(s => s === 'ACCEPTED')) return 'Completed';
   if (statuses.length > 0) return 'Attempted';
-  return null;
+  return 'Unattempted';
 };
 
 export class ProblemsService {
