@@ -296,6 +296,15 @@
 			"Difficulty": {
 				"$ref": "#/components/schemas/_36_Enums.Difficulty"
 			},
+			"CompletionState": {
+				"type": "string",
+				"enum": [
+					"Completed",
+					"Attempted",
+					null
+				],
+				"nullable": true
+			},
 			"ProblemSummary": {
 				"properties": {
 					"problemId": {
@@ -307,12 +316,16 @@
 					},
 					"difficulty": {
 						"$ref": "#/components/schemas/Difficulty"
+					},
+					"completionState": {
+						"$ref": "#/components/schemas/CompletionState"
 					}
 				},
 				"required": [
 					"problemId",
 					"title",
-					"difficulty"
+					"difficulty",
+					"completionState"
 				],
 				"type": "object",
 				"additionalProperties": false

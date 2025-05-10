@@ -4,12 +4,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
-import { ProblemsController } from "../../../backend/api/problems/problem-controller";
-import { ProblemsService } from "../../../backend/api/problems/problem-service";
+import { ProblemsController } from "../../../backend/api/problem/problem-controller";
+import { ProblemsService } from "../../../backend/api/problem/problem-service";
 import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 
 // Mock the ProblemsService class to return a mocked instance for all its methods
-vi.mock("../../../backend/api/problems/problem-service", () => {
+vi.mock("../../../backend/api/problem/problem-service", () => {
   return {
     ProblemsService: vi.fn().mockImplementation(() => ({
       getAllProblems: vi.fn(),

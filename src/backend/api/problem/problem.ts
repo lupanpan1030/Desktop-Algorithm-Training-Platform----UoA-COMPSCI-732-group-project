@@ -1,19 +1,36 @@
 // This file defines the types and interfaces used in the problem API.
 
-import { Difficulty } from "@prisma/client";
+import { Difficulty, Prisma } from "@prisma/client";
+
+export type CompletionState = 'Completed' | 'Attempted' | 'Unattempted';
 
 // Summary view of a problem (for listing purposes)
 export interface ProblemSummary {
   problemId: number;
   title: string;
   difficulty: Difficulty;
+  completionState: CompletionState; // optional field for completed status
 }
 
 // Detailed view of a problem (for getting a single problem's details)
-export interface ProblemDetails extends ProblemSummary {
+export interface ProblemDetails {
+  problemId: number;
+  title: string;
+  difficulty: Difficulty;
   description: string;
-  createdAt: string; // ISO8601 format
+  createdAt: string; // ISO date string
 }
+
+// Used for intermediary data transfer between the database and the API
+export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
+  include: {
+    submissions: {
+      select: {
+        status: true;
+      };
+    };
+  };
+}>;
 
 // Request parameters for creating a problem (id and createdAt are auto-generated)
 // use @tsoa/validation decorators to validate the request body

@@ -7,7 +7,7 @@ import { FormControl, InputLabel, Select, MenuItem, Box, Typography, IconButton,
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 
-// 一些编辑器默认设置
+// Some default settings for the editor
 const editorOptions = {
   fontSize: 14,
   scrollBeyondLastLine: false,
@@ -25,7 +25,7 @@ export default function CodeEditor({ onCodeChange }) {
     const [language, setLanguage] = useState('python');
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [monacoError, setMonacoError] = useState(null);
-    // 默认语言列表，在无法连接后端时作为备用
+    // Default language list works as backup when backend is unavailable
     const [languages, setLanguages] = useState([
         { language_id: 1, name: 'Python' },
         { language_id: 2, name: 'JavaScript' },
@@ -34,12 +34,12 @@ export default function CodeEditor({ onCodeChange }) {
     ]);
     const navigate = useNavigate();
     const handleAddLanguage = () => {
-        navigate('/languages');   // 跳转到 Language 管理页面
+        navigate('/languages');   // Navigate to Language management page
 };
 
     
 
-    // 获取支持的编程语言列表
+    // Fetch language list from backend
     useEffect(() => {
         const fetchLanguages = async () => {
             try {
@@ -50,25 +50,25 @@ export default function CodeEditor({ onCodeChange }) {
                 }
             } catch (error) {
                 console.error('Error fetching languages:', error);
-                // 使用默认语言列表，不显示错误
+                // Use default language list to avoid errors 
             }
         };
         fetchLanguages();
     }, []);
 
-    // 添加加载超时检测
+    // Additional loading timeout detection
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (!isEditorReady) {
                 console.warn('Monaco editor loading timeout - switching to fallback editor');
                 setMonacoError(new Error('Loading timeout'));
             }
-        }, 8000); // 8秒后超时
+        }, 8000); // Timeout after 8 seconds
         
         return () => clearTimeout(timeoutId);
     }, [isEditorReady]);
 
-    // 监听全局错误，捕获Monaco相关错误
+    // Listen for global errors and capture Monaco-related errors
     useEffect(() => {
         const handleGlobalError = (event) => {
             if (
@@ -86,7 +86,7 @@ export default function CodeEditor({ onCodeChange }) {
         return () => window.removeEventListener('error', handleGlobalError);
     }, []);
 
-    // 使用useCallback包装，确保函数引用稳定
+    // Use useCallback to memoize the function 
     const handleEditorChange = useCallback((value) => {
         setCode(value || '');
     }, []);
@@ -95,19 +95,19 @@ export default function CodeEditor({ onCodeChange }) {
         setLanguage(event.target.value);
     }, []);
 
-    // 处理编辑器成功挂载
+    // Handle editor mount successfully
     const handleEditorDidMount = useCallback((editor, monaco) => {
         editorRef.current = editor;
         setIsEditorReady(true);
         setMonacoError(null);
-        // 可以在这里添加更多编辑器初始化逻辑
+        
     }, []);
 
-    // 处理编辑器加载错误
+    // Handle editor mount error
     const handleEditorWillMount = useCallback((monaco) => {
         try {
     
-            // 👇 你的原主题设置逻辑继续保留
+            // 👇 The logic of original theme setting remains
             monaco.editor.defineTheme('customTheme', {
                 base: 'vs-dark',
                 inherit: true,
@@ -123,20 +123,20 @@ export default function CodeEditor({ onCodeChange }) {
     }, []);
     
 
-    // 处理加载错误
+    // Handle editor loading error
     const handleEditorError = useCallback((error) => {
         console.error('Monaco editor loading error:', error);
         setMonacoError(error);
     }, []);
 
-    // 当代码或语言改变时，通知父组件 - 使用useEffect避免循环更新
+    // When code or language changes, notify the parent component. Use useEffect to avoid circular updates
     useEffect(() => {
         if (onCodeChange) {
             onCodeChange({ code, language });
         }
     }, [code, language, onCodeChange]);
 
-    // 当编辑器引用存在时，设置焦点
+    // Set focus on editor when it is ready
     useEffect(() => {
         if (editorRef.current && isEditorReady) {
             setTimeout(() => {
@@ -145,7 +145,7 @@ export default function CodeEditor({ onCodeChange }) {
         }
     }, [isEditorReady]);
 
-    // 如果有Monaco错误或者8秒后还未加载完成，直接使用备用编辑器
+    // If there's a Monaco error or it hasn't loaded after 8 seconds, use the fallback editor
     if (monacoError) {
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
@@ -246,7 +246,7 @@ export default function CodeEditor({ onCodeChange }) {
                     onChange={handleEditorChange}
                     onMount={handleEditorDidMount}
                     beforeMount={handleEditorWillMount}
-                    onValidate={() => {}} // 防止验证错误
+                    onValidate={() => {}} // Avoid validation errors
                     theme="vs-dark"
                     loading={
                         <Box sx={{ 

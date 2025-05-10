@@ -30,8 +30,7 @@ interface SubmitResponse {
 }
 
 const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, languageId }) => {
-  const { fetchData, loading, error } = useApi();
-  //const [result, setResult] = useState<any>(null);
+  const { runCode, submitCode, loading, error } = useApi();
   const [runResults, setRunResults] = useState<RunResponse | null>(null);
   const [submitResults, setSubmitResults] = useState<SubmitResponse | null>(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -50,22 +49,11 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       return;
     }
 
-    const response = await fetchData<RunResponse>({
-      url: `http://localhost:6785/problems/${problemId}/run`,
-      method: 'POST',
-      body: {
-        code,  
-        languageId     
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
+    const response = await runCode(problemId, code, languageId);
     if (response) {
       setRunResults(response);
-      setActiveView('run'); // Set active view to run
-      setSnackbarMessage('sucess');
+      setActiveView('run');
+      setSnackbarMessage('success');
       setSeverity('info');
       setOpenSnackbar(true);
     }
@@ -80,21 +68,10 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       return;
     }
 
-    const response = await fetchData<SubmitResponse>({
-      url: `http://localhost:6785/problems/${problemId}/submit`,
-      method: 'POST',
-      body: {
-        code,
-        languageId        
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
+    const response = await submitCode(problemId, code, languageId);
     if (response) {
       setSubmitResults(response);
-      setActiveView('submit'); // Set active view to submit
+      setActiveView('submit');
       setSnackbarMessage('success!');
       setSeverity('info');
       setOpenSnackbar(true);
@@ -177,8 +154,6 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
           ))}
         </Paper>
       )}
-
-
 
       {/* Error message */}
       {error && (
