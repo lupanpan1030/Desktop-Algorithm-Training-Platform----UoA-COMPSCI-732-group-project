@@ -6,7 +6,6 @@ import { app } from 'electron';
 // Import the necessary modules for direct server execution in production
 import 'dotenv/config';
 import { createApp } from './backend/api/app';
-import { initializeDatabase } from './backend/db/prisma/initialize-database';
 
 let backendProcess: ChildProcess | undefined;
 let directServerInstance: http.Server | undefined;
@@ -14,7 +13,6 @@ let directServerInstance: http.Server | undefined;
 // Function to directly start the backend server (equivalent to main in server.ts)
 async function startBackendDirectly(): Promise<void> {
   try {
-    await initializeDatabase();
     const expressApp = await createApp();
     const port = process.env.PORT || 6785;
 
