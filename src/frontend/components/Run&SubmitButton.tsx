@@ -111,49 +111,74 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       <Box sx={{flex: 1, overflow: 'hidden', position: 'relative', height: 'calc(100% - 30px)', p: 2}}>
       <Box sx={{overflowY: 'auto', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pb: 2}}>
       {activeView === 'run' && runResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#fff3e0',
-          color: isDark ? '#ffffff' : '#000000' }}>
+      <>
         <Typography variant="h6" gutterBottom>
           Run Results
-        </Typography>       
-        {runResults?.results?.map((test, index) => (
-          <Box key={index} sx={{ mb: 1 }}>
-            <Typography variant="body2">Status: {test.status}</Typography>
+        </Typography>
+        {runResults.results.map((test, index) => (
+          <Paper
+            key={index}
+            elevation={3}
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor:
+                test.status === 'ACCEPTED'
+                  ? (isDark ? '#1b5e20' : '#e8f5e9')    
+                  : (isDark ? '#5c0000' : '#ffebee'),
+              color: isDark ? '#ffffff' : '#000000'
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              Status: {test.status}
+            </Typography>
             {test.output && (
               <Typography variant="body2">Output: {test.output}</Typography>
             )}
             <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
             <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
-            <hr />
-          </Box>
-         
+          </Paper>
         ))}
-        </Paper>
-      )}
+      </>
+    )}
 
-      {activeView === 'submit' && submitResults && (
-        <Paper elevation={3} sx={{ p: 2, mb: 2, bgcolor: isDark ? '#2c2c2c' : '#fff3e0',
-          color: isDark ? '#ffffff' : '#000000' }}>
-          <Typography variant="h6" gutterBottom>
-            Submit Results
-          </Typography>
-          <Typography variant="subtitle1" gutterBottom>
-            Overall Status: {submitResults.overallStatus}
-          </Typography>
-          {submitResults?.results?.map((test, index) => (
-            <Box key={index} sx={{ mb: 1 }}>
-              <Typography variant="body2">Status: {test.status}</Typography>
-              {test.output && (
-                <Typography variant="body2">Output: {test.output}</Typography>
-              )}
-              <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
-              <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
-              <hr />
-            </Box>
-            
-          ))}
-        </Paper>
-      )}
+    {activeView === 'submit' && submitResults && (
+      <>
+        <Typography variant="h6" gutterBottom>
+          Submit Results
+        </Typography>
+        <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold'}}>
+          Overall Status:{' '}
+          <Box component="span" sx={{ color: submitResults.overallStatus === 'ACCEPTED' ? 'green' : 'red' }}>
+            {submitResults.overallStatus}
+          </Box>
+        </Typography>
+        {submitResults.results.map((test, index) => (
+          <Paper
+            key={index}
+            elevation={3}
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor:
+                test.status === 'ACCEPTED'
+                  ? (isDark ? '#1b5e20' : '#e8f5e9')    
+                  : (isDark ? '#5c0000' : '#ffebee'),  
+              color: isDark ? '#ffffff' : '#000000'
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              Status: {test.status}
+            </Typography>
+            {test.output && (
+              <Typography variant="body2">Output: {test.output}</Typography>
+            )}
+            <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
+            <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
+          </Paper>
+        ))}
+      </>
+    )}
 
       {/* Error message */}
       {error && (
