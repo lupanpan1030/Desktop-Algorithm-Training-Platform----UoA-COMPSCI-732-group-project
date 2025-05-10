@@ -6,13 +6,14 @@ import { useParams } from "react-router-dom";
 import { Paper, Box, Typography, CircularProgress } from "@mui/material";
 import "../styles/DetailPage.css"; 
 import CodeSubmission from "../components/Run&SubmitButton";
+import { useApi } from "../hooks/useApi";
 
 export default function DetailPage () {
     const { id } = useParams();
     const [problem, setProblem] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [editorState, setEditorState] = useState({ code: '', language: 'python' });
     const [languageMap, setLanguageMap] = useState({});
+    const { getProblem, getLanguages, loading, error } = useApi();
 
     // Reference for resizable elements
     const leftPaneRef = useRef(null);
@@ -23,54 +24,31 @@ export default function DetailPage () {
     const [resizingHorizontal, setResizingHorizontal] = useState(false);
     const [resizingVertical, setResizingVertical] = useState(false);
  
-
     useEffect(() => {
         async function fetchProblem() {
-            try {
-                const response = await fetch(`http://localhost:6785/problems/${id}`);
-                if (!response.ok) {
-                    throw new Error('Problem not found');
-                }
-                const data = await response.json();
+            const data = await getProblem(Number(id));
+            if (data) {
                 setProblem(data);
-            } catch (error) {
-                console.error('Error fetching problem:', error);
-            } finally {
-                setLoading(false);
             }
         }
         fetchProblem();
-    }, [id]);
+    }, [id, getProblem]);
 
     // Get a list of supported programming languages and create a mapping
     useEffect(() => {
         async function fetchLanguages() {
-            try {
-                const response = await fetch('http://localhost:6785/languages');
-                if (response.ok) {
-                    const data = await response.json();
-                    setLanguages(data);
-                    
-                    // Creating Language Name to ID Mappings
-                    const mapping = {};
-                    data.forEach(lang => {
-                        mapping[lang.name.toLowerCase()] = lang.language_id;
-                    });
-                    setLanguageMap(mapping);
-                }
-            } catch (error) {
-                console.error('Error fetching languages:', error);
-                // Use the default mapping as a fallback
-                setLanguageMap({
-                    'python': 1,
-                    'javascript': 2,
-                    'java': 3,
-                    'c++': 4
+            const data = await getLanguages();
+            if (data) {
+                // Creating Language Name to ID Mappings
+                const mapping = {};
+                data.forEach(lang => {
+                    mapping[lang.name.toLowerCase()] = lang.languageId;
                 });
+                setLanguageMap(mapping);
             }
         }
         fetchLanguages();
-    }, []);
+    }, [getLanguages]);
 
     // Resize event handler
     useEffect(() => {
@@ -147,6 +125,10 @@ export default function DetailPage () {
                         {loading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                                 <CircularProgress />
+                            </Box>
+                        ) : error ? (
+                            <Box sx={{ p: 3 }}>
+                                <Typography color="error">Error loading problem: {error.message}</Typography>
                             </Box>
                         ) : problem ? (
                             <ProblemContent problem={problem} />

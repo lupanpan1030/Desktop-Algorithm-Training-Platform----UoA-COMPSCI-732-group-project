@@ -3,6 +3,13 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import HomePage from '../../../frontend/pages/HomePage';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import axios from 'axios';
+import { useApi } from '../../../frontend/hooks/useApi';
+
+// Mock the useApi hook
+vi.mock('../../../frontend/hooks/useApi', () => ({
+  useApi: vi.fn()
+}));
 
 // Mock data
 const mockProblems = [
@@ -15,12 +22,12 @@ const mockProblems = [
 const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 beforeEach(() => {
-  global.fetch = vi.fn(() =>
-    Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve(mockProblems),
-    })
-  );
+  // Mock the useApi hook implementation
+  vi.mocked(useApi).mockReturnValue({
+    getProblems: vi.fn().mockResolvedValue(mockProblems),
+    loading: false,
+    error: null
+  });
 });
 
 afterEach(() => {
@@ -88,13 +95,13 @@ describe('HomePage Component', () => {
   });
 
   test('handles API error gracefully', async () => {
-    vi.mocked(global.fetch).mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({ error: 'Internal Server Error' }),
-      })
-    );
+    // Mock useApi to return an error
+    const mockError = new Error('API Error');
+    vi.mocked(useApi).mockReturnValue({
+      getProblems: vi.fn().mockResolvedValue([]), // Return empty array instead of rejecting
+      loading: false,
+      error: mockError
+    });
 
     renderWithRouter(<HomePage />);
 
@@ -104,17 +111,30 @@ describe('HomePage Component', () => {
   });
 
   test('handles empty problem list gracefully', async () => {
-    vi.mocked(global.fetch).mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      })
-    );
+    // Mock useApi to return empty array
+    vi.mocked(useApi).mockReturnValue({
+      getProblems: vi.fn().mockResolvedValue([]),
+      loading: false,
+      error: null
+    });
 
     renderWithRouter(<HomePage />);
 
     await waitFor(() => {
       expect(screen.getByText(/no problems found/i)).toBeInTheDocument();
     });
+  });
+
+  test('shows loading state', async () => {
+    // Mock useApi to return loading state
+    vi.mocked(useApi).mockReturnValue({
+      getProblems: vi.fn().mockResolvedValue(mockProblems),
+      loading: true,
+      error: null
+    });
+
+    renderWithRouter(<HomePage />);
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 });
