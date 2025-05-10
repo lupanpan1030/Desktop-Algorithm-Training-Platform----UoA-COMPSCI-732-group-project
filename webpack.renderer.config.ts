@@ -20,7 +20,7 @@ export const rendererConfig: Configuration = {
     rules,
   },
   output: {
-    publicPath: '/',
+    publicPath: './../',
   },
   
   plugins: [
