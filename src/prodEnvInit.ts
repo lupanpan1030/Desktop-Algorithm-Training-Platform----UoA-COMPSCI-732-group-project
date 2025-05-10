@@ -34,6 +34,9 @@ export function initProdEnv() {
   }
   // macOS
   if (process.platform === 'darwin') {
+    const libName = process.arch === 'arm64'
+      ? "libquery_engine-darwin-arm64.dylib.node"
+      : "libquery_engine-darwin.dylib.node";
     process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
       process.resourcesPath,
       "app.asar.unpacked",
@@ -41,7 +44,7 @@ export function initProdEnv() {
       "main",
       "native_modules",
       "client",
-      "libquery_engine-darwin.dylib.node"
+      libName
     );
   }
 }
