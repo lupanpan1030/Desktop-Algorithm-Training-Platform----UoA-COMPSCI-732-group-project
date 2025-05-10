@@ -2,10 +2,10 @@ import path from 'path';
 
 export function initProdEnv() {
     // SQLite database path
-  process.env.DATABASE_URL = path.join(
-    process.resourcesPath,
-    "dev.db"
-  )
+    process.env.DATABASE_URL = "file:" + path.join(
+        process.resourcesPath,
+        "dev.db"
+    );
 
   // Prisma engine binary paths
   // Linux (Debian)
