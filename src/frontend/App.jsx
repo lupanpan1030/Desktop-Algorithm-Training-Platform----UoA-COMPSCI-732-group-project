@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Container } from "@mui/material";
 import NavBar from './components/common/NavBar';
 import HomePage from './pages/HomePage';
@@ -25,7 +25,7 @@ function App() {
     const theme = useAppTheme(darkMode);
 
     return (
-        <BrowserRouter basename="/main_window">
+        <HashRouter>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <div style={{ 
@@ -51,7 +51,7 @@ function App() {
                     </div>
                 </div>
             </ThemeProvider>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
 
