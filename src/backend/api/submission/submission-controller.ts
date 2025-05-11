@@ -23,7 +23,7 @@ import { NotFoundError } from '../../utils/errors/not-found-error';
 
 
 @Route('problems')
-@Tags('Problems')
+@Tags('Submissions')
 export class ProblemSubmissionController extends Controller {
   private service: SubmissionService;
   
