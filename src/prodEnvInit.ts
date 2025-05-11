@@ -1,39 +1,50 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import { app } from 'electron';
+import path from 'path';
 
-export function initProdEnv(): void {
-  // 设置生产环境下的资源路径
-  const appPath = app.getAppPath();
-  const resourcesPath = path.join(appPath, '.webpack', 'renderer');
-  const vsPath = path.join(resourcesPath, 'vs');
-  
-  // 检查资源目录
-  if (!fs.existsSync(resourcesPath)) {
-    console.warn(`Resources path does not exist: ${resourcesPath}`);
-    return;
+export function initProdEnv() {
+    // SQLite database path
+    process.env.DATABASE_URL = "file:" + path.join(
+        process.resourcesPath,
+        "dev.db"
+    );
+
+  // Prisma engine binary paths
+  // Linux (Debian)
+  if (process.platform === 'linux') {
+    process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
+      process.resourcesPath,
+      "app.asar.unpacked",
+      ".webpack",
+      "main",
+      "native_modules",
+      "client",
+      "libquery_engine-debian-openssl-3.0.x.so.node"
+    );
   }
-
-  // 检查 Monaco 资源
-  if (!fs.existsSync(vsPath)) {
-    console.warn(`Monaco resources path does not exist: ${vsPath}`);
-    return;
+  // Windows
+  if (process.platform === 'win32') {
+    process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
+      process.resourcesPath,
+      "app.asar.unpacked",
+      ".webpack",
+      "main",
+      "native_modules",
+      "client",
+      "query_engine-windows.dll.node"
+    );
   }
-
-  // 列出 Monaco 资源目录内容以帮助调试
-  try {
-    const files = fs.readdirSync(vsPath);
-    console.log('Monaco resources directory contents:', files);
-  } catch (err) {
-    console.error('Failed to read Monaco resources directory:', err);
+  // macOS
+  if (process.platform === 'darwin') {
+    const libName = process.arch === 'arm64'
+      ? "libquery_engine-darwin-arm64.dylib.node"
+      : "libquery_engine-darwin.dylib.node";
+    process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
+      process.resourcesPath,
+      "app.asar.unpacked",
+      ".webpack",
+      "main",
+      "native_modules",
+      "client",
+      libName
+    );
   }
-
-  // 设置环境变量
-  process.env.RESOURCES_PATH = resourcesPath;
-  process.env.MONACO_PATH = vsPath;
-  
-  // 打印调试信息
-  console.log('Production environment initialized');
-  console.log('Resources path:', resourcesPath);
-  console.log('Monaco path:', vsPath);
-} 
+}

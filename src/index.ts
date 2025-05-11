@@ -93,7 +93,10 @@ const createWindow = (): void => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
-  await waitForBackend();
+  await startBackend();
+  if (process.env.NODE_ENV === 'development') {
+    await waitForBackend();
+  }
   createWindow();
 });
 
