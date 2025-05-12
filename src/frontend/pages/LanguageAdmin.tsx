@@ -8,19 +8,20 @@ import { useLanguages, Language }    from '../hooks/useLanguages';
 import { strings } from '../i18n/messages';
 
 /**
- * LanguageAdmin Page
- * ------------------
- * Admin interface for managing supported programming languages.
- * Combines:
- *   • LanguageToolbar – quick actions (add, toggle edit/delete mode, refresh)
- *   • LanguageTable   – list view with inline edit/delete triggers
- *   • LanguageFormDialog / DeleteConfirmDialog – modal forms
+ * Language Management Page (语言管理页面)
+ * ------------------------------------
+ * The page manages available programming languages in the system.
+ * 本页面用于管理系统支持的编程语言。
  *
- * Data operations come from the custom `useLanguages` hook while
- * all UI state is kept locally in this component.
+ * Main Components (主要组成):
+ *   • LanguageToolbar – top toolbar: add, toggle delete/edit mode, refresh list
+ *   • LanguageTable   – table view: display languages and trigger inline edit/delete
+ *   • LanguageFormDialog / DeleteConfirmDialog – modals: add/edit/delete
+ *
+ * Data source (数据来源):
+ *   Uses custom hook `useLanguages` for CRUD; all UI state is kept locally in this component.
  */
-
-// —— Local state type definitions ——
+// Local state type definitions (本地状态类型定义)
 interface EditState {
   open: boolean;
   lang: Language | null;
@@ -42,8 +43,7 @@ export default function LanguageAdmin() {
     fetchLanguages,
   } = useLanguages();
 
-// ---------- Local UI state ----------
-
+// Local UI state (本地 UI 可见状态)
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit,   setShowEdit]   = useState(false);
   const [addOpen, setAddOpen]       = useState(false);
@@ -58,7 +58,7 @@ export default function LanguageAdmin() {
     setSnack({ open: true, msg, sev });
   };
 
-// ---------- CRUD handlers ----------
+// CRUD handlers (增删改处理函数)
   const handleAdd = useCallback(async (v: any) => {
     try {
       await addLanguage(v);
@@ -97,7 +97,7 @@ export default function LanguageAdmin() {
     }
   }, [del, deleteLanguage]);
 
-// ---------- Render ----------
+// Render (渲染)
   return (
     <>
     {loading && (
@@ -111,7 +111,7 @@ export default function LanguageAdmin() {
         <LanguageToolbar
           showDelete={showDelete} showEdit={showEdit}
           onAdd={() => {
-            // blur the triggering element before opening the dialog to avoid a11y warning
+            // Blur the triggering element before opening the dialog to avoid a11y warning (打开对话框前先失焦触发元素，避免 a11y 警告)
             (document.activeElement as HTMLElement | null)?.blur();
             setAddOpen(true);
           }}
@@ -125,7 +125,7 @@ export default function LanguageAdmin() {
         <Alert
           severity="error"
           sx={{ mb: 2 }}
-          onClose={() => { /* TODO: optionally clear error state */ }}
+          onClose={() => { /* TODO: optionally clear error state / 可选：清除错误状态 */ }}
         >
           {error.message ?? String(error)}
         </Alert>

@@ -1,3 +1,9 @@
+/**
+ * LanguageFormDialog component ― 语言表单对话框组件
+ * ------------------------------------------------
+ * Provides a modal form used for adding or editing a programming language.
+ * 该组件提供用于新增或编辑编程语言的模态表单。
+ */
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -20,9 +26,9 @@ interface Props {
   open: boolean;
   mode: 'add' | 'edit';
   initialValues: Values;
-  /** full language list，用于本地重复检测 */
+  /** Full language list for local duplication check (完整语言列表，用于本地重复检测) */
   languages: Language[];
-  /** 编辑模式下本条记录的 id，用于忽略自身 */
+  /** Current record id in edit‑mode, used to ignore self (编辑模式下本条记录的 id，用于忽略自身) */
   ignoreId?: number;
   onSubmit: (v: Values) => Promise<void> | void;
   onClose: () => void;
@@ -59,7 +65,7 @@ export default function LanguageFormDialog({
       runtime: blankField(form.runtimeCmd),
     };
 
-    // 前端重复检测（忽略自身）
+    // Front‑end duplication check (ignore current item) 前端重复检测（忽略自身）
     const sameName = languages.some(
       (l: Language) => l.name.trim() === form.name.trim() && l.languageId !== ignoreId
     );
@@ -98,7 +104,7 @@ export default function LanguageFormDialog({
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
         {submitErr && <Alert severity="warning" sx={{ mb: 1 }}>{submitErr}</Alert>}
 
-        {/* 1. Language */}
+        {/* 1. Language 语言 */}
         <TextField
           autoFocus
           label={strings.lblLanguage}
@@ -110,7 +116,7 @@ export default function LanguageFormDialog({
           size="small"
         />
 
-        {/* 2. Compile Cmd */}
+        {/* 2. Compile Cmd 编译命令 */}
         <TextField
           label={strings.lblCompileCmd}
           value={form.compilerCmd}
@@ -119,7 +125,7 @@ export default function LanguageFormDialog({
           size="small"
         />
 
-        {/* 3. Run Cmd */}
+        {/* 3. Run Cmd 运行命令 */}
         <TextField
           label={strings.lblRunCmd}
           value={form.runtimeCmd}
@@ -130,7 +136,7 @@ export default function LanguageFormDialog({
           size="small"
         />
 
-        {/* 4. Suffix */}
+        {/* 4. Suffix 文件后缀 */}
         <TextField
           label={strings.lblSuffix}
           value={form.suffix}
@@ -141,7 +147,7 @@ export default function LanguageFormDialog({
           size="small"
         />
 
-        {/* 5. Version */}
+        {/* 5. Version 版本 */}
         <TextField
           label={strings.lblVersion}
           value={form.version}

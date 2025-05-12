@@ -1,10 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
 import api from '../api/axiosInstance';
 
-/** ------------------------------------------------------------
- * Helper: convert back‑end DTO (camelCase) → UI model (snake_case)
- * Accepts either legacy snake_case or new camelCase payloads.
- * -----------------------------------------------------------*/
+/**
+ * useLanguages Hook
+ * -----------------
+ * This file centralises all logic for talking to the backend problem & language APIs
+ * and adds caching plus error handling for the UI layer.
+ * 该文件封装了访问后端题库与编程语言接口的所有逻辑，并为 UI 提供缓存与错误处理。
+ */
+
+/**
+ * normalizeLanguage ― 语言模型归一化
+ * ---------------------------------
+ * Converts backend camelCase or legacy snake_case fields into a unified frontend model.
+ * 将后端返回的 camelCase 或旧版 snake_case 字段转换为前端统一使用的属性。
+ */
 const normalizeLanguage = (l: any) => ({
   id:         l.languageId ?? l.language_id,
   languageId:  l.languageId ?? l.language_id,
@@ -16,7 +26,7 @@ const normalizeLanguage = (l: any) => ({
   isDefault:   l.isDefault ?? l.is_default ?? false,
 });
 
-// API Response Types
+// API Response Types (接口返回类型)
 interface Problem {
   problemId: number;
   title: string;
@@ -55,10 +65,10 @@ interface SubmitResponse {
   results: TestResult[];
 }
 
-/** 旧前端写法：snake_case 字段 */
+/** Legacy front‑end payload: snake_case fields (旧版前端 payload) */
 type OldLanguagePayload = Omit<Language, 'languageId'>;
 
-/** 新 API 写法：camelCase 字段 */
+/** New API payload in camelCase (新版 API payload：camelCase 字段) */
 interface NewLanguagePayload {
   name: string;
   runtimeCmd: string;
@@ -67,13 +77,13 @@ interface NewLanguagePayload {
   suffix: string;
 }
 
-/** 统一的输入类型：兼容旧 & 新 */
+/** Unified input type: compatible with both old & new (统一输入类型：兼容旧版与新版) */
 type LanguageInput = OldLanguagePayload | NewLanguagePayload;
 
-/** 类型守卫：区分 payload 风格 */
+/** Type guard to detect new payload style (类型守卫：判断 payload 是否为新版格式) */
 const isNewPayload = (p: LanguageInput): p is NewLanguagePayload => 'runtimeCmd' in p;
 
-/** 把任意输入 payload 转成后端需要的 Create/Update DTO */
+/** Translate payload to backend Create/Update DTO (将任意输入 payload 转换为后端需要的 Create/Update DTO) */
 const toLanguageDto = (lang: LanguageInput) => ({
   name:        lang.name,
   suffix:      lang.suffix,
@@ -82,7 +92,7 @@ const toLanguageDto = (lang: LanguageInput) => ({
   runtimeCmd:  lang.runtimeCmd,
 });
 
-// API Request Options
+// Generic API request options (通用 API 请求选项)
 interface ApiOptions {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -122,7 +132,7 @@ export const useApi = () => {
     }
   }, []);
 
-  // Problem related APIs
+  // Problem related APIs (题目相关接口)
   const getProblems = useCallback(async (): Promise<Problem[]> => {
     return await fetchData<Problem[]>({ url: 'http://localhost:6785/problems' }) || [];
   }, [fetchData]);
@@ -131,7 +141,7 @@ export const useApi = () => {
     return await fetchData<Problem>({ url: `http://localhost:6785/problems/${id}` });
   }, [fetchData]);
 
-  // Language related APIs
+  // Language related APIs (编程语言相关接口)
   const getLanguages = useCallback(async (): Promise<Language[]> => {
     const raw = await fetchData<any[]>({ url: 'http://localhost:6785/languages' }) || [];
     return raw.map(normalizeLanguage);
@@ -156,14 +166,21 @@ export const useApi = () => {
   }, [fetchData]);
 
   const deleteLanguage = useCallback(async (id: number): Promise<boolean> => {
-    const result = await fetchData<{ success: boolean }>({
+    // Most back‑ends return HTTP 204 (No Content) with an empty body on successful DELETE.
+    // 多数后端在成功删除时返回 HTTP 204（No Content）且无响应体。
+    // Therefore, treat any 2xx response that does not throw as failure unless the server explicitly indicates it.
+    // 因此只要请求未抛错，即视作成功，除非服务器显式声明失败。
+    const result = await fetchData<{ success?: boolean }>({
       url: `http://localhost:6785/languages/${id}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
-    return result?.success || false;
+
+    // If the server returns { success:false } we treat it as failure; otherwise we assume success.
+    // 若服务器返回 { success:false } 则视为失败；否则默认成功。
+    return result?.success !== false;
   }, [fetchData]);
 
-  // Code submission APIs
+  // Code submission APIs (代码运行与提交接口)
   const runCode = useCallback(async (problemId: number, code: string, languageId: number): Promise<RunResponse | null> => {
     return await fetchData<RunResponse>({
       url: `http://localhost:6785/problems/${problemId}/run`,
@@ -194,11 +211,13 @@ export const useApi = () => {
   };
 };
 
-/** ------------------------------------------------------------------
- * Thin wrapper hook that exposes a cached languages list and helpers.
- * Delegates network calls to useApi but keeps local state so the UI
- * can rely on `languages` and `fetchLanguages` consistently.
- * ------------------------------------------------------------------*/
+/**
+ * useLanguages
+ * ------------
+ * Thin wrapper around useApi that caches the language list locally so that the UI can
+ * update optimistically and roll back if a request fails.
+ * 该 Hook 通过 useApi 执行网络请求，并在本地缓存语言列表，以便 UI 即时响应。
+ */
 const useLanguages = () => {
   const {
     loading,
