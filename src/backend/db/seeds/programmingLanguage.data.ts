@@ -1,4 +1,3 @@
-
 // 引入 Prisma 客户端实例
 // Import Prisma client instance
 import prisma from '../prismaClient'
@@ -34,11 +33,11 @@ export async function seedLanguage() {
         },
         {
             language_id: 4,
-            name: 'Ocaml',
-            suffix: 'ml',
-            version: '4.14',
+            name: 'Go',
+            suffix: 'go',
+            version: '1.21',
             compile_command: null, 
-            run_command: 'ocaml'
+            run_command: 'go run'
         },
         {
             language_id: 5,

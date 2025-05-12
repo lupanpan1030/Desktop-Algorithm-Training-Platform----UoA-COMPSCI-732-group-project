@@ -38,7 +38,7 @@ export default function CodeEditor({ onCodeChange }) {
     // 统一内部语言变量为小写（如'python','c++','java','javascript','cpp'）
     const [language, setLanguage] = useState('python');
     const [isEditorReady, setIsEditorReady] = useState(false);
-    const [monacoError, setMonacoError] = useState(isPackaged ? null : new Error('无法确定Monaco资源路径'));
+    const [monacoError, setMonacoError] = useState(null);
     // Default language list works as backup when backend is unavailable
     const [languages, setLanguages] = useState([
         { language_id: 1, name: 'Python' },
@@ -71,20 +71,14 @@ export default function CodeEditor({ onCodeChange }) {
     }, []);
 
     // Additional loading timeout detection
-    useEffect(() => {
-      // 如果已经确定资源不可用，不需要等待
-      if (!isPackaged) {
-        console.warn('Monaco资源路径无效，使用fallback编辑器');
-        return;
-      }
-      
+    useEffect(() => {      
       console.log('Monaco编辑器加载中...');
       const timeoutId = setTimeout(() => {
         if (!isEditorReady) {
           console.warn('Monaco编辑器加载超时 - 切换到fallback编辑器');
           setMonacoError(new Error('加载超时 - Monaco编辑器资源无法加载'));
         }
-      }, 5000);
+      }, 10000);
       
       return () => clearTimeout(timeoutId);
     }, [isEditorReady, isPackaged]);
