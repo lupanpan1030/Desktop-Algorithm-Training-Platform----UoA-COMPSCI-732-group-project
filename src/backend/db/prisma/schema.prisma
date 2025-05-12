@@ -35,6 +35,8 @@ model ProgrammingLanguage {
     version         String?
     compile_command String?
     run_command     String
+    /// Indicates the single default language used by the system
+    is_default Boolean @default(false)
     submissions     Submission[]
 }
 

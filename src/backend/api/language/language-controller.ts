@@ -20,6 +20,7 @@ import {
 } from './language';
 import { ValidateError } from '../../utils/errors/validation-error';
 import { NotFoundError } from '../../utils/errors/not-found-error';
+import { ForbiddenError } from '../../utils/errors/forbidden-error';
 
 const service = new LanguageService();
 
@@ -99,6 +100,7 @@ export class LanguageController extends Controller {
    * @param id Language ID
    */
   @Response<NotFoundError>(404, 'Language not found')
+  @Response<ForbiddenError>(403, 'Default language cannot be deleted')
   @SuccessResponse('204', 'No Content')
   @Delete('{id}')
   public async remove(@Path() id: number): Promise<void> {

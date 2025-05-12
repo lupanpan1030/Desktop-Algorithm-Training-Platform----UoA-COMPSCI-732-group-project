@@ -491,6 +491,32 @@
 				},
 				"type": "object",
 				"additionalProperties": false
+			},
+			"ForbiddenError": {
+				"description": "ForbiddenError — represents an HTTP 403 error.\n\nThrow this when the client tries to perform an action that is not allowed,\ne.g., deleting the default programming language.",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double",
+						"description": "HTTP status code to be picked up by the global error handler",
+						"default": 403
+					}
+				},
+				"required": [
+					"name",
+					"message"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -1279,6 +1305,16 @@
 				"responses": {
 					"204": {
 						"description": "No Content"
+					},
+					"403": {
+						"description": "Default language cannot be deleted",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ForbiddenError"
+								}
+							}
+						}
 					},
 					"404": {
 						"description": "Language not found",

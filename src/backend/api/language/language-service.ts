@@ -3,6 +3,7 @@ import { LanguageDao } from './language-dao';
 import { ProgrammingLanguage } from '@prisma/client';
 import { LanguageDto, CreateLanguageDto } from './language';
 import { NotFoundError } from '../../utils/errors/not-found-error';
+import { ForbiddenError } from '../../utils/errors/forbidden-error';
 
 export class LanguageService {
   async getAllLanguages(): Promise<LanguageDto[]> {
@@ -32,6 +33,16 @@ export class LanguageService {
   }
 
   async deleteLanguage(id: number): Promise<void> {
+    // 1️⃣ 先拿到语言记录
+    const lang = await LanguageDao.findLanguageById(id);
+    if (!lang) throw new NotFoundError('Language not found');
+
+    // 2️⃣ 如果是默认语言则禁止删除
+    if ((lang as any).is_default) {
+      throw new ForbiddenError('Default language cannot be deleted');
+    }
+
+    // 3️⃣ 正常删除
     try {
       await LanguageDao.deleteLanguage(id);
     } catch (err: any) {
