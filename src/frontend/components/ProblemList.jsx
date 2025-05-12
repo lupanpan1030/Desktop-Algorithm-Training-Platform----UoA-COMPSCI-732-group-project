@@ -13,7 +13,7 @@ import AssignmentLateOutlinedIcon from "@mui/icons-material/AssignmentLateOutlin
 // import {TaskAltIcon,AssignmentLateOutlinedIcon} from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
-export default function ProblemList({ problems }) {
+export default function ProblemList({ problems, filtersOpen }) {
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case "EASY":
@@ -31,24 +31,25 @@ export default function ProblemList({ problems }) {
     <List
       disablePadding
       sx={{
-        p: 0,
         overflowY: "auto",
-        maxHeight: "calc(100vh - 260px)", // header  filters approx
+        maxHeight: {xs:`${filtersOpen ? "calc(100vh - 395px)" : "calc(100vh - 200px)"}`,sm:`${
+          filtersOpen ? "calc(100vh - 310px)" : "calc(100vh - 200px)"
+        }`},
       }}
     >
       {problems.map((problem) => (
         <ListItemButton
           disableGutters
           sx={{
-            pl: 0,
-            "&:nth-of-type(odd)": { backgroundColor: "rgba(0,0,0,0.02)" }, // 奇数行淡色
-            "&:hover": { backgroundColor: "rgba(0,0,0,0.06)" }, // 悬停高亮
+            p: 1,
+            "&:nth-of-type(odd)": { backgroundColor: "action.rowStripe" },
+            "&:hover": { backgroundColor: "action.rowHover" },
           }}
           component={Link}
           to={`/problems/${problem.problemId}`}
           key={problem.problemId}
         >
-          <Stack direction="row" spacing={2} alignItems="center" width="100%">
+          <Stack direction="row" spacing={2} alignItems="center" width="99%">
             <ListItemText
               primary={
                 <Stack direction="row" spacing={1} alignItems="center">

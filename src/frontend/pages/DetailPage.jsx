@@ -121,7 +121,7 @@ export default function DetailPage () {
 
                 {/* Left half: Problem content */}
                 <Box ref={leftPaneRef} className="left-pane">
-                    <Paper className="problem-content" elevation={2} >
+                    <Paper className="problem-content">
                         {loading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                                 <CircularProgress />
@@ -150,7 +150,7 @@ export default function DetailPage () {
                 {/* Right half: Code Editor and Running Result */}
                     <Box className="editor-result-container">
                         <Box ref={editorPaneRef} className="editor-pane">
-                            <Paper className="editor-section" elevation={2}>
+                            <Paper className="editor-section">
                                 <CodeEditor onCodeChange={handleCodeChange} />
                             </Paper>
                         </Box>
@@ -163,7 +163,7 @@ export default function DetailPage () {
 
                         {/* Result */}
                         <Box className="result-pane">
-                            <Paper className="result-section" elevation={2}>
+                            <Paper className="result-section">
                                 {problem && (
                                     <CodeSubmission 
                                         problemId={id} 

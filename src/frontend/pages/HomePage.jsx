@@ -27,11 +27,8 @@ export default function HomePage() {
         return problems.filter(p => {
             // difficulty filter
             const diffOK = !difficultyFilter.length || difficultyFilter.includes(p.difficulty);
-
             // status filter (`Unattempted` when null/undefined)
-            const status = p.completionState ?? 'Unattempted';
-            const statusOK = !statusFilter.length || statusFilter.includes(status);
-
+            const statusOK = !statusFilter.length || statusFilter.includes(p.completionState);
             return diffOK && statusOK;
         });
     }, [problems, difficultyFilter, statusFilter]);
@@ -51,7 +48,7 @@ export default function HomePage() {
           pl: 0,
         }}
       >
-        <Typography variant="h5" component="h2" sx={{ mr: 1 }}>
+        <Typography variant="h5" component="h1" sx={{ mr: 1 }}>
           Problem List
         </Typography>
         <IconButton
@@ -66,7 +63,7 @@ export default function HomePage() {
 
     return (
       <Box sx={{ pt: 3, px: 3 }}>
-        <Paper elevation={0} sx={{ p: 2, overflowX: 'auto' }}>
+        <Paper sx={{ p: 2, overflowX: 'auto' }}>
         {header}
 
         {/* Horizontal filters bar */}
@@ -86,7 +83,7 @@ export default function HomePage() {
         {loading ? (
           <Typography>Loading...</Typography>
         ) : visibleProblems.length ? (
-          <ProblemList problems={visibleProblems} />
+          <ProblemList problems={visibleProblems} filtersOpen={filtersOpen} />
         ) : (
           <Typography>No problems found</Typography>
         )}

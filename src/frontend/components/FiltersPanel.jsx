@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Box,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -17,12 +18,21 @@ export default function FiltersPanel({
 }) {
   return (
     <Stack
-      spacing={horizontal ? 3 : 2}
       direction={horizontal ? "row" : "column"}
-      sx={{ p: 2 }}
+      spacing={horizontal ? 3 : 1.5}
+      useFlexGap
+      sx={{
+        p: 2,
+        flexWrap: { xs: "wrap", sm: "nowrap" },
+        alignItems: "center",
+      }}
     >
       {/* Difficulty toggle */}
-      <div>
+      <Box
+        sx={{
+          order: { xs: 1, sm: 1 },
+        }}
+      >
         <Typography variant="body2" gutterBottom>
           Difficulty
         </Typography>
@@ -42,10 +52,16 @@ export default function FiltersPanel({
             </ToggleButton>
           ))}
         </ToggleButtonGroup>
-      </div>
+      </Box>
 
       {/* Completion status filter */}
-      <div style={{ marginLeft: horizontal ? 32 : 0 }}>
+      <Box
+        sx={{
+          order: { xs: 3, sm: 2 },
+          flexBasis: { xs: "100%", sm: "auto" }, // forces its own row on xs
+          alignSelf: "flex-start",
+        }}
+      >
         <Typography variant="body2" gutterBottom>
           Status
         </Typography>
@@ -66,14 +82,16 @@ export default function FiltersPanel({
             </ToggleButton>
           ))}
         </ToggleButtonGroup>
-      </div>
+      </Box>
 
       {/* Clear filters */}
       <Stack
         spacing={0.5}
         alignItems="center"
         justifyContent="center"
-        sx={{ marginLeft: horizontal ? 32 : 0, pr: 4}}
+        sx={{
+          order: { xs: 2, sm: 3 },
+        }}
       >
         <Typography variant="body2" gutterBottom>
           Clear

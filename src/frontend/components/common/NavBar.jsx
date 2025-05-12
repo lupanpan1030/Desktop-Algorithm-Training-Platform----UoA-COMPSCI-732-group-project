@@ -9,7 +9,7 @@ export default function NavBar({ darkMode, setDarkMode }) {
             <Toolbar>
                 <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
                   <Button component={Link} to="/" color="inherit">
-                    Home
+                    List
                   </Button>
                   <Button component={Link} to="/languages" color="inherit">
                     Languages
