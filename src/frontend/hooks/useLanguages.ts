@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import useApi from './useApi';
 
 /** 把各种后端字段名统一成前端可用格式 */
 const normalise = (raw: any) => {
@@ -32,38 +33,81 @@ export interface Payload {
   suffix: string;
 }
 
+/** 将前端 camelCase 输入转换成后端需要的 snake_case，并同时保留 camelCase 字段
+ *  这样既满足 useApi 的 isNewPayload 判断，又能让后端拿到 compile_command / run_command
+ */
+const toBackendDto = (p: Partial<Payload>) => ({
+  // 公共字段
+  name: p.name,
+  suffix: p.suffix,
+  version: p.version ?? null,
+
+  // camelCase (旧前端字段)
+  runtimeCmd: p.runtimeCmd ?? '',
+  compilerCmd: p.compilerCmd ?? null,
+
+  // snake_case (后端校验字段)
+  run_command: p.runtimeCmd ?? '',
+  compile_command: p.compilerCmd ?? null,
+});
+
 export function useLanguages() {
+  /** 调用通用数据层 useApi */
+  const {
+    getLanguages,
+    addLanguage: apiAddLanguage,
+    updateLanguage: apiUpdateLanguage,
+    deleteLanguage: apiDeleteLanguage,
+    error: apiError,
+  } = useApi();
+
   const [languages, setLanguages] = useState<any[]>([]);
-  const [error, setError]         = useState<string | null>(null);
 
+  /** 拉取并规范化语言列表 */
   const fetchLanguages = useCallback(async () => {
-    try {
-      const res = await fetch('http://localhost:6785/languages');
-      const raw = await res.json();
-      setLanguages(normalise(raw));
-      setError(null);
-    } catch (e) {
-      console.error(e);
-      setError('Network error');
-      setLanguages([]);
-    }
-  }, []);
+    const data = await getLanguages();
+    setLanguages(normalise(data));
+  }, [getLanguages]);
 
-  const request = async (url: string, method: string, body?: any) => {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!res.ok) throw new Error(await res.text());
-    await fetchLanguages();
+  /** 对外暴露的 CRUD，内部仍调用 useApi，并在成功后刷新本地 state */
+  const addLanguage = useCallback(
+    async (p: Payload) => {
+      const res = await apiAddLanguage(toBackendDto(p));
+      if (res) await fetchLanguages();
+      return res;
+    },
+    [apiAddLanguage, fetchLanguages],
+  );
+
+  const updateLanguage = useCallback(
+    async (id: number, p: Partial<Payload>) => {
+      const res = await apiUpdateLanguage(id, toBackendDto(p));
+      if (res) await fetchLanguages();
+      return res;
+    },
+    [apiUpdateLanguage, fetchLanguages],
+  );
+
+  const deleteLanguage = useCallback(
+    async (id: number) => {
+      const success = await apiDeleteLanguage(id);
+      if (success) await fetchLanguages();
+      return success;
+    },
+    [apiDeleteLanguage, fetchLanguages],
+  );
+
+  /** 首次挂载自动拉取 */
+  useEffect(() => {
+    fetchLanguages();
+  }, [fetchLanguages]);
+
+  return {
+    languages,
+    error: apiError,
+    fetchLanguages,
+    addLanguage,
+    updateLanguage,
+    deleteLanguage,
   };
-
-  const addLanguage    = (p: Payload)             => request('http://localhost:6785/languages', 'POST', p);
-  const updateLanguage = (id: number, p: Payload) => request(`http://localhost:6785/languages/${id}`, 'PUT', p);
-  const deleteLanguage = (id: number)             => request(`http://localhost:6785/languages/${id}`, 'DELETE');
-
-  useEffect(() => { fetchLanguages(); }, [fetchLanguages]);
-
-  return { languages, error, fetchLanguages, addLanguage, updateLanguage, deleteLanguage };
 }

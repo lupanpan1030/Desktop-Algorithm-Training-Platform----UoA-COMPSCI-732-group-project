@@ -417,12 +417,21 @@
 						"type": "string",
 						"nullable": true
 					},
-					"compile_command": {
+					"compilerCmd": {
 						"type": "string",
 						"nullable": true
 					},
-					"run_command": {
+					"runtimeCmd": {
 						"type": "string"
+					},
+					"compile_command": {
+						"type": "string",
+						"nullable": true,
+						"deprecated": true
+					},
+					"run_command": {
+						"type": "string",
+						"deprecated": true
 					}
 				},
 				"required": [
@@ -430,8 +439,8 @@
 					"name",
 					"suffix",
 					"version",
-					"compile_command",
-					"run_command"
+					"compilerCmd",
+					"runtimeCmd"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -448,6 +457,15 @@
 						"type": "string",
 						"description": "Command used to run the compiled/interpreted program",
 						"minLength": 1
+					},
+					"run_command": {
+						"type": "string",
+						"deprecated": true
+					},
+					"compile_command": {
+						"type": "string",
+						"nullable": true,
+						"deprecated": true
 					},
 					"compilerCmd": {
 						"type": "string",
@@ -476,6 +494,15 @@
 					},
 					"runtimeCmd": {
 						"type": "string"
+					},
+					"run_command": {
+						"type": "string",
+						"deprecated": true
+					},
+					"compile_command": {
+						"type": "string",
+						"nullable": true,
+						"deprecated": true
 					},
 					"compilerCmd": {
 						"type": "string",

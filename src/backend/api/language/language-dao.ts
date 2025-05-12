@@ -32,7 +32,14 @@ export class LanguageDao {
   public static async createLanguage(
     data: CreateLanguageDto,
   ): Promise<ProgrammingLanguage> {
-    return this.db.programmingLanguage.create({ data });
+    const { compilerCmd, runtimeCmd, ...rest } = data;
+    return this.db.programmingLanguage.create({
+      data: {
+        ...rest,
+        compile_command: compilerCmd ?? null, // map camelCase → snake_case
+        run_command: runtimeCmd ?? null,
+      },
+    });
   }
 
   /** Update an existing language */
@@ -40,9 +47,14 @@ export class LanguageDao {
     id: number,
     data: Partial<CreateLanguageDto>,
   ): Promise<ProgrammingLanguage> {
+    const { compilerCmd, runtimeCmd, ...rest } = data;
     return this.db.programmingLanguage.update({
       where: { language_id: id },
-      data,
+      data: {
+        ...rest,
+        ...(compilerCmd !== undefined && { compile_command: compilerCmd }),
+        ...(runtimeCmd  !== undefined && { run_command:  runtimeCmd }),
+      },
     });
   }
 

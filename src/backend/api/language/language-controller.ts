@@ -63,11 +63,12 @@ export class LanguageController extends Controller {
   ): Promise<LanguageDto> {
     this.setStatus(201);
     const data = {
-      name:            body.name,
-      suffix:          body.suffix,
-      version:         body.version ?? null,
-      compile_command: body.compilerCmd ?? null,
-      run_command:     body.runtimeCmd,
+      name:        body.name,
+      suffix:      body.suffix,
+      version:     body.version ?? null,
+      // accept both camelCase and snake_case
+      compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
+      runtimeCmd:  body.runtimeCmd  ?? body.run_command,
     };
     return this.service.createLanguage(data);
   }
@@ -86,11 +87,11 @@ export class LanguageController extends Controller {
     @Body() body: UpdateLanguageRequestDto,
   ): Promise<LanguageDto> {
     const data = {
-      name:            body.name,
-      suffix:          body.suffix,
-      version:         body.version,
-      compile_command: body.compilerCmd ?? null,
-      run_command:     body.runtimeCmd,
+      name:        body.name,
+      suffix:      body.suffix,
+      version:     body.version,
+      compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
+      runtimeCmd:  body.runtimeCmd  ?? body.run_command,
     };
     return this.service.updateLanguage(id, data);
   }

@@ -56,7 +56,13 @@ export class LanguageService {
     name:        lang.name,
     suffix:      lang.suffix,
     version:     lang.version ?? null,
+
+    // canonical camelCase
+    compilerCmd: lang.compile_command ?? null,
+    runtimeCmd:  lang.run_command,
+
+    // legacy aliases (read‑only)
     compile_command: lang.compile_command ?? null,
-    run_command:  lang.run_command,
+    run_command:     lang.run_command,
   });
 }

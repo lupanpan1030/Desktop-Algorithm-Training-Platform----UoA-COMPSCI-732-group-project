@@ -192,34 +192,58 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ProgrammingLanguage": {
+    "LanguageDto": {
         "dataType": "refObject",
         "properties": {
-            "language_id": {"dataType":"double","required":true},
+            "languageId": {"dataType":"double","required":true},
             "name": {"dataType":"string","required":true},
             "suffix": {"dataType":"string","required":true},
-            "version": {"dataType":"string","required":true},
-            "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "run_command": {"dataType":"string","required":true},
+            "version": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "compilerCmd": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "runtimeCmd": {"dataType":"string","required":true},
+            "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "run_command": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CreateLanguageDto": {
+    "CreateLanguageRequestDto": {
         "dataType": "refObject",
         "properties": {
-            "name": {"dataType":"string","required":true},
-            "suffix": {"dataType":"string","required":true},
-            "version": {"dataType":"string","required":true},
-            "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "run_command": {"dataType":"string","required":true},
+            "name": {"dataType":"string","required":true,"validators":{"minLength":{"value":1},"maxLength":{"value":50}}},
+            "runtimeCmd": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "run_command": {"dataType":"string"},
+            "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "compilerCmd": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "version": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "suffix": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Partial_CreateLanguageDto_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"name":{"dataType":"string"},"suffix":{"dataType":"string"},"version":{"dataType":"string"},"compile_command":{"dataType":"string"},"run_command":{"dataType":"string"}},"validators":{}},
+    "UpdateLanguageRequestDto": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string"},
+            "runtimeCmd": {"dataType":"string"},
+            "run_command": {"dataType":"string"},
+            "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "compilerCmd": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "version": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "suffix": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ForbiddenError": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "message": {"dataType":"string","required":true},
+            "stack": {"dataType":"string"},
+            "statusCode": {"dataType":"double","default":403},
+        },
+        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -626,7 +650,37 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsLanguageController_get: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/languages/:id',
+            ...(fetchMiddlewares<RequestHandler>(LanguageController)),
+            ...(fetchMiddlewares<RequestHandler>(LanguageController.prototype.get)),
+
+            async function LanguageController_get(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsLanguageController_get, request, response });
+
+                const controller = new LanguageController();
+
+              await templateService.apiHandler({
+                methodName: 'get',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
@@ -634,7 +688,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLanguageController_create: Record<string, TsoaRoute.ParameterSchema> = {
-                body: {"in":"body","name":"body","required":true,"ref":"CreateLanguageDto"},
+                body: {"in":"body","name":"body","required":true,"ref":"CreateLanguageRequestDto"},
         };
         app.post('/languages',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
@@ -656,7 +710,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 201,
               });
             } catch (err) {
                 return next(err);
@@ -665,7 +719,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLanguageController_update: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
-                body: {"in":"body","name":"body","required":true,"ref":"Partial_CreateLanguageDto_"},
+                body: {"in":"body","name":"body","required":true,"ref":"UpdateLanguageRequestDto"},
         };
         app.put('/languages/:id',
             ...(fetchMiddlewares<RequestHandler>(LanguageController)),
@@ -687,7 +741,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
@@ -717,7 +771,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 204,
               });
             } catch (err) {
                 return next(err);
