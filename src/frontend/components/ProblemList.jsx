@@ -5,13 +5,13 @@ import {
   ListItemText,
   Chip,
   Stack,
-  Box,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AssignmentLateOutlinedIcon from "@mui/icons-material/AssignmentLateOutlined";
-// import {TaskAltIcon,AssignmentLateOutlinedIcon} from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { ResponsiveChip } from "./common/ResponsiveComponents";
 
 export default function ProblemList({ problems, filtersOpen }) {
   const getDifficultyColor = (difficulty) => {
@@ -28,15 +28,7 @@ export default function ProblemList({ problems, filtersOpen }) {
   };
 
   return (
-    <List
-      disablePadding
-      sx={{
-        overflowY: "auto",
-        maxHeight: {xs:`${filtersOpen ? "calc(100vh - 395px)" : "calc(100vh - 200px)"}`,sm:`${
-          filtersOpen ? "calc(100vh - 310px)" : "calc(100vh - 200px)"
-        }`},
-      }}
-    >
+    <List disablePadding sx={{ flexGrow: 1, overflowY: "auto" }}>
       {problems.map((problem) => (
         <ListItemButton
           disableGutters
@@ -53,18 +45,17 @@ export default function ProblemList({ problems, filtersOpen }) {
             <ListItemText
               primary={
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Box component="span">{problem.title}</Box>
+                  {/* <Box component="span" variant>{problem.title}</Box> */}
+                  <Typography variant="h6">{problem.title}</Typography>
                   {problem.completionState === "Completed" && (
                     <Tooltip title="Completed" arrow placement="right">
-                      <TaskAltIcon
-                        sx={{ color: "success.main", fontSize: 20 }}
-                      />
+                      <TaskAltIcon sx={{ color: "success.main" }} />
                     </Tooltip>
                   )}
                   {problem.completionState === "Attempted" && (
                     <Tooltip title="Attempted" arrow placement="right">
                       <AssignmentLateOutlinedIcon
-                        sx={{ color: "warning.main", fontSize: 20 }}
+                        sx={{ color: "warning.main" }}
                       />
                     </Tooltip>
                   )}
@@ -72,10 +63,9 @@ export default function ProblemList({ problems, filtersOpen }) {
               }
               slotProps={{ variant: "subtitle1", fontWeight: 500 }}
             />
-            <Chip
+            <ResponsiveChip
               label={problem.difficulty}
               color={getDifficultyColor(problem.difficulty)}
-              size="small"
               variant="outlined"
             />
           </Stack>

@@ -1,4 +1,4 @@
-import { createTheme, alpha } from "@mui/material";
+import { createTheme, alpha, responsiveFontSizes } from "@mui/material";
 import { useMemo } from "react";
 
 export function useAppTheme(darkMode) {
@@ -6,7 +6,13 @@ export function useAppTheme(darkMode) {
     const stripeAlpha = darkMode ? 0.3 : 0.02;
     const hoverAlpha = darkMode ? 0.15 : 0.06;
 
-    return createTheme({
+    let theme = createTheme({
+      breakpoints: {
+        values: {
+          xs: 0,
+          sm: 700,
+        },
+      },
       palette: {
         mode: darkMode ? "dark" : "light",
         background: {
@@ -25,9 +31,10 @@ export function useAppTheme(darkMode) {
         },
       },
       components: {
+        // written in alphabetical order
         MuiAppBar: {
           defaultProps: {
-            elevation: darkMode ? 0 : 4,
+            elevation: darkMode ? 1 : 4,
           },
           styleOverrides: {
             root: ({ theme }) => ({
@@ -40,7 +47,7 @@ export function useAppTheme(darkMode) {
           styleOverrides: {
             root: ({ theme }) => ({
               "&.Mui-focused": {
-                color: theme.palette.text.primary, //default is primary.main 
+                color: theme.palette.text.primary, //default is primary.main
               },
             }),
           },
@@ -49,9 +56,33 @@ export function useAppTheme(darkMode) {
           styleOverrides: {
             root: ({ theme }) => ({
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                // make it slightly thinner than default
-                borderWidth: "1.5px",
-                borderColor: theme.palette.text.secondary, //default is primary.main 
+                borderWidth: "1.5px", // make it slightly thinner than default
+                borderColor: theme.palette.text.secondary, //default is primary.main
+              },
+            }),
+          },
+        },
+        MuiPaper: {
+          defaultProps: {
+            elevation: darkMode ? 1 : 0,
+          },
+        },
+        MuiSvgIcon: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              fontSize: theme.typography.pxToRem(20), // ≈1.25rem
+              [theme.breakpoints.up("sm")]: {
+                fontSize: theme.typography.pxToRem(24), // ≈1.5rem
+              },
+            }),
+          },
+        },
+        MuiToggleButton: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              fontSize: theme.typography.pxToRem(12),
+              [theme.breakpoints.up("sm")]: {
+                fontSize: theme.typography.pxToRem(15),
               },
             }),
           },
@@ -59,9 +90,19 @@ export function useAppTheme(darkMode) {
       },
       typography: {
         h4: {
-          fontSize: "2rem",
+          fontSize: "1.9rem", // default 2.125rem
         },
+        h5: {},
       },
     });
-  }, [darkMode]);
+    theme = responsiveFontSizes(
+      theme,
+      {
+        breakpoints: ["sm"],
+        factor: 2,
+      },
+      [darkMode]
+    );
+    return theme;
+  });
 }
