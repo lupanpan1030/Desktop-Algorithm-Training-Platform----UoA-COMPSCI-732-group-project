@@ -1,4 +1,12 @@
-// language.ts
+/**
+ * Language DTO definitions (语言 DTO 定义)
+ * -------------------------------------
+ * Contains all data‑transfer objects used by the Programming Language API,
+ * including create/update request bodies and response models.
+ * 包含编程语言 API 使用的所有数据传输对象，如创建/更新请求体和响应模型。
+ */
+
+// DTO used internally when creating a language (创建语言时的内部 DTO)
 export interface CreateLanguageDto {
   name: string;
   suffix: string;
@@ -7,7 +15,7 @@ export interface CreateLanguageDto {
   runtimeCmd: string;
 }
 
-// Request body for creating a language
+// Request body for creating a language (创建语言的请求体)
 export class CreateLanguageRequestDto {
   /**
    * Language name (e.g., "Python")
@@ -31,7 +39,7 @@ export class CreateLanguageRequestDto {
   public suffix?: string;
 }
 
-// Request body for updating a language
+// Request body for updating a language (更新语言的请求体)
 export class UpdateLanguageRequestDto {
   public name?: string;
   public runtimeCmd?: string;
@@ -44,10 +52,11 @@ export class UpdateLanguageRequestDto {
   public suffix?: string;
 }
 
+// Response model returned to clients (返回给客户端的响应模型)
 export interface LanguageDto {
   languageId: number;
   name: string;
-  suffix: string;          // 新增
+  suffix: string;          // File suffix, new in v2 (文件后缀，v2 新增)
   version: string | null;
   compilerCmd: string | null;
   runtimeCmd: string;
@@ -57,6 +66,7 @@ export interface LanguageDto {
   run_command?: string;
 }
 
+// Simplified response for listings (列表使用的简化响应模型)
 export interface LanguageResponseDto {
   languageId: number;
   name: string;

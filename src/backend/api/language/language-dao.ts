@@ -1,25 +1,33 @@
-// language-dao.ts — Data Access Layer for ProgrammingLanguage
+/**
+ * LanguageDao — Data Access Layer for ProgrammingLanguage 表
+ * ----------------------------------------------------------
+ * Provides database helpers to create, read, update and delete programming
+ * languages using Prisma. 通过 Prisma 提供编程语言的增删改查数据库操作。
+ */
 import type { ProgrammingLanguage } from '@prisma/client';
 import { getPrisma } from '../../db/prisma/prisma';
 import { CreateLanguageDto } from './language';
 
 /**
  * DAO for the `programmingLanguage` table.
+ * 该类封装对 `programmingLanguage` 表的所有操作。
+ *
  * Mirrors the static‑class style used by ProblemsDao/TestCaseDao so tests can
  * swap the Prisma client via `getPrisma()`.
+ * 与 ProblemsDao/TestCaseDao 保持相同的静态类风格，方便测试替换 Prisma Client。
  */
 export class LanguageDao {
-  /** Always returns the current Prisma Client (allows tests to inject one). */
+  /** Always returns the current Prisma Client (用于测试注入). */
   private static get db() {
     return getPrisma();
   }
 
-  /** List all languages */
+  /** List all programming languages. 列出所有编程语言。 */
   public static async getAllLanguages(): Promise<ProgrammingLanguage[]> {
     return this.db.programmingLanguage.findMany();
   }
 
-  /** Find a single language by primary key */
+  /** Find a language by primary key. 根据主键查询语言。 */
   public static async findLanguageById(
     id: number,
   ): Promise<ProgrammingLanguage | null> {
@@ -28,7 +36,7 @@ export class LanguageDao {
     });
   }
 
-  /** Insert a new language */
+  /** Insert a new language. 插入新语言。 */
   public static async createLanguage(
     data: CreateLanguageDto,
   ): Promise<ProgrammingLanguage> {
@@ -36,13 +44,13 @@ export class LanguageDao {
     return this.db.programmingLanguage.create({
       data: {
         ...rest,
-        compile_command: compilerCmd ?? null, // map camelCase → snake_case
+        compile_command: compilerCmd ?? null, // Map camelCase → snake_case 字段
         run_command: runtimeCmd ?? null,
       },
     });
   }
 
-  /** Update an existing language */
+  /** Update an existing language. 更新已有语言。 */
   public static async updateLanguage(
     id: number,
     data: Partial<CreateLanguageDto>,
@@ -58,7 +66,7 @@ export class LanguageDao {
     });
   }
 
-  /** Delete a language */
+  /** Delete a language. 删除语言。 */
   public static async deleteLanguage(id: number): Promise<void> {
     await this.db.programmingLanguage.delete({
       where: { language_id: id },
@@ -66,9 +74,9 @@ export class LanguageDao {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Legacy functional exports (kept to avoid breaking older imports)           */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* Legacy functional exports (保留旧版函数式导出以避免破坏现有引用) */
+/* ------------------------------------------------------------------ */
 
 export const getAllLanguages = () => LanguageDao.getAllLanguages();
 export const findLanguageById = (id: number) => LanguageDao.findLanguageById(id);
