@@ -1,5 +1,9 @@
 import { loader } from '@monaco-editor/react';
-loader.config({ paths: { vs: '/vs' } });
+
+const isPackaged = window.location.protocol === 'file:';
+loader.config({
+  paths: { vs: isPackaged ? '../vs' : '/vs' }
+});
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
@@ -19,12 +23,22 @@ const editorOptions = {
   folding: true,
 };
 
+// 统一语言映射
+const monacoLanguageMap = {
+  python: 'python',
+  javascript: 'javascript',
+  java: 'java',
+  'c++': 'cpp',
+  cpp: 'cpp',
+};
+
 export default function CodeEditor({ onCodeChange }) {
     const editorRef = useRef(null);
     const [code, setCode] = useState('');
+    // 统一内部语言变量为小写（如'python','c++','java','javascript','cpp'）
     const [language, setLanguage] = useState('python');
     const [isEditorReady, setIsEditorReady] = useState(false);
-    const [monacoError, setMonacoError] = useState(null);
+    const [monacoError, setMonacoError] = useState(isPackaged ? null : new Error('无法确定Monaco资源路径'));
     // Default language list works as backup when backend is unavailable
     const [languages, setLanguages] = useState([
         { language_id: 1, name: 'Python' },
@@ -58,22 +72,31 @@ export default function CodeEditor({ onCodeChange }) {
 
     // Additional loading timeout detection
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (!isEditorReady) {
-                console.warn('Monaco editor loading timeout - switching to fallback editor');
-                setMonacoError(new Error('Loading timeout'));
-            }
-        }, 8000); // Timeout after 8 seconds
-        
-        return () => clearTimeout(timeoutId);
-    }, [isEditorReady]);
+      // 如果已经确定资源不可用，不需要等待
+      if (!isPackaged) {
+        console.warn('Monaco资源路径无效，使用fallback编辑器');
+        return;
+      }
+      
+      console.log('Monaco编辑器加载中...');
+      const timeoutId = setTimeout(() => {
+        if (!isEditorReady) {
+          console.warn('Monaco编辑器加载超时 - 切换到fallback编辑器');
+          setMonacoError(new Error('加载超时 - Monaco编辑器资源无法加载'));
+        }
+      }, 5000);
+      
+      return () => clearTimeout(timeoutId);
+    }, [isEditorReady, isPackaged]);
 
     // Listen for global errors and capture Monaco-related errors
     useEffect(() => {
         const handleGlobalError = (event) => {
+            console.log('Checking error:', event.message || 'Unknown error');
             if (
                 event.message && 
                 (event.message.includes('Monaco') || 
+                 event.message.includes('monaco') ||
                  event.filename?.includes('monaco') ||
                  event.error?.stack?.includes('monaco'))
             ) {
@@ -91,9 +114,16 @@ export default function CodeEditor({ onCodeChange }) {
         setCode(value || '');
     }, []);
 
+    // 统一下拉菜单、Monaco、父组件onCodeChange的language
     const handleLanguageChange = useCallback((event) => {
-        setLanguage(event.target.value);
-    }, []);
+        const newLanguage = event.target.value;
+        setLanguage(newLanguage);
+        
+        // Immediately notify parent component of language change
+        if (onCodeChange) {
+            onCodeChange({ code, language: newLanguage });
+        }
+    }, [code, onCodeChange]);
 
     // Handle editor mount successfully
     const handleEditorDidMount = useCallback((editor, monaco) => {
@@ -129,7 +159,7 @@ export default function CodeEditor({ onCodeChange }) {
         setMonacoError(error);
     }, []);
 
-    // When code or language changes, notify the parent component. Use useEffect to avoid circular updates
+    // When code changes, notify the parent component. Use useEffect to avoid circular updates
     useEffect(() => {
         if (onCodeChange) {
             onCodeChange({ code, language });
@@ -179,6 +209,9 @@ export default function CodeEditor({ onCodeChange }) {
                 <Box sx={{ p: 2, flex: 1, overflow: 'hidden' }}>
                     <Typography color="error" variant="subtitle2" sx={{ mb: 1 }}>
                         Monaco Editor could not be loaded. Using basic editor instead.
+                    </Typography>
+                    <Typography variant="body2" color="error" sx={{ mb: 1 }}>
+                        Error: {monacoError?.message || 'Unknown error'}
                     </Typography>
                     <textarea
                         value={code}
@@ -241,7 +274,7 @@ export default function CodeEditor({ onCodeChange }) {
                 <Editor
                     height="100%"
                     defaultLanguage="python"
-                    language={language}
+                    language={monacoLanguageMap[language] || 'plaintext'}
                     value={code}
                     onChange={handleEditorChange}
                     onMount={handleEditorDidMount}

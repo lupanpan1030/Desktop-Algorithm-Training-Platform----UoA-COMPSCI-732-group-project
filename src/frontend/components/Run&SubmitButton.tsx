@@ -49,6 +49,8 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       return;
     }
 
+    console.log('Running code with language ID:', languageId);
+    
     const response = await runCode(problemId, code, languageId);
     if (response) {
       setRunResults(response);
@@ -68,6 +70,8 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       return;
     }
 
+    console.log('Submitting code with language ID:', languageId);
+    
     const response = await submitCode(problemId, code, languageId);
     if (response) {
       setSubmitResults(response);
