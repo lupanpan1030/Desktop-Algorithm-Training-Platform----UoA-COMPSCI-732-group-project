@@ -703,7 +703,7 @@
 				},
 				"description": "Run code against a subset of test cases without saving the submission",
 				"tags": [
-					"Problems"
+					"Submissions"
 				],
 				"security": [],
 				"parameters": [
@@ -769,7 +769,7 @@
 				},
 				"description": "Submit code for full evaluation and save the submission",
 				"tags": [
-					"Problems"
+					"Submissions"
 				],
 				"security": [],
 				"parameters": [
@@ -828,7 +828,7 @@
 				},
 				"description": "List submissions for a problem",
 				"tags": [
-					"Problems"
+					"Submissions"
 				],
 				"security": [],
 				"parameters": [
@@ -871,7 +871,7 @@
 				},
 				"description": "Get a specific submission for a problem",
 				"tags": [
-					"Problems"
+					"Submissions"
 				],
 				"security": [],
 				"parameters": [
