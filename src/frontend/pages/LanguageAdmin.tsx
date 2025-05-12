@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Box, Snackbar, Alert } from '@mui/material';
+import React, { useState, useCallback } from 'react';
+import { Box, Snackbar, Alert, CircularProgress } from '@mui/material';
 import LanguageToolbar     from '../components/languages/LanguageToolbar';
 import LanguageTable       from '../components/languages/LanguageTable';
 import LanguageFormDialog  from '../components/languages/LanguageFormDialog';
 import DeleteConfirmDialog from '../components/languages/DeleteConfirmDialog';
-import { useLanguages }    from '../hooks/useLanguages';
+import { useLanguages, Language }    from '../hooks/useLanguages';
+import { strings } from '../i18n/messages';
 
 /**
  * LanguageAdmin Page
@@ -19,16 +20,35 @@ import { useLanguages }    from '../hooks/useLanguages';
  * all UI state is kept locally in this component.
  */
 
+// —— Local state type definitions ——
+interface EditState {
+  open: boolean;
+  lang: Language | null;
+}
+interface DelState {
+  open: boolean;
+  id: number | null;
+  name: string;
+}
+
 export default function LanguageAdmin() {
-  const { languages, addLanguage, updateLanguage, deleteLanguage, fetchLanguages } = useLanguages();
+  const {
+    languages,
+    loading,
+    error,
+    addLanguage,
+    updateLanguage,
+    deleteLanguage,
+    fetchLanguages,
+  } = useLanguages();
 
 // ---------- Local UI state ----------
 
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit,   setShowEdit]   = useState(false);
   const [addOpen, setAddOpen]       = useState(false);
-  const [edit, setEdit]             = useState<{ open:boolean; lang:any|null }>({ open:false, lang:null });
-  const [del,  setDel]              = useState<{ open:boolean; id:number|null; name:string }>({ open:false, id:null, name:'' });
+  const [edit, setEdit]             = useState<EditState>({ open:false, lang:null });
+  const [del,  setDel]              = useState<DelState>({ open:false, id:null, name:'' });
 
   const [snack,setSnack] = useState<{open:boolean; msg:string; sev:'success'|'error'|'warning'}>({open:false, msg:'', sev:'success'});
   const notify = (
@@ -39,61 +59,83 @@ export default function LanguageAdmin() {
   };
 
 // ---------- CRUD handlers ----------
-  const handleAdd = async (v:any) => {
+  const handleAdd = useCallback(async (v: any) => {
     try {
       await addLanguage(v);
-      notify(`Added "${v.name}"`);
-    } catch (e:any) {
+      notify(strings.addSuccess(v.name));
+    } catch (e: any) {
       notify(e.message, 'error');
     } finally {
       setAddOpen(false);
     }
-  };
-  const handleSave = async (v:any) => {
+  }, [addLanguage]);
+
+  const handleSave = useCallback(async (v: any) => {
     if (!edit.lang) return;
 
     try {
       await updateLanguage(edit.lang.languageId, v);
-      notify(`Updated "${v.name}"`);
-    } catch (e:any) {
+      notify(strings.updateSuccess(v.name));
+    } catch (e: any) {
       notify(e.message, 'error');
     } finally {
       setEdit({ open: false, lang: null });
     }
-  };
-  const confirmDel = async () => {
+  }, [edit, updateLanguage]);
+
+  const confirmDel = useCallback(async () => {
     if (del.id == null) return;
 
     try {
       await deleteLanguage(del.id);
-      notify(`Deleted "${del.name}"`);
-    } catch (e:any) {
+      notify(strings.deleteSuccess(del.name));
+    } catch (e: any) {
       notify(e.message, 'error');
     } finally {
       setDel({ open: false, id: null, name: '' });
       setShowDelete(false);
     }
-  };
+  }, [del, deleteLanguage]);
 
 // ---------- Render ----------
   return (
+    <>
+    {loading && (
+      <Box sx={{ display:'flex', justifyContent:'center', my:4 }}>
+        <CircularProgress />
+      </Box>
+    )}
     <Box sx={{ p:3 }}>
       <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:3 }}>
         <h1 style={{margin:0}}>Language Management</h1>
         <LanguageToolbar
           showDelete={showDelete} showEdit={showEdit}
-          onAdd={() => setAddOpen(true)}
+          onAdd={() => {
+            // blur the triggering element before opening the dialog to avoid a11y warning
+            (document.activeElement as HTMLElement | null)?.blur();
+            setAddOpen(true);
+          }}
           onToggleDelete={() => setShowDelete((p)=>!p)}
           onToggleEdit={() => setShowEdit((p)=>!p)}
           onRefresh={fetchLanguages}
         />
       </Box>
 
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => { /* TODO: optionally clear error state */ }}
+        >
+          {error.message ?? String(error)}
+        </Alert>
+      )}
+
       <LanguageTable
         languages={languages}
         showDelete={showDelete}
         showEdit={showEdit}
-        onEdit={(lang) => setEdit({open:true, lang})}
+        onEdit={(lang: Language) => setEdit({open:true, lang})}
         onDelete={(id,name) => setDel({open:true,id,name})}
       />
 
@@ -101,14 +143,27 @@ export default function LanguageAdmin() {
       <LanguageFormDialog
         open={addOpen}
         mode="add"
-        initialValues={{ name:'', compile_command:'', run_command:'', suffix:'', version:'' }}
+        initialValues={{ name:'', compilerCmd:'', runtimeCmd:'', suffix:'', version:'' }}
+        languages={languages}
         onSubmit={handleAdd}
         onClose={() => setAddOpen(false)}
       />
       <LanguageFormDialog
         open={edit.open}
         mode="edit"
-        initialValues={edit.lang ?? { name:'', compile_command:'', run_command:'', suffix:'', version:'' }}
+        initialValues={
+          edit.lang
+            ? {
+                name:        edit.lang.name,
+                compilerCmd: edit.lang.compilerCmd ?? '',
+                runtimeCmd:  edit.lang.runtimeCmd ?? '',
+                suffix:      edit.lang.suffix,
+                version:     edit.lang.version,
+              }
+            : { name:'', compilerCmd:'', runtimeCmd:'', suffix:'', version:'' }
+        }
+        languages={languages}
+        ignoreId={edit.lang?.languageId}
         onSubmit={handleSave}
         onClose={() => setEdit({open:false, lang:null})}
       />
@@ -125,5 +180,6 @@ export default function LanguageAdmin() {
         <Alert severity={snack.sev} variant="filled" onClose={() => setSnack({...snack,open:false})}>{snack.msg}</Alert>
       </Snackbar>
     </Box>
+    </>
   );
 }

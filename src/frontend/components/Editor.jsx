@@ -7,9 +7,7 @@ loader.config({
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { FormControl, InputLabel, Select, MenuItem, Box, Typography, IconButton, Tooltip } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
+import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 
 // Some default settings for the editor
 const editorOptions = {
@@ -46,11 +44,6 @@ export default function CodeEditor({ onCodeChange }) {
         { language_id: 3, name: 'Java' },
         { language_id: 4, name: 'C++' }
     ]);
-    const navigate = useNavigate();
-    const handleAddLanguage = () => {
-        navigate('/languages');   // Navigate to Language management page
-};
-
     
 
     // Fetch language list from backend
@@ -197,12 +190,6 @@ export default function CodeEditor({ onCodeChange }) {
                           ))}
                         </Select>
                       </FormControl>
-
-                      <Tooltip title="Add new language">
-                        <IconButton size="small" onClick={handleAddLanguage}>
-                          <AddIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
                     </Box>
                 </Box>
 
@@ -255,12 +242,6 @@ export default function CodeEditor({ onCodeChange }) {
                       ))}
                     </Select>
                   </FormControl>
-
-                  <Tooltip title="Add new language">
-                    <IconButton size="small" onClick={handleAddLanguage}>
-                      <AddIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
                 </Box>
             </Box>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { strings } from '../../i18n/messages';
 
 interface Props {
   open: boolean;
@@ -11,11 +12,11 @@ interface Props {
 export default function DeleteConfirmDialog({ open, name, onClose, onConfirm }: Props) {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Confirm Delete</DialogTitle>
-      <DialogContent>Are you sure you want to delete "{name}"?</DialogContent>
+      <DialogTitle>{strings.confirmDeleteTitle}</DialogTitle>
+      <DialogContent>{strings.confirmDeleteMessage(name)}</DialogContent>
       <DialogActions>
-        <Button variant="contained" onClick={onClose}>Cancel</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>Delete</Button>
+        <Button variant="contained" onClick={onClose}>{strings.btnCancel}</Button>
+        <Button color="error" variant="contained" onClick={onConfirm}>{strings.btnDelete}</Button>
       </DialogActions>
     </Dialog>
   );

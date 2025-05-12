@@ -11,6 +11,7 @@ interface Problem {
 }
 
 interface Language {
+  id?: number;
   languageId: number;
   name: string;
   compile_command?: string;
