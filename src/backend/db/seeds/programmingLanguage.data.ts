@@ -42,11 +42,11 @@ export async function seedLanguage() {
         },
         {
             language_id: 4,
-            name: 'Ocaml',
-            suffix: 'ml',
-            version: '4.14',
+            name: 'Go',
+            suffix: 'go',
+            version: '1.21',
             compile_command: null, 
-            run_command: 'ocaml',
+            run_command: 'go run',
             is_default: false
         },
         {
