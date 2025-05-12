@@ -6,7 +6,7 @@ import NavBar from './components/common/NavBar';
 import HomePage from './pages/HomePage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
-import LanguageAdmin from "./pages/LanguageAdmin";
+import LanguageAdmin from "./pages/LanguageAdmin.tsx";
 import './styles/global.css';
 
 function App() {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
-import LanguageAdmin from '../../../frontend/pages/LanguageAdmin';
+import LanguageAdmin from '../../../frontend/pages/LanguageAdmin.js';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { useApi } from '../../../frontend/hooks/useApi';
