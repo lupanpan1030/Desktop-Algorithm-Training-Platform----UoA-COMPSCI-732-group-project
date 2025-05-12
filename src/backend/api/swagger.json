@@ -301,9 +301,8 @@
 				"enum": [
 					"Completed",
 					"Attempted",
-					null
-				],
-				"nullable": true
+					"Unattempted"
+				]
 			},
 			"ProblemSummary": {
 				"properties": {
@@ -402,9 +401,9 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ProgrammingLanguage": {
+			"LanguageDto": {
 				"properties": {
-					"language_id": {
+					"languageId": {
 						"type": "number",
 						"format": "double"
 					},
@@ -415,7 +414,8 @@
 						"type": "string"
 					},
 					"version": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"compile_command": {
 						"type": "string",
@@ -426,7 +426,7 @@
 					}
 				},
 				"required": [
-					"language_id",
+					"languageId",
 					"name",
 					"suffix",
 					"version",
@@ -436,55 +436,61 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"CreateLanguageDto": {
+			"CreateLanguageRequestDto": {
 				"properties": {
 					"name": {
-						"type": "string"
+						"type": "string",
+						"description": "Language name (e.g., \"Python\")",
+						"minLength": 1,
+						"maxLength": 50
 					},
-					"suffix": {
-						"type": "string"
+					"runtimeCmd": {
+						"type": "string",
+						"description": "Command used to run the compiled/interpreted program",
+						"minLength": 1
+					},
+					"compilerCmd": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional compile command (null for interpreted languages)"
 					},
 					"version": {
-						"type": "string"
-					},
-					"compile_command": {
 						"type": "string",
 						"nullable": true
 					},
-					"run_command": {
+					"suffix": {
 						"type": "string"
 					}
 				},
 				"required": [
 					"name",
-					"suffix",
-					"version",
-					"compile_command",
-					"run_command"
+					"runtimeCmd"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"Partial_CreateLanguageDto_": {
+			"UpdateLanguageRequestDto": {
 				"properties": {
 					"name": {
 						"type": "string"
 					},
-					"suffix": {
+					"runtimeCmd": {
 						"type": "string"
+					},
+					"compilerCmd": {
+						"type": "string",
+						"nullable": true
 					},
 					"version": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
-					"compile_command": {
-						"type": "string"
-					},
-					"run_command": {
+					"suffix": {
 						"type": "string"
 					}
 				},
 				"type": "object",
-				"description": "Make all properties in T optional"
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -1097,12 +1103,12 @@
 				"operationId": "GetLanguages",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/ProgrammingLanguage"
+										"$ref": "#/components/schemas/LanguageDto"
 									},
 									"type": "array"
 								}
@@ -1110,6 +1116,7 @@
 						}
 					}
 				},
+				"description": "List all programming languages",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1119,28 +1126,41 @@
 			"post": {
 				"operationId": "Create",
 				"responses": {
-					"200": {
-						"description": "Ok",
+					"201": {
+						"description": "Created",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ProgrammingLanguage"
+									"$ref": "#/components/schemas/LanguageDto"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
 								}
 							}
 						}
 					}
 				},
+				"description": "Create a new programming language",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [],
 				"requestBody": {
+					"description": "Language information",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateLanguageDto"
+								"$ref": "#/components/schemas/CreateLanguageRequestDto",
+								"description": "Language information"
 							}
 						}
 					}
@@ -1148,26 +1168,90 @@
 			}
 		},
 		"/languages/{id}": {
-			"put": {
-				"operationId": "Update",
+			"get": {
+				"operationId": "Get",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ProgrammingLanguage"
+									"$ref": "#/components/schemas/LanguageDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Language not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
 								}
 							}
 						}
 					}
 				},
+				"description": "Get a programming language by its ID",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [
 					{
+						"description": "Language ID",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LanguageDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Language not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Update an existing programming language",
+				"tags": [
+					"ProgrammingLanguage"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Language ID",
 						"in": "path",
 						"name": "id",
 						"required": true,
@@ -1178,11 +1262,13 @@
 					}
 				],
 				"requestBody": {
+					"description": "Updated language information",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/Partial_CreateLanguageDto_"
+								"$ref": "#/components/schemas/UpdateLanguageRequestDto",
+								"description": "Updated language information"
 							}
 						}
 					}
@@ -1192,15 +1278,27 @@
 				"operationId": "Remove",
 				"responses": {
 					"204": {
-						"description": "No content"
+						"description": "No Content"
+					},
+					"404": {
+						"description": "Language not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
 					}
 				},
+				"description": "Delete a programming language",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [
 					{
+						"description": "Language ID",
 						"in": "path",
 						"name": "id",
 						"required": true,

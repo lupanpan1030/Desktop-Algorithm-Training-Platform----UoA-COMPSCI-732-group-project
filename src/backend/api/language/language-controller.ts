@@ -1,17 +1,25 @@
 // language-controller.ts
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Path,
-    Post,
-    Put,
-    Route,
-    Tags,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Route,
+  Body,
+  Path,
+  Response,
+  SuccessResponse,
+  Tags,
 } from 'tsoa';
-import { ProgrammingLanguage, CreateLanguageDto } from './language';
 import { LanguageService } from './language-service';
+import {
+  CreateLanguageRequestDto,
+  UpdateLanguageRequestDto,
+  LanguageDto,
+} from './language';
+import { ValidateError } from '../../utils/errors/validation-error';
+import { NotFoundError } from '../../utils/errors/not-found-error';
 
 const service = new LanguageService();
 
@@ -20,35 +28,81 @@ const service = new LanguageService();
 @Route('languages')
 @Tags('ProgrammingLanguage')
 export class LanguageController extends Controller {
-    // 获取所有编程语言
-    // Get all programming languages
-    @Get('/')
-    public async getLanguages(): Promise<ProgrammingLanguage[]> {
-        return service.getAllLanguages();
-    }
+  private service = new LanguageService();
 
-    // 创建新的编程语言
-    // Create a new programming language
-    @Post('/')
-    public async create(@Body() body: CreateLanguageDto): Promise<ProgrammingLanguage> {
-        return service.createLanguage(body);
-    }
+  /**
+   * List all programming languages
+   */
+  @SuccessResponse('200', 'OK')
+  @Get()
+  public async getLanguages(): Promise<LanguageDto[]> {
+    return this.service.getAllLanguages();
+  }
 
-    // 更新编程语言（根据 ID）
-    // Update a programming language by ID
-    @Put('{id}')
-    public async update(
-        @Path() id: number,                           
-        @Body() body: Partial<CreateLanguageDto> 
-    ): Promise<ProgrammingLanguage> {
-        return service.updateLanguage(id, body);
-    }
+  /**
+   * Get a programming language by its ID
+   * @param id Language ID
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @SuccessResponse('200', 'OK')
+  @Get('{id}')
+  public async get(@Path() id: number): Promise<LanguageDto> {
+    return this.service.getLanguageById(id);
+  }
 
-    // 删除编程语言（根据 ID）
-    // Delete a programming language by ID
-    @Delete('{id}')
-    public async remove(@Path() id: number): Promise<void> {
-        return service.deleteLanguage(id);
-    }
+  /**
+   * Create a new programming language
+   * @param body Language information
+   */
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse('201', 'Created')
+  @Post()
+  public async create(
+    @Body() body: CreateLanguageRequestDto,
+  ): Promise<LanguageDto> {
+    this.setStatus(201);
+    const data = {
+      name:            body.name,
+      suffix:          body.suffix,
+      version:         body.version ?? null,
+      compile_command: body.compilerCmd ?? null,
+      run_command:     body.runtimeCmd,
+    };
+    return this.service.createLanguage(data);
+  }
+
+  /**
+   * Update an existing programming language
+   * @param id Language ID
+   * @param body Updated language information
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse('200', 'OK')
+  @Put('{id}')
+  public async update(
+    @Path() id: number,
+    @Body() body: UpdateLanguageRequestDto,
+  ): Promise<LanguageDto> {
+    const data = {
+      name:            body.name,
+      suffix:          body.suffix,
+      version:         body.version,
+      compile_command: body.compilerCmd ?? null,
+      run_command:     body.runtimeCmd,
+    };
+    return this.service.updateLanguage(id, data);
+  }
+
+  /**
+   * Delete a programming language
+   * @param id Language ID
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @SuccessResponse('204', 'No Content')
+  @Delete('{id}')
+  public async remove(@Path() id: number): Promise<void> {
+    await this.service.deleteLanguage(id);
+    this.setStatus(204);
+  }
 }
-

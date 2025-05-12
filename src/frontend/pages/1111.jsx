@@ -22,12 +22,10 @@ import {
   DialogContent,
   DialogActions,
   Fade,
-  LinearProgress,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { useApi } from '../hooks/useApi';
 
 /**
  * Language Management Page (Add/Delete Languages)
@@ -47,6 +45,11 @@ export default function LanguageAdmin() {
     suffix: '',
     version: ''
   });
+  const [errors, setErrors] = useState({
+    name: false,
+    suffix: false,
+    run_command: false,
+  });
   const [showDelete, setShowDelete] = useState(false); // toggles delete mode
   const [showEdit, setShowEdit] = useState(false);   // toggles edit mode
   const [openAdd, setOpenAdd] = useState(false);       // controls add‑dialog
@@ -63,7 +66,6 @@ export default function LanguageAdmin() {
   const [confirm, setConfirm] = useState({ open: false, id: null, name: '' }); // delete confirmation
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); // feedback
 
-  const { getLanguages, addLanguage, updateLanguage, deleteLanguage, loading, error } = useApi();
   const theme = useTheme();
   const darkBtnStyle =
     theme.palette.mode === 'dark'
@@ -74,28 +76,94 @@ export default function LanguageAdmin() {
         }
       : {};
 
+  /** Normalises payload for either add or edit */
+  const buildPayload = (formOrEdit) => {
+    const compileCmdStr = (formOrEdit.compile_command ?? '').trim();
+    const runCmdStr     = (formOrEdit.run_command ?? '').trim();
+    const versionStr    = (formOrEdit.version ?? '').trim();
+
+    return {
+      run_command:     runCmdStr,
+      compile_command: compileCmdStr,
+      version:         versionStr,
+      runtimeCmd:      runCmdStr,
+      compilerCmd:     compileCmdStr,
+      name:            formOrEdit.name,
+      suffix:          formOrEdit.suffix,
+    };
+  };
+
   /* Fetch all languages */
   const fetchLanguages = async () => {
-    const data = await getLanguages();
-    if (data) {
-      setLanguages(data);
-    }
-  };
+    try {
+      const res = await fetch("http://localhost:6785/languages");
+      const raw = await res.json();
+      
+    console.log("👉 /languages raw =", raw);        // 调试用，保留
+
+    /* ① 把返回值统一折腾成数组 */
+    const list =
+      Array.isArray(raw)                     ? raw :
+      Array.isArray(raw.languages)           ? raw.languages :
+      Array.isArray(raw.data)                ? raw.data :
+      Array.isArray(raw.data?.languages)     ? raw.data.languages :
+      Object.values(raw);        /* 兜底：{1:{…},2:{…}} 这种 */
+
+    /* ② 把各种别名字段映射成组件统一用的字段名 */
+    const mapped = list
+      .map((l) => {
+        // 统一主键，优先转成 number
+        const rawId = l.languageId ?? l.language_id ?? l.id ?? l.languageID;
+        const numericId =
+          typeof rawId === 'string' ? parseInt(rawId, 10) : rawId;
+
+        return {
+          ...l,
+
+          /* 主键：确保始终为数字 */
+          languageId: numericId,
+
+          /* 编译命令：compile_command / compileCmd / compilerCmd … */
+          compile_command:
+            l.compile_command ??
+            l.compileCmd ??
+            l.compilerCmd ??
+            l.compiledCmd ??
+            null,
+
+          /* 运行命令：run_command / runCmd / runtimeCmd … */
+          run_command:
+            l.run_command ??
+            l.runCmd ??
+            l.runtimeCmd ??
+            l.executeCmd ??
+            l.runCommand ??
+            null,
+        };
+      })
+      /* 删除掉没有合法 ID 的脏数据，避免 422 */
+      .filter((l) => Number.isFinite(l.languageId));
+
+    setLanguages(mapped);
+  } catch (err) {
+    console.error("Failed to fetch languages", err);
+    setLanguages([]);
+  }
+};
 
   useEffect(() => {
     fetchLanguages();
-  }, [getLanguages]);
+  }, []);
 
-  // Handle error state
-  useEffect(() => {
-    if (error) {
-      setSnackbar({ open: true, message: error.message, severity: 'error' });
+  /* Handle input changes + clear error state */
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({ ...prev, [field]: value }));
+    // 如果正在修改必填字段，实时清除错误提示
+    if (field === 'name' || field === 'suffix' || field === 'run_command') {
+      setErrors((prev) => ({ ...prev, [field]: false }));
     }
-  }, [error]);
-
-  /* Handle input changes */
-  const handleChange = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
 
   const toggleDeleteMode = () => setShowDelete((prev) => !prev);
 
@@ -106,53 +174,161 @@ export default function LanguageAdmin() {
     setEditId(lang.languageId);
     setEditForm({
       name: lang.name ?? '',
-      compile_command: lang.compile_command ?? '',
-      run_command: lang.run_command ?? '',
+      compile_command: lang.compile_command ?? lang.compilerCmd ?? '',
+      run_command: lang.run_command ?? lang.runCmd ?? '',
       suffix: lang.suffix ?? '',
       version: lang.version ?? ''
     });
+    setErrors({ name: false, suffix: false });
     setOpenEdit(true);
   };
 
-  const handleEditChange = (field) => (e) =>
-    setEditForm((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleUpdateLanguage = async () => {
-    if (!editId) return;
-    const result = await updateLanguage(editId, editForm);
-    if (result) {
-      setSnackbar({ open: true, message: `Updated "${editForm.name}"`, severity: 'success' });
-      setOpenEdit(false);
-      fetchLanguages();
-    } else {
-      setSnackbar({ open: true, message: 'Update failed', severity: 'error' });
+  const handleEditChange = (field) => (e) => {
+    const value = e.target.value;
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    if (field === 'name' || field === 'suffix' || field === 'run_command') {
+      setErrors((prev) => ({ ...prev, [field]: false }));
     }
   };
 
-  const handleOpenAdd = () => setOpenAdd(true);
-  const handleCloseAdd = () => setOpenAdd(false);
+  const updateLanguage = async () => {
+    if (!editId) return;
 
-  const handleAddLanguage = async () => {
-    if (!form.name.trim()) {
-      setSnackbar({ open: true, message: 'Please enter a language name', severity: 'warning' });
+    /* ===== Front‑end validation (same rules as Add) ===== */
+    const newErrors = {
+      name: !editForm.name.trim(),
+      suffix: !editForm.suffix.trim(),
+      run_command: !editForm.run_command.trim(),
+    };
+    if (newErrors.name || newErrors.suffix || newErrors.run_command) {
+      setErrors(newErrors);
+      setSnackbar({
+        open: true,
+        message: 'Please fill all required fields',
+        severity: 'warning',
+      });
       return;
     }
-    if (!form.suffix.trim()) return;
-    
-    const result = await addLanguage(form);
-    if (result) {
-      setSnackbar({ open: true, message: `Added "${form.name}"`, severity: 'success' });
-      setForm({
-        name: '',
-        compile_command: '',
-        run_command: '',
-        suffix: '',
-        version: ''
+
+    try {
+      const payload = buildPayload(editForm);
+      const res = await fetch(`http://localhost:6785/languages/${editId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      handleCloseAdd();
-      fetchLanguages();
-    } else {
-      setSnackbar({ open: true, message: 'Add failed', severity: 'error' });
+
+      if (res.ok) {
+        // ✅ success
+        setSnackbar({
+          open: true,
+          message: `Updated "${editForm.name}"`,
+          severity: 'success',
+        });
+        setOpenEdit(false);
+        fetchLanguages();
+      } else {
+        // ❌ back‑end rejected
+        let msg = 'Update failed';
+        try {
+          const data = await res.json();
+          if (data?.message) msg = data.message;
+        } catch {
+          try {
+            const text = await res.text();
+            if (text) msg = text;
+          } catch {}
+        }
+        setSnackbar({
+          open: true,
+          message: msg,
+          severity: 'error',
+        });
+      }
+    } catch {
+      setSnackbar({
+        open: true,
+        message: 'Network error, update failed',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleOpenAdd = () => {
+    setErrors({ name: false, suffix: false, run_command: false });
+    setOpenAdd(true);
+  };
+  const handleCloseAdd = () => {
+    setErrors({ name: false, suffix: false, run_command: false });
+    setOpenAdd(false);
+  };
+
+  const addLanguage = async () => {
+    /* ---------- front‑end validation ---------- */
+    const blank = (s) => !s || s.trim() === '';
+    const newErrors = {
+      name: blank(form.name),
+      suffix: blank(form.suffix),
+      run_command: blank(form.run_command),
+    };
+    if (newErrors.name || newErrors.suffix || newErrors.run_command) {
+      setErrors(newErrors);
+      setSnackbar({
+        open: true,
+        message: 'Please fill all required fields',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    /* ---------- build request payload (camelCase only) ---------- */
+    const payload = {
+      name: form.name.trim(),
+      runtimeCmd: form.run_command.trim(),
+      compilerCmd: blank(form.compile_command) ? null : form.compile_command.trim(),
+      version:     blank(form.version)         ? null : form.version.trim(),
+      suffix:      form.suffix.trim(),
+    };
+
+    try {
+      const res = await fetch('http://localhost:6785/languages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setSnackbar({
+          open: true,
+          message: `Added "${form.name}"`,
+          severity: 'success',
+        });
+        /* clear form & refresh list */
+        setForm({
+          name: '',
+          compile_command: '',
+          run_command: '',
+          suffix: '',
+          version: ''
+        });
+        handleCloseAdd();
+        fetchLanguages();
+      } else {
+        /* backend rejected (validation, duplicate, etc.) */
+        let msg = 'Add failed';
+        try {
+          const data = await res.json();
+          if (data?.message) msg = data.message;
+        } catch {
+          try {
+            const text = await res.text();
+            if (text) msg = text;
+          } catch {}
+        }
+        setSnackbar({ open: true, message: msg, severity: 'error' });
+      }
+    } catch {
+      setSnackbar({ open: true, message: 'Network error, add failed', severity: 'error' });
     }
   };
 
@@ -160,22 +336,59 @@ export default function LanguageAdmin() {
     setConfirm({ open: true, id, name });
   };
 
-  const handleConfirmDelete = async () => {
+  const confirmDelete = async () => {
     const { id, name } = confirm;
-    const success = await deleteLanguage(id);
-    if (success) {
-      setSnackbar({ open: true, message: `Deleted "${name}"`, severity: 'success' });
-      fetchLanguages();
-    } else {
-      setSnackbar({ open: true, message: 'Delete failed', severity: 'error' });
+    try {
+      const res = await fetch(`http://localhost:6785/languages/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        // ✅ successfully deleted
+        setSnackbar({
+          open: true,
+          message: `Deleted "${name}"`,
+          severity: 'success'
+        });
+        fetchLanguages();
+        setShowDelete(false);         // leave delete mode after success
+      } else {
+        // ❌ backend rejected (e.g., trying to delete the last language)
+        // 更健壮地解析后端错误信息
+        let msg = 'Delete failed';
+        try {
+          // 尝试解析 JSON（推荐后端返回 {message: "..."}）
+          const data = await res.json();
+          if (data?.message) {
+            msg = data.message;
+          }
+        } catch (_) {
+          // 如果不是 JSON，再退而求其次读 text
+          try {
+            const text = await res.text();
+            if (text) msg = text;
+          } catch (_) {}
+        }
+        setSnackbar({
+          open: true,
+          message: msg,
+          severity: 'error'
+        });
+      }
+    } catch (e) {
+      setSnackbar({
+        open: true,
+        message: 'Network error, delete failed',
+        severity: 'error'
+      });
+    } finally {
+      // close the confirmation dialog
+      setConfirm({ open: false, id: null, name: '' });
     }
-    setConfirm({ open: false, id: null, name: '' });
-    setShowDelete(false);
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      {loading && <LinearProgress />}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <h1 style={{ margin: 0 }}>Language Management</h1>
         <Stack direction="row" spacing={2}>
@@ -185,7 +398,6 @@ export default function LanguageAdmin() {
               size="small"
               onClick={handleOpenAdd}
               sx={darkBtnStyle}
-              aria-label="Add new language"
             >
               Add
             </Button>
@@ -197,7 +409,6 @@ export default function LanguageAdmin() {
               color={showDelete ? 'error' : 'primary'}
               onClick={toggleDeleteMode}
               sx={darkBtnStyle}
-              aria-label="Toggle delete mode"
             >
               Delete
             </Button>
@@ -209,7 +420,6 @@ export default function LanguageAdmin() {
               color={showEdit ? 'secondary' : 'primary'}
               onClick={toggleEditMode}
               sx={darkBtnStyle}
-              aria-label="Toggle edit mode"
             >
               Edit
             </Button>
@@ -297,7 +507,6 @@ export default function LanguageAdmin() {
                             color: theme.palette.getContrastText(theme.palette.secondary.light),
                             '&:hover': { bgcolor: theme.palette.secondary.main },
                           }}
-                          data-testid="EditIcon"
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -310,7 +519,6 @@ export default function LanguageAdmin() {
                           color="error"
                           size="small"
                           onClick={() => handleDeleteClick(lang.languageId, lang.name)}
-                          data-testid="DeleteIcon"
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -332,30 +540,49 @@ export default function LanguageAdmin() {
             size="small"
             value={form.name}
             onChange={handleChange('name')}
+            required
+            error={errors.name}
+            helperText={errors.name ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Compile Command"
             size="small"
             value={form.compile_command}
             onChange={handleChange('compile_command')}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Run Command"
             size="small"
             value={form.run_command}
             onChange={handleChange('run_command')}
+            required
+            error={errors.run_command}
+            helperText={errors.run_command ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Suffix"
             size="small"
             value={form.suffix}
             onChange={handleChange('suffix')}
+            required
+            error={errors.suffix}
+            helperText={errors.suffix ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Version"
             size="small"
             value={form.version}
             onChange={handleChange('version')}
+            fullWidth
+            variant="outlined"
           />
         </DialogContent>
         <DialogActions>
@@ -364,9 +591,8 @@ export default function LanguageAdmin() {
           </Button>
           <Button
             variant="contained"
-            onClick={handleAddLanguage}
+            onClick={addLanguage}
             sx={darkBtnStyle}
-            aria-label="Add"
           >
             Add
           </Button>
@@ -382,43 +608,56 @@ export default function LanguageAdmin() {
             size="small"
             value={editForm.name}
             onChange={handleEditChange('name')}
+            required
+            error={errors.name}
+            helperText={errors.name ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Compile Command"
             size="small"
             value={editForm.compile_command}
             onChange={handleEditChange('compile_command')}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Run Command"
             size="small"
             value={editForm.run_command}
             onChange={handleEditChange('run_command')}
+            required
+            error={errors.run_command}
+            helperText={errors.run_command ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Suffix"
             size="small"
             value={editForm.suffix}
             onChange={handleEditChange('suffix')}
+            required
+            error={errors.suffix}
+            helperText={errors.suffix ? 'Required' : ''}
+            fullWidth
+            variant="outlined"
           />
           <TextField
             label="Version"
             size="small"
             value={editForm.version}
             onChange={handleEditChange('version')}
+            fullWidth
+            variant="outlined"
           />
         </DialogContent>
         <DialogActions>
           <Button variant="contained" onClick={() => setOpenEdit(false)} sx={darkBtnStyle}>
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
-            onClick={handleUpdateLanguage}
-            aria-label="Save"
-          >
-            Save
-          </Button>
+          <Button variant="contained" onClick={updateLanguage}>Save</Button>
         </DialogActions>
       </Dialog>
 
@@ -431,14 +670,7 @@ export default function LanguageAdmin() {
           <Button variant="contained" onClick={() => setConfirm({ ...confirm, open: false })} sx={darkBtnStyle}>
             Cancel
           </Button>
-          <Button 
-            color="error" 
-            variant="contained" 
-            onClick={handleConfirmDelete}
-            aria-label="Delete"
-          >
-            Delete
-          </Button>
+          <Button color="error" variant="contained" onClick={confirmDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
 
@@ -454,7 +686,6 @@ export default function LanguageAdmin() {
           variant="filled"
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           sx={{ width: '100%' }}
-          role="alert"
         >
           {snackbar.message}
         </Alert>
