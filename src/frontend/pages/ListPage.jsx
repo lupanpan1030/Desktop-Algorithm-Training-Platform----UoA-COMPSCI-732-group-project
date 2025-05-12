@@ -5,7 +5,7 @@ import FiltersPanel from '../components/FiltersPanel';
 import ProblemList from '../components/ProblemList';
 import { useApi } from '../hooks/useApi';
 
-export default function HomePage() {
+export default function ListPage() {
     const [problems, setProblems] = useState([]);
     const [difficultyFilter, setDifficultyFilter] = useState([]);   // [] = show all
     const [statusFilter, setStatusFilter] = useState([]);     // [] = show all

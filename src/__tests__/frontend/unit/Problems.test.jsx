@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
-import HomePage from '../../../frontend/pages/HomePage';
+import ListPage from '../../../frontend/pages/ListPage';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
@@ -35,9 +35,9 @@ afterEach(() => {
   cleanup();
 });
 
-describe('HomePage Component', () => {
+describe('ListPage Component', () => {
   test('fetches and displays problems correctly', async () => {
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Two Sum')).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('HomePage Component', () => {
   });
 
   test('filters problems based on difficulty toggle', async () => {
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     // Ensure initial list rendered
     await waitFor(() => {
@@ -85,7 +85,7 @@ describe('HomePage Component', () => {
   });
 
   test('ProblemList component correctly renders chips based on difficulty', async () => {
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/easy/i)).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('HomePage Component', () => {
       error: mockError
     });
 
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/error/i)).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('HomePage Component', () => {
       error: null
     });
 
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/no problems found/i)).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe('HomePage Component', () => {
       error: null
     });
 
-    renderWithRouter(<HomePage />);
+    renderWithRouter(<ListPage />);
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });

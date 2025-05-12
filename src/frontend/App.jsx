@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Container } from "@mui/material";
 import NavBar from './components/common/NavBar';
-import HomePage from './pages/HomePage';
+import ListPage from './pages/ListPage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
 import LanguageAdmin from "./pages/LanguageAdmin";
@@ -44,7 +44,7 @@ function App() {
                         overflow: 'hidden'
                     }}>
                         <Routes>
-                            <Route path="/" element={<HomePage />} />
+                            <Route path="/" element={<ListPage />} />
                             <Route path="/problems/:id" element={<DetailPage />} />
                             <Route path="/languages" element={<LanguageAdmin />} />
                         </Routes>
