@@ -10,11 +10,14 @@ export function useAppTheme(darkMode) {
       palette: {
         mode: darkMode ? "dark" : "light",
         background: {
-          default: darkMode ? "#121212" : "#fff3e0",
-          paper: darkMode ? "#1e1e1e" : "#f5ebdd",
+          default: darkMode ? "#121212" : "#fff3e0", // dark black : light sandy yellow
+          paper: darkMode ? "#1e1e1e" : "#f5ebdd", // lighter balck : sandy yellow
         },
         primary: {
-          main: darkMode ? "#fff" : "rgba(0, 0, 0, 0.80)",
+          main: darkMode ? "#454545" : "#d0d0d0", // grey
+        },
+        secondary: {
+          main: darkMode ? "#4c8164" : "#a8c1b3", // green
         },
         action: {
           rowStripe: alpha("#000", stripeAlpha),
@@ -28,15 +31,35 @@ export function useAppTheme(darkMode) {
           },
           styleOverrides: {
             root: ({ theme }) => ({
-              backgroundColor: theme.palette.background.paper,
-              color: theme.palette.primary.main,
+              backgroundColor: theme.palette.background.paper, // default is primary.main
+              color: theme.palette.text.primary, //default is primary.contrastText
             }),
           },
         },
-        MuiPaper: {
-          defaultProps: {
-            elevation: 0,
+        MuiInputLabel: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              "&.Mui-focused": {
+                color: theme.palette.text.primary, //default is primary.main 
+              },
+            }),
           },
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                // make it slightly thinner than default
+                borderWidth: "1.5px",
+                borderColor: theme.palette.text.secondary, //default is primary.main 
+              },
+            }),
+          },
+        },
+      },
+      typography: {
+        h4: {
+          fontSize: "2rem",
         },
       },
     });

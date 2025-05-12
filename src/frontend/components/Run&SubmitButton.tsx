@@ -88,7 +88,6 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <Button
           variant="contained"
-          color="info"
           startIcon={<PlayArrowIcon />}
           onClick={handleRunCode}
           disabled={loading}
@@ -98,7 +97,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
 
         <Button
           variant="contained"
-          color="success"
+          color="secondary"
           startIcon={<SendIcon />}
           onClick={handleSubmitCode}
           disabled={loading}
