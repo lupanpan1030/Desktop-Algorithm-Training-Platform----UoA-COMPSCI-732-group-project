@@ -1,18 +1,13 @@
 import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem, Box, IconButton, Tooltip } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
+import { FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+
 
 export default function LanguageSelector({ 
     language, 
     languages, 
     handleLanguageChange 
 }) {
-    const navigate = useNavigate();
-    const handleAddLanguage = () => {
-        navigate('/languages');
-    };
-
+    
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <FormControl size="small">
@@ -31,11 +26,6 @@ export default function LanguageSelector({
                 </Select>
             </FormControl>
 
-            <Tooltip title="Add new language">
-                <IconButton size="small" onClick={handleAddLanguage}>
-                    <AddIcon fontSize="small" />
-                </IconButton>
-            </Tooltip>
         </Box>
     );
 } 
