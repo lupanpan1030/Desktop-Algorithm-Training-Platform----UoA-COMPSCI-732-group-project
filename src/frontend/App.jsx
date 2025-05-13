@@ -16,6 +16,18 @@ function App() {
         return stored === null ? true : stored === "true"; 
     });
 
+    // Clear editor cache when app starts
+    useEffect(() => {
+        // 获取所有 localStorage 的 key
+        const keys = Object.keys(localStorage);
+        // 找出所有 editorCode_ 和 editorLanguage_ 开头的 key
+        const editorKeys = keys.filter(key => 
+            key.startsWith('editorCode_') || key.startsWith('editorLanguage_')
+        );
+        // 删除这些 key
+        editorKeys.forEach(key => localStorage.removeItem(key));
+    }, []);
+    
     // Listen to the change of darkMode，and store into localStorage
     useEffect(() => {
         localStorage.setItem("darkMode", darkMode);

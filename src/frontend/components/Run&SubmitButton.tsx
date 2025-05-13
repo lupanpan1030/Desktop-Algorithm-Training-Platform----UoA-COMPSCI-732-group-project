@@ -79,6 +79,10 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
       setSnackbarMessage('success!');
       setSeverity('info');
       setOpenSnackbar(true);
+
+      // Clear saved code after successful submission
+      localStorage.removeItem(`editorCode_${problemId}`);
+      localStorage.removeItem(`editorLanguage_${problemId}`);
     }
   };
 
