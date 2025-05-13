@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import api from '../api/axiosInstance';
+import { useApi } from './useApi';
 
 /**
  * useLanguages Hook
@@ -92,125 +92,6 @@ const toLanguageDto = (lang: LanguageInput) => ({
   runtimeCmd:  lang.runtimeCmd,
 });
 
-// Generic API request options (通用 API 请求选项)
-interface ApiOptions {
-  url: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  body?: any;
-  headers?: Record<string, string>;
-}
-
-export const useApi = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(async <T>({ url, method = 'GET', body, headers }: ApiOptions): Promise<T | null> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.request({
-        url,
-        method,
-        data: body,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        },
-      });
-      return response.data as T;
-    } catch (err: any) {
-      // 把后端返回的 message 透传；没有就用原生 message
-      const msg =
-        err?.response?.data?.message ??
-        err?.message ??
-        'Unknown error';
-      setError(new Error(msg));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Problem related APIs (题目相关接口)
-  const getProblems = useCallback(async (): Promise<Problem[]> => {
-    return await fetchData<Problem[]>({ url: 'http://localhost:6785/problems' }) || [];
-  }, [fetchData]);
-
-  const getProblem = useCallback(async (id: number): Promise<Problem | null> => {
-    return await fetchData<Problem>({ url: `http://localhost:6785/problems/${id}` });
-  }, [fetchData]);
-
-  // Language related APIs (编程语言相关接口)
-  const getLanguages = useCallback(async (): Promise<Language[]> => {
-    const raw = await fetchData<any[]>({ url: 'http://localhost:6785/languages' }) || [];
-    return raw.map(normalizeLanguage);
-  }, [fetchData]);
-
-  const addLanguage = useCallback(async (language: LanguageInput): Promise<Language | null> => {
-    const raw = await fetchData<any>({
-      url: 'http://localhost:6785/languages',
-      method: 'POST',
-      body: toLanguageDto(language),
-    });
-    return raw ? normalizeLanguage(raw) : null;
-  }, [fetchData]);
-
-  const updateLanguage = useCallback(async (id: number, language: Partial<LanguageInput>): Promise<Language | null> => {
-    const raw = await fetchData<any>({
-      url: `http://localhost:6785/languages/${id}`,
-      method: 'PUT',
-      body: toLanguageDto(language as LanguageInput),
-    });
-    return raw ? normalizeLanguage(raw) : null;
-  }, [fetchData]);
-
-  const deleteLanguage = useCallback(async (id: number): Promise<boolean> => {
-    // Most back‑ends return HTTP 204 (No Content) with an empty body on successful DELETE.
-    // 多数后端在成功删除时返回 HTTP 204（No Content）且无响应体。
-    // Therefore, treat any 2xx response that does not throw as failure unless the server explicitly indicates it.
-    // 因此只要请求未抛错，即视作成功，除非服务器显式声明失败。
-    const result = await fetchData<{ success?: boolean }>({
-      url: `http://localhost:6785/languages/${id}`,
-      method: 'DELETE',
-    });
-
-    // If the server returns { success:false } we treat it as failure; otherwise we assume success.
-    // 若服务器返回 { success:false } 则视为失败；否则默认成功。
-    return result?.success !== false;
-  }, [fetchData]);
-
-  // Code submission APIs (代码运行与提交接口)
-  const runCode = useCallback(async (problemId: number, code: string, languageId: number): Promise<RunResponse | null> => {
-    return await fetchData<RunResponse>({
-      url: `http://localhost:6785/problems/${problemId}/run`,
-      method: 'POST',
-      body: { code, languageId }
-    });
-  }, [fetchData]);
-
-  const submitCode = useCallback(async (problemId: number, code: string, languageId: number): Promise<SubmitResponse | null> => {
-    return await fetchData<SubmitResponse>({
-      url: `http://localhost:6785/problems/${problemId}/submit`,
-      method: 'POST',
-      body: { code, languageId }
-    });
-  }, [fetchData]);
-
-  return {
-    loading,
-    error,
-    getProblems,
-    getProblem,
-    getLanguages,
-    addLanguage,
-    updateLanguage,
-    deleteLanguage,
-    runCode,
-    submitCode
-  };
-};
-
 /**
  * useLanguages
  * ------------
@@ -232,13 +113,13 @@ const useLanguages = () => {
 
   const fetchLanguages = useCallback(async () => {
     const data = await getLanguages();
-    setLanguages(data);
+    setLanguages(data.map(normalizeLanguage));      // 后端字段统一转换
   }, [getLanguages]);
 
   const addLanguage = useCallback(async (lang: LanguageInput) => {
     try {
-      const res = await apiAddLanguage(lang);
-      if (res) setLanguages(prev => [...prev, res]);  // optimistic
+      const res = await apiAddLanguage(lang as any); // 维持旧签名，避免类型不兼容
+      if (res) setLanguages(prev => [...prev, normalizeLanguage(res)]);
       return res;
     } catch (e) {
       await fetchLanguages();                        // rollback
@@ -250,7 +131,7 @@ const useLanguages = () => {
     try {
       const res = await apiUpdateLanguage(id, lang);
       if (res) {
-        setLanguages(prev => prev.map(l => (l.languageId === id ? res : l)));
+        setLanguages(prev => prev.map(l => (l.languageId === id ? normalizeLanguage(res) : l)));
       }
       return res;
     } catch (e) {
@@ -288,6 +169,5 @@ const useLanguages = () => {
   };
 };
 
-export default useApi;
-
 export { useLanguages };
+export default useLanguages;
