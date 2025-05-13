@@ -1,54 +1,123 @@
-// language-controller.ts
+/**
+ * Programming Language API Controller — 编程语言 API 控制器
+ * ------------------------------------------------------
+ * Provides REST endpoints to create, read, update, and delete programming languages.
+ * 提供编程语言的增删改查 REST 端点。
+ */
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Path,
-    Post,
-    Put,
-    Route,
-    Tags,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Route,
+  Body,
+  Path,
+  Response,
+  SuccessResponse,
+  Tags,
 } from 'tsoa';
-import { ProgrammingLanguage, CreateLanguageDto } from './language';
 import { LanguageService } from './language-service';
+import {
+  CreateLanguageRequestDto,
+  UpdateLanguageRequestDto,
+  LanguageDto,
+} from './language';
+import { ValidateError } from '../../utils/errors/validation-error';
+import { NotFoundError } from '../../utils/errors/not-found-error';
+import { ForbiddenError } from '../../utils/errors/forbidden-error';
 
 const service = new LanguageService();
 
-// 编程语言 API 控制器
-// Programming Language API Controller
 @Route('languages')
 @Tags('ProgrammingLanguage')
 export class LanguageController extends Controller {
-    // 获取所有编程语言
-    // Get all programming languages
-    @Get('/')
-    public async getLanguages(): Promise<ProgrammingLanguage[]> {
-        return service.getAllLanguages();
-    }
+  private service = new LanguageService();
 
-    // 创建新的编程语言
-    // Create a new programming language
-    @Post('/')
-    public async create(@Body() body: CreateLanguageDto): Promise<ProgrammingLanguage> {
-        return service.createLanguage(body);
-    }
+  /**
+   * List all programming languages.
+   * 列出所有编程语言。
+   */
+  @SuccessResponse('200', 'OK')
+  @Get()
+  public async getLanguages(): Promise<LanguageDto[]> {
+    return this.service.getAllLanguages();
+  }
 
-    // 更新编程语言（根据 ID）
-    // Update a programming language by ID
-    @Put('{id}')
-    public async update(
-        @Path() id: number,                           
-        @Body() body: Partial<CreateLanguageDto> 
-    ): Promise<ProgrammingLanguage> {
-        return service.updateLanguage(id, body);
-    }
+  /**
+   * Get a programming language by its ID.
+   * 根据 ID 获取编程语言。
+   *
+   * @param id Language ID  编程语言 ID
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @SuccessResponse('200', 'OK')
+  @Get('{id}')
+  public async get(@Path() id: number): Promise<LanguageDto> {
+    return this.service.getLanguageById(id);
+  }
 
-    // 删除编程语言（根据 ID）
-    // Delete a programming language by ID
-    @Delete('{id}')
-    public async remove(@Path() id: number): Promise<void> {
-        return service.deleteLanguage(id);
-    }
+  /**
+   * Create a new programming language.
+   * 创建新的编程语言。
+   *
+   * @param body Language information  编程语言信息
+   */
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse('201', 'Created')
+  @Post()
+  public async create(
+    @Body() body: CreateLanguageRequestDto,
+  ): Promise<LanguageDto> {
+    this.setStatus(201);
+    const data = {
+      name:        body.name,
+      suffix:      body.suffix,
+      version:     body.version ?? null,
+      // Accept both camelCase and snake_case keys (同时接受 camelCase 与 snake_case 键)
+      compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
+      runtimeCmd:  body.runtimeCmd  ?? body.run_command,
+    };
+    return this.service.createLanguage(data);
+  }
+
+  /**
+   * Update an existing programming language.
+   * 更新已有的编程语言。
+   *
+   * @param id   Language ID  编程语言 ID
+   * @param body Updated language information  更新后的编程语言信息
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @Response<ValidateError>(422, 'Validation Failed')
+  @SuccessResponse('200', 'OK')
+  @Put('{id}')
+  public async update(
+    @Path() id: number,
+    @Body() body: UpdateLanguageRequestDto,
+  ): Promise<LanguageDto> {
+    const data = {
+      name:        body.name,
+      suffix:      body.suffix,
+      version:     body.version,
+      compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
+      runtimeCmd:  body.runtimeCmd  ?? body.run_command,
+    };
+    return this.service.updateLanguage(id, data);
+  }
+
+  /**
+   * Delete a programming language.
+   * 删除编程语言。
+   *
+   * @param id Language ID  编程语言 ID
+   */
+  @Response<NotFoundError>(404, 'Language not found')
+  @Response<ForbiddenError>(403, 'Default language cannot be deleted')
+  @SuccessResponse('204', 'No Content')
+  @Delete('{id}')
+  public async remove(@Path() id: number): Promise<void> {
+    await this.service.deleteLanguage(id);
+    this.setStatus(204);
+  }
 }
-

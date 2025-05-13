@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ProblemContent from "../components/ProblemContent";
-import CodeEditor from "../components/Editor";
-import Result from "../components/Result";
+import CodeEditor from "../components/Editor/Editor";
 import { useParams } from "react-router-dom";
 import { Paper, Box, Typography, CircularProgress } from "@mui/material";
 import "../styles/DetailPage.css"; 
@@ -42,7 +41,10 @@ export default function DetailPage () {
                 // Creating Language Name to ID Mappings
                 const mapping = {};
                 data.forEach(lang => {
-                    mapping[lang.name.toLowerCase()] = lang.languageId;
+                    const key = lang.name.toLowerCase();
+                    mapping[key] = lang.languageId;
+                    // 兼容Monaco的'cpp'写法
+                    if (key === 'c++') mapping['cpp'] = lang.languageId;
                 });
                 setLanguageMap(mapping);
             }
@@ -107,12 +109,15 @@ export default function DetailPage () {
 
 
     const handleCodeChange = useCallback((newState) => {
+        console.log('Editor state changed:', newState);
         setEditorState(newState);
     }, []);
 
     // Get languageId
     const getLanguageId = () => {
-        return languageMap[editorState.language.toLowerCase()] || 1; 
+        const id = languageMap[editorState.language.toLowerCase()] || 1;
+        console.log('Using language:', editorState.language, 'with ID:', id, 'from map:', languageMap);
+        return id;
     };
 
     return (
@@ -151,7 +156,7 @@ export default function DetailPage () {
                     <Box className="editor-result-container">
                         <Box ref={editorPaneRef} className="editor-pane">
                             <Paper className="editor-section">
-                                <CodeEditor onCodeChange={handleCodeChange} />
+                                <CodeEditor onCodeChange={handleCodeChange} problemId={id} />
                             </Paper>
                         </Box>
 
