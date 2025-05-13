@@ -11,7 +11,6 @@ interface Problem {
 }
 
 interface Language {
-  id?: number;
   languageId: number;
   name: string;
   compile_command?: string;
@@ -37,37 +36,6 @@ interface SubmitResponse {
   overallStatus: string;
   results: TestResult[];
 }
-
-/** 旧前端写法：snake_case 字段 */
-type OldLanguagePayload = Omit<Language, 'languageId'>;
-
-/** 新 API 写法：camelCase 字段 */
-interface NewLanguagePayload {
-  name: string;
-  runtimeCmd: string;
-  compilerCmd?: string | null;
-  version?: string | null;
-  suffix: string;
-}
-
-/** 统一的输入类型：兼容旧 & 新 */
-type LanguageInput = OldLanguagePayload | NewLanguagePayload;
-
-/** 类型守卫：区分 payload 风格 */
-const isNewPayload = (p: LanguageInput): p is NewLanguagePayload => 'runtimeCmd' in p;
-
-/** 把任意输入 payload 转成后端需要的 Create/Update DTO */
-const toLanguageDto = (p: LanguageInput) => {
-  if (isNewPayload(p)) return p; // 已是新写法，直接返回
-  // old → new 字段映射
-  return {
-    name:            p.name,
-    runtimeCmd:      p.run_command,
-    compilerCmd:     p.compile_command ?? null,
-    version:         p.version ?? null,
-    suffix:          p.suffix,
-  };
-};
 
 // API Request Options
 interface ApiOptions {
@@ -118,19 +86,19 @@ export const useApi = () => {
     return await fetchData<Language[]>({ url: 'http://localhost:6785/languages' }) || [];
   }, [fetchData]);
 
-  const addLanguage = useCallback(async (language: LanguageInput): Promise<Language | null> => {
+  const addLanguage = useCallback(async (language: Omit<Language, 'languageId'>): Promise<Language | null> => {
     return await fetchData<Language>({
       url: 'http://localhost:6785/languages',
       method: 'POST',
-      body: toLanguageDto(language),
+      body: language
     });
   }, [fetchData]);
 
-  const updateLanguage = useCallback(async (id: number, language: Partial<LanguageInput>): Promise<Language | null> => {
+  const updateLanguage = useCallback(async (id: number, language: Partial<Language>): Promise<Language | null> => {
     return await fetchData<Language>({
       url: `http://localhost:6785/languages/${id}`,
       method: 'PUT',
-      body: toLanguageDto(language as LanguageInput),
+      body: language
     });
   }, [fetchData]);
 

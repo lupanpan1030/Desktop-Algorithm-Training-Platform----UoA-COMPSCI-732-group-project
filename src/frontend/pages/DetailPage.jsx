@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ProblemContent from "../components/ProblemContent";
-import CodeEditor from "../components/Editor";
-import Result from "../components/Result";
+import CodeEditor from "../components/Editor/Editor";
 import { useParams } from "react-router-dom";
 import { Paper, Box, Typography, CircularProgress } from "@mui/material";
 import "../styles/DetailPage.css"; 
@@ -157,7 +156,7 @@ export default function DetailPage () {
                     <Box className="editor-result-container">
                         <Box ref={editorPaneRef} className="editor-pane">
                             <Paper className="editor-section" elevation={2}>
-                                <CodeEditor onCodeChange={handleCodeChange} />
+                                <CodeEditor onCodeChange={handleCodeChange} problemId={id} />
                             </Paper>
                         </Box>
 
