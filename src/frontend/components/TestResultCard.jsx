@@ -18,6 +18,8 @@ export default function TestResultCard({ test }) {
           theme.palette.mode === "dark"
             ? theme.palette.common.white
             : theme.palette.common.black,
+        border: "1px solid",
+        borderColor: "divider",
       }}
     >
       <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>

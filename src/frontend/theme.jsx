@@ -16,14 +16,16 @@ export function useAppTheme(darkMode) {
       palette: {
         mode: darkMode ? "dark" : "light",
         background: {
-          default: darkMode ? "#121212" : "#fff3e0", // dark black : light sandy yellow
-          paper: darkMode ? "#1e1e1e" : "#f5ebdd", // lighter balck : sandy yellow
+          default: darkMode ? "#121212" : "#f2efdc", // dark black : very light green
+          paper: darkMode ? "#1e1e1e" : "#fffae8", //      black : very light yellow
+          memo: darkMode ? "#303030" : "#edf7ed", // light black: light mint green
+          memoError: darkMode ? "#7d3333" : "#ffeff1", // dark red : light pink
         },
         primary: {
-          main: darkMode ? "#454545" : "#d0d0d0", // grey
+          main: darkMode ? "#454545" : "#96d9d7", //  gray : mint green
         },
         secondary: {
-          main: darkMode ? "#4c8164" : "#a8c1b3", // green
+          main: darkMode ? "#4c8164" : "#cfd082", // green : grass
         },
         action: {
           rowStripe: alpha("#000", stripeAlpha),
@@ -40,6 +42,21 @@ export function useAppTheme(darkMode) {
             root: ({ theme }) => ({
               backgroundColor: theme.palette.background.paper, // default is primary.main
               color: theme.palette.text.primary, //default is primary.contrastText
+            }),
+          },
+        },
+        MuiButton: {
+          styleOverrides: {
+            // when hover, add opacity and make it lighter (default is darker)
+            containedPrimary: ({ theme }) => ({
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.9),
+              },
+            }),
+            containedSecondary: ({ theme }) => ({
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.secondary.main, 0.9),
+              },
             }),
           },
         },
