@@ -6,8 +6,14 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Alert, CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { Language } from '../../hooks/useLanguages';
 import { useTheme } from '@mui/material/styles';
@@ -35,11 +41,21 @@ interface Props {
 }
 
 const blank: Values = {
-  name: '', compilerCmd: '', runtimeCmd: '', suffix: '', version: ''
+  name: '',
+  compilerCmd: '',
+  runtimeCmd: '',
+  suffix: '',
+  version: '',
 };
 
 export default function LanguageFormDialog({
-  open, mode, initialValues, languages, ignoreId, onSubmit, onClose,
+  open,
+  mode,
+  initialValues,
+  languages,
+  ignoreId,
+  onSubmit,
+  onClose,
 }: Props) {
   const [form, setForm] = useState<Values>(blank);
   const [err, setErr] = useState<Record<string, boolean>>({});
@@ -54,8 +70,9 @@ export default function LanguageFormDialog({
     setSubmitErr('');
   }, [initialValues, open]);
 
-  const change = (k: keyof Values) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }));
+  const change =
+    (k: keyof Values) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((p) => ({ ...p, [k]: e.target.value }));
 
   const save = async () => {
     const blankField = (s: string) => !s.trim();
@@ -67,18 +84,21 @@ export default function LanguageFormDialog({
 
     // Front‑end duplication check (ignore current item) 前端重复检测（忽略自身）
     const sameName = languages.some(
-      (l: Language) => l.name.trim() === form.name.trim() && l.languageId !== ignoreId
+      (l: Language) =>
+        l.name.trim() === form.name.trim() && l.languageId !== ignoreId
     );
     const sameSuffix = languages.some(
-      (l: Language) => (l.suffix ?? '').trim() === form.suffix.trim() && l.languageId !== ignoreId
+      (l: Language) =>
+        (l.suffix ?? '').trim() === form.suffix.trim() &&
+        l.languageId !== ignoreId
     );
     if (sameName) e.name = true;
     if (sameSuffix) e.suffix = true;
 
     if (e.name || e.suffix || e.runtime) {
-      if (sameName)       setSubmitErr(strings.nameExistsWarn);
+      if (sameName) setSubmitErr(strings.nameExistsWarn);
       else if (sameSuffix) setSubmitErr(strings.suffixExistsWarn);
-      else                setSubmitErr(strings.formBlankWarn);
+      else setSubmitErr(strings.formBlankWarn);
       setErr(e as any);
       return;
     }
@@ -95,14 +115,32 @@ export default function LanguageFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
       fullScreen={fullScreen}
       disableRestoreFocus
     >
-      <DialogTitle>{mode === 'add' ? strings.formAddTitle : strings.formEditTitle}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 3 }}>
-        {submitErr && <Alert severity="warning" sx={{ mb: 1 }}>{submitErr}</Alert>}
+      <DialogTitle sx={{ pt: 4.5, px:4, pd: 0 }}>
+        {mode === 'add' ? strings.formAddTitle : strings.formEditTitle}
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          // MUI zeroes the top‑padding of DialogContent when it is immediately preceded by a DialogTitle
+          // Use `&&` to increase selector specificity so the 'language' text can display completely on the left-top corner
+          '&&': {
+            padding:4,
+            paddingTop: 1,
+          },
+        }}
+      >
+        {submitErr && (
+          <Alert severity='warning' sx={{ mb: 1 }}>
+            {submitErr}
+          </Alert>
+        )}
 
         {/* 1. Language 语言 */}
         <TextField
@@ -157,10 +195,14 @@ export default function LanguageFormDialog({
         />
       </DialogContent>
 
-      <DialogActions>
-        <Button variant="outlined" onClick={onClose}>{strings.btnCancel}</Button>
+      <DialogActions sx={{p:4, pt:0}}>
+        <Button variant='contained' size="small" onClick={onClose} sx={{mr:1}}>
+          {strings.btnCancel}
+        </Button>
         <Button
-          variant="contained"
+          variant='contained'
+          color='secondary'
+          size="small"
           onClick={save}
           disabled={submitting}
           startIcon={submitting ? <CircularProgress size={18} /> : undefined}

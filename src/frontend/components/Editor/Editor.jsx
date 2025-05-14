@@ -119,16 +119,19 @@ export default function CodeEditor({ onCodeChange, problemId }) {
         setIsEditorReady(true);
         setMonacoError(null);
     }, []);
-
     const handleEditorWillMount = useCallback((monaco) => {
         try {
-            monaco.editor.defineTheme('customTheme', {
+            monaco.editor.defineTheme('customLight', {
+                base: 'vs',
+                inherit: true,
+                rules: [],
+                colors: { 'editor.background': '#f5f2e3' },
+            });
+            monaco.editor.defineTheme('customDark', {
                 base: 'vs-dark',
                 inherit: true,
                 rules: [],
-                colors: {
-                    'editor.background': '#1e1e1e',
-                }
+                colors: { 'editor.background': '#303030' },
             });
         } catch (error) {
             console.error('Monaco configuration error:', error);

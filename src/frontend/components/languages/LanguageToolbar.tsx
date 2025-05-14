@@ -35,98 +35,42 @@ export default function LanguageToolbar({
   onToggleEdit,
   onRefresh,
 }: Props) {
-  const theme = useTheme();
-  // Determine if viewport is small (判断视口是否为小屏)
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const darkBtn =
-    theme.palette.mode === 'dark'
-      ? { backgroundColor: theme.palette.grey[100], color: theme.palette.grey[900] }
-      : {};
-  // Adjust button colors in dark mode to maintain contrast (暗色模式下调整按钮颜色，以保持对比度)
 
   return (
     <Stack direction="row" spacing={2}>
-      {isMobile ? (
-        <>
-          <Tooltip title={strings.tooltipAdd}>
-            <IconButton size="small" onClick={onAdd} sx={darkBtn}>
-              <AddIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+      <>
+        <Tooltip title={strings.tooltipAdd} placement="top">
+          <IconButton onClick={onAdd} disabled={showDelete || showEdit}>
+            <AddIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
 
-          <Tooltip title={strings.tooltipDeleteMode}>
-            <IconButton
-              size="small"
-              color={showDelete ? 'error' : 'default'}
-              onClick={onToggleDelete}
-              sx={darkBtn}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+        <Tooltip title={strings.tooltipDeleteMode} placement="top">
+          <IconButton
+            color={showDelete ? "error" : "default"}
+            onClick={onToggleDelete}
+            disabled={showEdit}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
 
-          <Tooltip title={strings.tooltipEditMode}>
-            <IconButton
-              size="small"
-              color={showEdit ? 'secondary' : 'default'}
-              onClick={onToggleEdit}
-              sx={darkBtn}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+        <Tooltip title={strings.tooltipEditMode} placement="top">
+          <IconButton
+            color={showEdit ? "secondary" : "default"}
+            onClick={onToggleEdit}
+            disabled={showDelete}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
 
-          <Tooltip title={strings.tooltipRefresh}>
-            <IconButton size="small" onClick={onRefresh} sx={darkBtn}>
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </>
-      ) : (
-        <>
-          <Tooltip title={strings.tooltipAdd}>
-            <Button variant="contained" size="small" onClick={onAdd} sx={darkBtn}>
-              {strings.btnAdd}
-            </Button>
-          </Tooltip>
-
-          <Tooltip title={strings.tooltipDeleteMode}>
-            <Button
-              variant="contained"
-              size="small"
-              color={showDelete ? 'error' : 'primary'}
-              onClick={onToggleDelete}
-              sx={darkBtn}
-            >
-              {strings.btnDelete}
-            </Button>
-          </Tooltip>
-
-          <Tooltip title={strings.tooltipEditMode}>
-            <Button
-              variant="contained"
-              size="small"
-              color={showEdit ? 'secondary' : 'primary'}
-              onClick={onToggleEdit}
-              sx={darkBtn}
-            >
-              {strings.btnEdit}
-            </Button>
-          </Tooltip>
-
-          <Tooltip title={strings.tooltipRefresh}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<RefreshIcon fontSize="small" />}
-              onClick={onRefresh}
-              sx={darkBtn}
-            >
-              {strings.btnRefresh}
-            </Button>
-          </Tooltip>
-        </>
-      )}
+        <Tooltip title={strings.tooltipRefresh} placement="top" sx={{mb:1}}>
+          <IconButton onClick={onRefresh} disabled={showDelete || showEdit}>
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </>
     </Stack>
   );
 }

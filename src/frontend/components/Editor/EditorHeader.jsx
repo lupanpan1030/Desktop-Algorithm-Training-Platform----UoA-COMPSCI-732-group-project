@@ -10,7 +10,7 @@ export default function EditorHeader({
     error
 }) {
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, columnGap : 1 }}>
             <Typography variant="h6">Code Editor</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {loading && <CircularProgress size={20} />}

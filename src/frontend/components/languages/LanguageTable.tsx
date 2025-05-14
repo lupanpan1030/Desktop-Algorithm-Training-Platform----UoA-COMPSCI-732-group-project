@@ -5,17 +5,32 @@
  * and optionally shows inline edit / delete actions.
  * 渲染紧凑的响应式语言列表表格，并可选显示行内编辑 / 删除按钮。
  */
-import React from 'react';
+import React from "react";
 import {
   useTheme,
-  Table, TableHead, TableBody, TableRow,
-  TableCell, TableContainer, Paper,
-  IconButton, Tooltip,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon   from '@mui/icons-material/Edit';
-import { strings } from '../../i18n/messages';
+  Table,
+  TableHead,
+  TableBody,
+  TableFooter,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Paper,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import { strings } from "../../i18n/messages";
 
+declare module "@mui/material/styles" {
+  interface TypeAction {
+    rowStripe?: string;
+  }
+  interface TypeAction {
+    rowHover?: string;
+  }
+}
 
 export interface Language {
   languageId: number;
@@ -25,7 +40,7 @@ export interface Language {
   suffix?: string;
   version?: string;
   /**
-   * built‑in language flag (内置语言标记)  
+   * built‑in language flag (内置语言标记)
    * When true, the language cannot be removed from the system.
    * 当为 true 时，该语言不可被删除。
    */
@@ -37,7 +52,7 @@ interface Props {
   languages: Language[];
   showDelete?: boolean;
   showEdit?: boolean;
-  onEdit?:   (lang: Language) => void;
+  onEdit?: (lang: Language) => void;
   onDelete?: (id: number, name: string) => void;
 }
 
@@ -49,48 +64,66 @@ interface Props {
 export default function LanguageTable({
   languages,
   showDelete = false,
-  showEdit   = false,
+  showEdit = false,
   onEdit,
   onDelete,
 }: Props) {
   const theme = useTheme();
 
   return (
-    <TableContainer component={Paper} elevation={0} sx={{ overflowX: 'auto' }}>
+    <TableContainer component={Paper} sx={{ overflowX: "auto"}}>
       <Table size="small">
-        <caption style={{ textAlign: 'left', paddingLeft: 8 }}>
+        <caption style={{ position: "absolute", left: -9999 }}>
           {strings.tableCaption}
         </caption>
         <TableHead>
-          <TableRow sx={{ backgroundColor: theme.palette.mode === 'dark'
-            ? theme.palette.grey[800] : '#f5f5f5' }}>
-            {[strings.tableColLanguage, strings.tableColCompile, strings.tableColRun,
-              strings.tableColSuffix, strings.tableColVersion,
-              (showDelete || showEdit) ? strings.tableColAction : '']
-              .map((h) => h && (
-                <TableCell key={h} align="center">
-                  <strong>{h}</strong>
-                </TableCell>
-              ))}
+          <TableRow sx={{ backgroundColor: theme.palette.secondary.light }}>
+            {[
+              strings.tableColLanguage,
+              strings.tableColCompile,
+              strings.tableColRun,
+              strings.tableColSuffix,
+              strings.tableColVersion,
+              showDelete || showEdit ? strings.tableColAction : "",
+            ].map(
+              (h) =>
+                h && (
+                  <TableCell key={h}>
+                    <strong>{h}</strong>
+                  </TableCell>
+                )
+            )}
           </TableRow>
         </TableHead>
 
         <TableBody>
-          {languages.map((l) => {
+          {languages.map((l, idx) => {
             const canDelete = showDelete && !l.isDefault;
             // Show trash icon only when delete‑mode is on and the language is not default (仅当删除模式开启且语言非内置时才显示删除按钮)
             return (
-              <TableRow key={l.languageId}>
-                <TableCell align="center">{l.name}</TableCell>
-                <TableCell align="center">{l.compilerCmd ?? '-'}</TableCell>
-                <TableCell align="center">{l.runtimeCmd  ?? '-'}</TableCell>
-                <TableCell align="center">{l.suffix ?? '-'}</TableCell>
-                <TableCell align="center">{l.version ?? '-'}</TableCell>
+              <TableRow
+                key={l.languageId}
+                sx={{
+                  backgroundColor:
+                    idx % 2 !== 0
+                      ? theme.palette.action.rowHover
+                      : theme.palette.background.paper,
+                }}
+              >
+                <TableCell>{l.name}</TableCell>
+                <TableCell>{l.compilerCmd ?? "-"}</TableCell>
+                <TableCell>{l.runtimeCmd ?? "-"}</TableCell>
+                <TableCell>{l.suffix ?? "-"}</TableCell>
+                <TableCell>{l.version ?? "-"}</TableCell>
 
                 {(showDelete || showEdit) && (
-                  <TableCell align="center">
+                  <TableCell>
                     {showEdit && (
-                      <Tooltip title={strings.tooltipEdit(l.name)}>
+                      <Tooltip
+                        title={strings.tooltipEdit(l.name)}
+                        arrow
+                        placement="right"
+                      >
                         <IconButton
                           size="small"
                           aria-label={strings.tooltipEdit(l.name)}
@@ -101,7 +134,11 @@ export default function LanguageTable({
                       </Tooltip>
                     )}
                     {canDelete && (
-                      <Tooltip title={strings.tooltipDelete(l.name)}>
+                      <Tooltip
+                        title={strings.tooltipDelete(l.name)}
+                        arrow
+                        placement="right"
+                      >
                         <IconButton
                           size="small"
                           color="error"
@@ -118,6 +155,20 @@ export default function LanguageTable({
             );
           })}
         </TableBody>
+        <TableFooter>
+          <TableRow
+            sx={{
+              backgroundColor:
+                languages.length % 2 === 0
+                  ? theme.palette.background.paper
+                  : theme.palette.action.rowHover,
+            }}
+          >
+            <TableCell colSpan={showDelete || showEdit ? 6 : 5}>
+              {strings.tableCaption}
+            </TableCell>
+          </TableRow>
+        </TableFooter>
       </Table>
     </TableContainer>
   );

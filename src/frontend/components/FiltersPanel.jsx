@@ -1,81 +1,98 @@
 import React from "react";
 import {
+  Box,
   Stack,
   ToggleButton,
-  ToggleButtonGroup,
   Typography,
   IconButton,
 } from "@mui/material";
 import ReplayIcon from "@mui/icons-material/Replay";
+import {ResponsiveToggleGroup} from "./common/ResponsiveComponents";
 
 export default function FiltersPanel({
   difficultyFilter,
   onDifficultyChange,
   statusFilter,
   onStatusChange,
-  horizontal = false,
+  // horizontal = false,
 }) {
   return (
     <Stack
-      spacing={horizontal ? 3 : 2}
-      direction={horizontal ? "row" : "column"}
-      sx={{ p: 2 }}
+      sx={{
+        px: 2,
+        py: { xs: 0, sm: 1 },
+        useFlexGap: true,
+        flexDirection: "row",
+        flexWrap: { xs: "wrap", sm: "nowrap" },
+        alignItems: "center",
+        columnGap: 3,
+        rowGap: 1,
+      }}
     >
       {/* Difficulty toggle */}
-      <div>
-        <Typography variant="body2" gutterBottom>
+      <Box
+        sx={{
+          order: { xs: 1, sm: 1 },
+        }}
+      >
+        <Typography variant="body1" gutterBottom>
           Difficulty
         </Typography>
-        <ToggleButtonGroup
+        <ResponsiveToggleGroup
           value={difficultyFilter}
           onChange={(_, v) => onDifficultyChange(v)} // keep array
           aria-label="difficulty filter"
-          size="small"
         >
           {["EASY", "MEDIUM", "HARD"].map((level) => (
             <ToggleButton
               key={level}
               value={level}
-              sx={{ fontSize: "0.75rem", px: 1.5 }}
+              // sx={{ fontSize: "1rem", px: 1.5 }}
             >
               {level}
             </ToggleButton>
           ))}
-        </ToggleButtonGroup>
-      </div>
+        </ResponsiveToggleGroup>
+      </Box>
 
       {/* Completion status filter */}
-      <div style={{ marginLeft: horizontal ? 32 : 0 }}>
-        <Typography variant="body2" gutterBottom>
+      <Box
+        sx={{
+          order: { xs: 3, sm: 2 },
+          flexBasis: { xs: "100%", sm: "auto" }, // forces its own row on xs
+          alignSelf: "flex-start",
+        }}
+      >
+        <Typography variant="body1" gutterBottom>
           Status
         </Typography>
-        <ToggleButtonGroup
+        <ResponsiveToggleGroup
           value={statusFilter}
           onChange={(_, v) => onStatusChange(v)}
           aria-label="status filter"
-          size="small"
           exclusive={false}
         >
           {["Completed", "Attempted", "Unattempted"].map((s) => (
             <ToggleButton
               key={s}
               value={s}
-              sx={{ fontSize: "0.75rem", px: 1.5 }}
             >
               {s}
             </ToggleButton>
           ))}
-        </ToggleButtonGroup>
-      </div>
+        </ResponsiveToggleGroup>
+      </Box>
 
       {/* Clear filters */}
       <Stack
         spacing={0.5}
         alignItems="center"
         justifyContent="center"
-        sx={{ marginLeft: horizontal ? 32 : 0, pr: 4}}
+        sx={{
+          order: { xs: 2, sm: 3 },
+        }}
       >
-        <Typography variant="body2" gutterBottom>
+        <Typography variant="body1" gutterBottom>
           Clear
         </Typography>
         <IconButton
@@ -84,9 +101,8 @@ export default function FiltersPanel({
             onStatusChange([]);
           }}
           aria-label="clear filters"
-          size="small"
         >
-          <ReplayIcon fontSize="small" />
+          <ReplayIcon font />
         </IconButton>
       </Stack>
     </Stack>
