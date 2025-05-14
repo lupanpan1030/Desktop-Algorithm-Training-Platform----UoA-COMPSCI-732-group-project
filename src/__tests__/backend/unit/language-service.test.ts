@@ -29,7 +29,15 @@ const mockedDao = LanguageDao as unknown as {
 };
 
 // 用固定的数据构造一个“数据库行”——Prisma 模型里的字段名
-const fakeRow = {
+const fakeRow: {
+  language_id: number;
+  name: string;
+  suffix: string;
+  version: string;
+  compile_command: string | null;
+  run_command: string;
+  is_default: boolean;
+} = {
   language_id: 1,
   name: "Python",
   suffix: "py",
@@ -40,7 +48,16 @@ const fakeRow = {
 };
 
 // 预期返回给客户端的 DTO（camelCase + legacy alias）
-const expectedDto = {
+const expectedDto: {
+  languageId: number;
+  name: string;
+  suffix: string;
+  version: string;
+  compilerCmd: string | null;
+  runtimeCmd: string;
+  compile_command: string | null;
+  run_command: string;
+} = {
   languageId: 1,
   name: "Python",
   suffix: "py",
@@ -86,7 +103,13 @@ describe("LanguageService", () => {
   it("createLanguage → passes data through to DAO and maps result", async () => {
     mockedDao.createLanguage.mockResolvedValue(fakeRow);
 
-    const body = {
+    const body: {
+      name: string;
+      suffix: string;
+      version: string;
+      compilerCmd: string | null;
+      runtimeCmd: string;
+    } = {
       name: "Python",
       suffix: "py",
       version: "3.12",
