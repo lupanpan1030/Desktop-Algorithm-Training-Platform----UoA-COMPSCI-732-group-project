@@ -98,6 +98,7 @@ export default function LanguageAdmin() {
 
     try {
       await deleteLanguage(del.id);
+      await fetchLanguages();
       notify(strings.deleteSuccess(del.name));
     } catch (e: any) {
       notify(e.message, "error");
@@ -105,7 +106,7 @@ export default function LanguageAdmin() {
       setDel({ open: false, id: null, name: "" });
       setShowDelete(false);
     }
-  }, [del, deleteLanguage]);
+  }, [del, deleteLanguage, fetchLanguages]);
 
   // Render (渲染)
   return (
