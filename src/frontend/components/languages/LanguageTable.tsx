@@ -71,7 +71,17 @@ export default function LanguageTable({
   const theme = useTheme();
 
   return (
-    <TableContainer component={Paper} sx={{ overflowX: "auto"}}>
+    <TableContainer
+      component={Paper}
+      sx={{
+        overflowX: "auto",
+        whiteSpace: "nowrap",
+        scrollbarWidth: "thin",
+        "&::-webkit-scrollbar": {
+          height: "4px",
+        },
+      }}
+    >
       <Table size="small">
         <caption style={{ position: "absolute", left: -9999 }}>
           {strings.tableCaption}
