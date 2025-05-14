@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
+import { useTheme } from "@mui/material/styles";
 
 // Some default settings for the editor
 const editorOptions = {
@@ -21,6 +22,7 @@ export default function MonacoConfig({
     handleEditorDidMount,
     handleEditorWillMount
 }) {
+    const muiTheme = useTheme(); 
     return (
         <Box sx={{ 
             flex: 1, 
@@ -38,7 +40,7 @@ export default function MonacoConfig({
                 onMount={handleEditorDidMount}
                 beforeMount={handleEditorWillMount}
                 onValidate={() => {}} // Avoid validation errors
-                theme="vs-dark"
+                theme={muiTheme.palette.mode === 'dark' ? 'customDark' : 'customLight'}
                 loading={
                     <Box sx={{ 
                         display: 'flex', 

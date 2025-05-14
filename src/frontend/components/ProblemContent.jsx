@@ -17,13 +17,12 @@ export default function ProblemContent({ problem }) {
             {problem.difficulty && (
                 <Box
                     sx={{
-                        mb: 2,
+                        my: 1,
                         display: 'inline-block',
                         px: 2,
                         py: 1,
                         bgcolor: 'background.paper',
-                        borderRadius: 2,
-                        boxShadow: 1,
+                        borderRadius: 25,
                         border: '1px solid',
                         borderColor: 'divider',
                     }}

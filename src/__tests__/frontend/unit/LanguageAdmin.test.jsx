@@ -1,13 +1,13 @@
 import React from 'react';
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
-import LanguageAdmin from '../../../frontend/pages/LanguageAdmin.js';
+import { render, screen, waitFor, cleanup, fireEvent, within } from '@testing-library/react';
+import LanguageAdmin from '../../../frontend/pages/LanguageAdmin';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { useApi } from '../../../frontend/hooks/useApi';
+import { useLanguages } from '../../../frontend/hooks/useLanguages';
 
-// Mock the useApi hook
-vi.mock('../../../frontend/hooks/useApi', () => ({
-  useApi: vi.fn()
+// Mock the useLanguages hook
+vi.mock('../../../frontend/hooks/useLanguages', () => ({
+  useLanguages: vi.fn()
 }));
 
 // Mock data
@@ -15,18 +15,20 @@ const mockLanguages = [
   {
     languageId: 1,
     name: 'Python',
-    compile_command: null,
-    run_command: 'python',
+    compilerCmd: null,
+    runtimeCmd: 'python',
     suffix: '.py',
-    version: '3.9'
+    version: '3.9',
+    isDefault: true
   },
   {
     languageId: 2,
     name: 'JavaScript',
-    compile_command: null,
-    run_command: 'node',
+    compilerCmd: null,
+    runtimeCmd: 'node',
     suffix: '.js',
-    version: '16.0'
+    version: '16.0',
+    isDefault: false
   }
 ];
 
@@ -34,14 +36,15 @@ const mockLanguages = [
 const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 beforeEach(() => {
-  // Mock the useApi hook implementation
-  vi.mocked(useApi).mockReturnValue({
-    getLanguages: vi.fn().mockResolvedValue(mockLanguages),
-    addLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], languageId: 3 }),
-    updateLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], name: 'Updated Python' }),
-    deleteLanguage: vi.fn().mockResolvedValue(true),
+  // Mock the useLanguages hook implementation
+  vi.mocked(useLanguages).mockReturnValue({
+    languages: mockLanguages,
     loading: false,
-    error: null
+    error: null,
+    fetchLanguages: vi.fn().mockResolvedValue(mockLanguages),
+    addLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], languageId: 3, name: 'New Language' }),
+    updateLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], name: 'Updated Python' }),
+    deleteLanguage: vi.fn().mockResolvedValue(true)
   });
 });
 
@@ -61,30 +64,42 @@ describe('LanguageAdmin Component', () => {
   });
 
   test('adds a new language successfully', async () => {
-    const { getLanguages } = useApi();
+    const { addLanguage } = useLanguages();
     renderWithRouter(<LanguageAdmin />);
 
     // Click Add button
-    fireEvent.click(screen.getByRole('button', { name: /add new language/i }));
-
-    // Fill in the form
-    fireEvent.change(screen.getByLabelText('Language Name'), { target: { value: 'New Language' } });
-    fireEvent.change(screen.getByLabelText('Run Command'), { target: { value: 'run' } });
-    fireEvent.change(screen.getByLabelText('Suffix'), { target: { value: '.ext' } });
-
-    // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /add/i }));
 
+    // Fill in the form
+    const form = screen.getByRole('dialog');
+    const nameInput = within(form).getByLabelText(/language/i);
+    const runCmdInput = within(form).getByLabelText(/run cmd/i);
+    const suffixInput = within(form).getByLabelText(/suffix/i);
+
+    fireEvent.change(nameInput, { target: { value: 'New Language' } });
+    fireEvent.change(runCmdInput, { target: { value: 'run' } });
+    fireEvent.change(suffixInput, { target: { value: '.ext' } });
+
+    // Submit the form
+    fireEvent.click(within(form).getByRole('button', { name: /add/i }));
+
+    // Verify addLanguage was called with correct data
     await waitFor(() => {
-      expect(screen.getByText('Added "New Language"')).toBeInTheDocument();
+      expect(addLanguage).toHaveBeenCalledWith({
+        name: 'New Language',
+        runtimeCmd: 'run',
+        suffix: '.ext',
+        compilerCmd: '',
+        version: ''
+      });
     });
 
-    // Verify getLanguages was called to refresh the list
-    expect(getLanguages).toHaveBeenCalled();
+    // Verify success message
+    expect(screen.getByText(/added/i)).toBeInTheDocument();
   });
 
   test('edits an existing language successfully', async () => {
-    const { getLanguages } = useApi();
+    const { updateLanguage } = useLanguages();
     renderWithRouter(<LanguageAdmin />);
 
     // Wait for languages to load
@@ -93,27 +108,63 @@ describe('LanguageAdmin Component', () => {
     });
 
     // Enable edit mode
-    fireEvent.click(screen.getByRole('button', { name: /toggle edit mode/i }));
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
 
     // Click edit button for Python
     fireEvent.click(screen.getAllByTestId('EditIcon')[0]);
 
     // Update the name
-    fireEvent.change(screen.getByLabelText('Language Name'), { target: { value: 'Updated Python' } });
+    const form = screen.getByRole('dialog');
+    const nameInput = within(form).getByLabelText(/language/i);
+    fireEvent.change(nameInput, { target: { value: 'Updated Python' } });
 
     // Save changes
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.click(within(form).getByRole('button', { name: /save/i }));
 
+    // Verify updateLanguage was called with correct data
     await waitFor(() => {
-      expect(screen.getByText('Updated "Updated Python"')).toBeInTheDocument();
+      expect(updateLanguage).toHaveBeenCalledWith(1, {
+        name: 'Updated Python',
+        runtimeCmd: 'python',
+        suffix: '.py',
+        compilerCmd: '',
+        version: '3.9'
+      });
     });
 
-    // Verify getLanguages was called to refresh the list
-    expect(getLanguages).toHaveBeenCalled();
+    // Verify success message
+    expect(screen.getByText(/Updated "Updated Python"/)).toBeInTheDocument();
   });
 
   test('deletes a language successfully', async () => {
-    const { getLanguages } = useApi();
+    const { deleteLanguage } = useLanguages();
+    renderWithRouter(<LanguageAdmin />);
+
+    // Wait for languages to load
+    await waitFor(() => {
+      expect(screen.getByText('JavaScript')).toBeInTheDocument();
+    });
+
+    // Enable delete mode
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    // Click delete button for JavaScript (not Python because it's isDefault)
+    fireEvent.click(screen.getAllByTestId('DeleteIcon')[0]);
+
+    // Confirm deletion
+    const confirmDialog = screen.getByRole('dialog');
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: /delete/i }));
+
+    // Verify deleteLanguage was called with correct ID
+    await waitFor(() => {
+      expect(deleteLanguage).toHaveBeenCalledWith(2);
+    });
+
+    // Verify success message
+    expect(screen.getByText(/deleted/i)).toBeInTheDocument();
+  });
+
+  test('cannot delete default language', async () => {
     renderWithRouter(<LanguageAdmin />);
 
     // Wait for languages to load
@@ -122,51 +173,44 @@ describe('LanguageAdmin Component', () => {
     });
 
     // Enable delete mode
-    fireEvent.click(screen.getByRole('button', { name: /toggle delete mode/i }));
-
-    // Click delete button for Python
-    fireEvent.click(screen.getAllByTestId('DeleteIcon')[0]);
-
-    // Confirm deletion
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Deleted "Python"')).toBeInTheDocument();
-    });
-
-    // Verify getLanguages was called to refresh the list
-    expect(getLanguages).toHaveBeenCalled();
+    // Verify delete button is not present for Python (default language)
+    const deleteButtons = screen.getAllByTestId('DeleteIcon');
+    expect(deleteButtons).toHaveLength(1); // Only JavaScript should have delete button
   });
 
   test('handles API error gracefully', async () => {
-    // Mock useApi to return an error
+    // Mock useLanguages to return an error
     const mockError = new Error('API Error');
-    vi.mocked(useApi).mockReturnValue({
-      getLanguages: vi.fn().mockResolvedValue([]),
+    vi.mocked(useLanguages).mockReturnValue({
+      languages: [],
+      loading: false,
+      error: mockError,
+      fetchLanguages: vi.fn().mockResolvedValue([]),
       addLanguage: vi.fn().mockResolvedValue(null),
       updateLanguage: vi.fn().mockResolvedValue(null),
-      deleteLanguage: vi.fn().mockResolvedValue(false),
-      loading: false,
-      error: mockError
+      deleteLanguage: vi.fn().mockResolvedValue(false)
     });
 
     renderWithRouter(<LanguageAdmin />);
 
-    // Check for error message in Snackbar
+    // Check for error message in Alert
     await waitFor(() => {
       expect(screen.getByText('API Error')).toBeInTheDocument();
     });
   });
 
   test('shows loading state', async () => {
-    // Mock useApi to return loading state
-    vi.mocked(useApi).mockReturnValue({
-      getLanguages: vi.fn().mockResolvedValue(mockLanguages),
+    // Mock useLanguages to return loading state
+    vi.mocked(useLanguages).mockReturnValue({
+      languages: mockLanguages,
+      loading: true,
+      error: null,
+      fetchLanguages: vi.fn().mockResolvedValue(mockLanguages),
       addLanguage: vi.fn().mockResolvedValue(null),
       updateLanguage: vi.fn().mockResolvedValue(null),
-      deleteLanguage: vi.fn().mockResolvedValue(false),
-      loading: true,
-      error: null
+      deleteLanguage: vi.fn().mockResolvedValue(false)
     });
 
     renderWithRouter(<LanguageAdmin />);
@@ -179,13 +223,38 @@ describe('LanguageAdmin Component', () => {
     renderWithRouter(<LanguageAdmin />);
 
     // Click Add button
-    fireEvent.click(screen.getByRole('button', { name: /add new language/i }));
-
-    // Try to submit without required fields
     fireEvent.click(screen.getByRole('button', { name: /add/i }));
 
+    // Try to submit without required fields
+    const form = screen.getByRole('dialog');
+    fireEvent.click(within(form).getByRole('button', { name: /add/i }));
+
     await waitFor(() => {
-      expect(screen.getByText('Please enter a language name')).toBeInTheDocument();
+      expect(within(form).getByText(/please fill all required fields/i)).toBeInTheDocument();
+    });
+  });
+
+  test('validates duplicate language name', async () => {
+    renderWithRouter(<LanguageAdmin />);
+
+    // Click Add button
+    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+
+    // Try to add a language with existing name
+    const form = screen.getByRole('dialog');
+    const nameInput = within(form).getByLabelText(/language/i);
+    const runCmdInput = within(form).getByLabelText(/run cmd/i);
+    const suffixInput = within(form).getByLabelText(/suffix/i);
+
+    fireEvent.change(nameInput, { target: { value: 'Python' } });
+    fireEvent.change(runCmdInput, { target: { value: 'run' } });
+    fireEvent.change(suffixInput, { target: { value: '.ext' } });
+
+    // Submit the form
+    fireEvent.click(within(form).getByRole('button', { name: /add/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/already exists/i)).toBeInTheDocument();
     });
   });
 }); 

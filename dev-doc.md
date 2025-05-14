@@ -1,0 +1,280 @@
+# Algo-Platform
+
+## Setup & Run
+
+> The following command should be executed in the project root directory.
+
+### [Run (Development)](https://www.electronforge.io/#starting-your-app)
+
+```bash
+npm start
+```
+
+### [Building Distributables](https://www.electronforge.io/#building-distributables)
+
+```bash
+npm run make
+```
+
+## Backend Server
+
+### Run Backend Server
+
+```bash
+npm run dev
+```
+
+### Regenerate Backend Routes.ts
+
+```bash
+npx tsoa routes
+```
+
+### Regenerate OpenApi Swagger.json
+
+Swagger UI debug page: `localhost:6785/docs`
+
+```bash
+npx tsoa spec
+```
+
+### Run All Tests
+
+```bash
+npm run test
+```
+
+### Run Frontend Tests
+
+```bash
+npm run test:front
+```
+
+### Run Backend Tests
+
+```bash
+npm run test:back
+```
+
+## DB initialization
+
+Run the following commands
+
+- Create Tables
+
+  ```bash
+  npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma
+  ```
+
+- Insert Predefined Data
+  -- First-time Database Setup
+  `bash
+    npx ts-node src/backend/db/seeds/init-db_first.ts
+    `
+- Insert Predefined Data
+  -- Reset and Reinitialize the Database
+  `bash
+    npx ts-node src/backend/db/seeds/init-db+drop.ts
+    `
+
+## Architecture
+
+```
+src/
+├── electron/                # Electron-specific code
+│   ├── main.ts              # Main process entry point
+│   ├── preload.ts           # Limited preload script (if needed)
+│   └── window.ts            # Window management functions
+│
+├── frontend/                # React.js application
+│   ├── components/          # Reusable UI components
+│   │   ├── common/          # Shared UI elements (buttons, inputs)
+│   │   ├── layout/          # Layout components (header, sidebar)
+│   │   └── problems/        # Problem-specific components
+│   ├── pages/               # Page components
+│   │   ├── Home.tsx
+│   │   ├── ProblemList.tsx  # Puzzles list (from MVP)
+│   │   ├── ProblemDetail.tsx # View specific puzzle (from MVP)
+│   │   └── Submission.tsx   # Submit solutions (from MVP)
+│   ├── hooks/               # Custom React hooks
+│   │   └── useApi.ts        # Hook for API communication
+│   ├── styles/              # CSS/styling
+│   ├── App.tsx              # Main React component
+│   └── index.tsx            # React entry point
+│
+├── backend/                 # Backend services
+│   ├── api/                 # Express router setup
+│   │   ├── routes/          # API route definitions
+│   │   │   ├── problems.ts
+│   │   │   ├── languages.ts
+│   │   │   ├── testcases.ts
+│   │   │   └── submissions.ts
+│   │   ├── middleware/      # Express middleware
+│   │   └── index.ts         # Express app setup
+│   │
+│   ├── db/                  # Database layer
+│   │   ├── prisma/          # Prisma ORM
+│   │   │   ├── schema.prisma  # DB schema definition
+│   │   │   └── migrations/    # DB migrations
+│   │   │
+│   │   └── crud/            # Database operations
+│   │       ├── problems.ts
+│   │       ├── testcases.ts
+│   │       ├── languages.ts
+│   │       └── submissions.ts
+│   │
+│   ├── services/            # Business logic
+│   │   └── judge/           # Code execution engine (key MVP component)
+│   │       └── executor.ts   # Code execution
+│   │
+│   └── utils/               # Utility functions
+│
+├── shared/                  # Shared code
+│   ├── types/               # TypeScript type definitions
+│   └── constants.ts         # Shared constants
+│
+└── tests/
+    ├── frontend/  
+    │   ├── unit/
+    │   └── integration/
+    └── backend/
+        ├── unit/
+        └── integration/
+
+```
+
+---
+
+### RESTful API Design for Delightful Dogs (Revised)
+
+---
+
+#### 1. CRUD Endpoints
+
+---
+
+---
+
+**Problems**
+
+| Method | Path             | Description                    | Request Body (Types & Validation)                                                                                                                                                     | Response Format (Types & Status Codes)                                                                                                                                                                              |
+| ------ | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/problems`      | List all problems              | _None_                                                                                                                                                                                | **200 OK:** Array of problem summaries<br>`Array<{ problemId: number, title: string, difficulty: "EASY" \| "MEDIUM" \| "HARD", completionState: "Completed" \| "Attempted" \| null}>`                                                                   |
+| GET    | `/problems/{id}` | Retrieve problem details by ID | _None_                                                                                                                                                                                | **200 OK:** Detailed problem object<br>`{ problemId: number, title: string, description: string, difficulty: enum, createdAt: ISO8601 }`<br>**404 Not Found:** `{ "message": "Problem not found" }` |
+| POST   | `/problems`      | Create a new problem           | **Required:**<br>`{ title: string, description: string, difficulty: enum, tags: string[] }`<br>• `title` must be 5–100 characters<br>• `description` must be 10–2000 characters       | **201 Created:** Detailed problem object (same as GET details)<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                               |
+| PUT    | `/problems/{id}` | Update an existing problem     | **Optional:**<br>`{ title?: string, description?: string, difficulty?: enum, tags?: string[] }`<br>If provided, `title` must be 5–100 characters and `description` 10–2000 characters | **200 OK:** Updated detailed problem object<br>**404 Not Found:** `{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                       |
+| DELETE | `/problems/{id}` | Delete a problem by ID         | _None_                                                                                                                                                                                | **204 No Content:** _No body_                                                                                                                                                                                       |
+
+---
+
+**Programming Languages**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/languages` | List languages | - | `Array<{languageId: number, name: string, compilerCmd: string, runtimeCmd: string}>` |
+| `POST` | `/languages` | Add language | `{name: string, compilerCmd: string, runtimeCmd: string}` | `201` + created language object |
+| `PUT` | `/languages/{id}` | Update language | `{name?: string, compilerCmd?: string, runtimeCmd?: string}` | `200` + updated language object |
+| `DELETE` | `/languages/{id}` | Remove language | - | `204` |
+
+---
+
+**Test Cases**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/problems/{id}/testcases` | List test cases | - | **200 OK:** `Array<{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}>` <br>**404 Not Found:** `{ "message": "Problem not found" }` |
+| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` | **201 Created:**  Detailed testcase object `{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` <br>**404 Not Found:**`{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`    |
+|`DELETE`|`/problems/{id}/testcases/{id}`| Delete test case | - |**204 No Content:** _No body_ <br>**404 Not Found:**`{ "message": "Problem not found" }` |
+
+---
+
+**Submissions**
+| Method | Path | Description | Request Body (Types) | Response Format (Types) |
+|--------|------|-------------|-----------------------|--------------------------|
+| `GET` | `/problems/{problemId}/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
+| `GET` | `/problems/{problemId}/submissions/{submissionId}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
+
+---
+
+#### 2. Execution Endpoints
+
+| Method | Path                     | Description                                                           | Request Body                                 | Response Format                                                                                                                       |
+| ------ | ------------------------ | --------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/problems/{problemId}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
+| `POST` | `/problems/{problemId}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
+
+## Example Solutions for ACM Mode
+
+1. An example Python solution for the "Fibonacci Number" puzzle
+
+    ```python
+    def fibonacci(n):
+      """
+      Calculates the nth Fibonacci number.
+
+      Args:
+        n: The index of the Fibonacci number to calculate (non-negative integer).
+
+      Returns:
+        The nth Fibonacci number.
+      """
+      if n <= 1:
+        return n
+      else:
+        a = 0
+        b = 1
+        for _ in range(2, n + 1):
+          a, b = b, a + b
+        return b
+
+    if __name__ == "__main__":
+      # Read input from stdin
+      n = int(input())
+
+      # Calculate the nth Fibonacci number
+      result = fibonacci(n)
+
+      # Print the result to stdout
+      print(result)
+
+    ```
+
+2. An example C++ solution for the "Fibonacci Number" puzzle
+
+    ```cpp
+    #include <iostream>
+
+    /**
+    * Calculates the nth Fibonacci number.
+    * 
+    * @param n The index of the Fibonacci number to calculate (non-negative integer).
+    * @return The nth Fibonacci number.
+    */
+    long long fibonacci(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        
+        long long a = 0;
+        long long b = 1;
+        for (int i = 2; i <= n; i++) {
+            long long temp = b;
+            b = a + b;
+            a = temp;
+        }
+        return b;
+    }
+
+    int main() {
+        // Fast I/O optimization
+        std::ios_base::sync_with_stdio(false);
+        std::cin.tie(NULL);
+        
+        int n;
+        std::cin >> n;
+        
+        long long result = fibonacci(n);
+        std::cout << result << std::endl;
+        
+        return 0;
+    }
+
+    ```

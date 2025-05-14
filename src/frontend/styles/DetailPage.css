@@ -79,10 +79,6 @@
     background-color: #f0f0f01f;
   }
 
-  .resize-handle:hover {
-    background-color: #bbdefb;
-  }
-
   .horizontal-handle {
     width: 6px;
     height: 100%;

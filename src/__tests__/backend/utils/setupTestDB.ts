@@ -128,20 +128,22 @@ export async function dropAndSeedLanguage() {
     data: [
       {
         language_id: 1,
-        name: "Python",
-        suffix: "py",
-        version: "3.9",
-        compile_command: null,
-        run_command: "python",
-      },
-      {
+        name: 'Python',
+        suffix: 'py',
+        version: '3.9',
+        compile_command: null,  
+        run_command: 'python',
+        is_default: true
+        },
+        {
         language_id: 2,
-        name: "Java",
-        suffix: "java",
-        version: "11",
-        compile_command: "javac",
-        run_command: "java",
-      },
+        name: 'Java',
+        suffix: 'java',
+        version: '11',
+        compile_command: null,  
+        run_command: 'java',
+        is_default: false
+        },
     ],
   });
 }

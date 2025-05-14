@@ -1,8 +1,7 @@
 /**
- * Programming Language API Controller — 编程语言 API 控制器
+ * Programming Language API Controller
  * ------------------------------------------------------
  * Provides REST endpoints to create, read, update, and delete programming languages.
- * 提供编程语言的增删改查 REST 端点。
  */
 import {
   Controller,
@@ -36,7 +35,6 @@ export class LanguageController extends Controller {
 
   /**
    * List all programming languages.
-   * 列出所有编程语言。
    */
   @SuccessResponse('200', 'OK')
   @Get()
@@ -46,9 +44,8 @@ export class LanguageController extends Controller {
 
   /**
    * Get a programming language by its ID.
-   * 根据 ID 获取编程语言。
    *
-   * @param id Language ID  编程语言 ID
+   * @param id Language ID
    */
   @Response<NotFoundError>(404, 'Language not found')
   @SuccessResponse('200', 'OK')
@@ -59,9 +56,8 @@ export class LanguageController extends Controller {
 
   /**
    * Create a new programming language.
-   * 创建新的编程语言。
    *
-   * @param body Language information  编程语言信息
+   * @param body Language information
    */
   @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse('201', 'Created')
@@ -74,7 +70,7 @@ export class LanguageController extends Controller {
       name:        body.name,
       suffix:      body.suffix,
       version:     body.version ?? null,
-      // Accept both camelCase and snake_case keys (同时接受 camelCase 与 snake_case 键)
+      // Accept both camelCase and snake_case keys
       compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
       runtimeCmd:  body.runtimeCmd  ?? body.run_command,
     };
@@ -83,10 +79,9 @@ export class LanguageController extends Controller {
 
   /**
    * Update an existing programming language.
-   * 更新已有的编程语言。
    *
-   * @param id   Language ID  编程语言 ID
-   * @param body Updated language information  更新后的编程语言信息
+   * @param id   Language ID
+   * @param body Updated language information
    */
   @Response<NotFoundError>(404, 'Language not found')
   @Response<ValidateError>(422, 'Validation Failed')
@@ -108,9 +103,8 @@ export class LanguageController extends Controller {
 
   /**
    * Delete a programming language.
-   * 删除编程语言。
    *
-   * @param id Language ID  编程语言 ID
+   * @param id Language ID
    */
   @Response<NotFoundError>(404, 'Language not found')
   @Response<ForbiddenError>(403, 'Default language cannot be deleted')
