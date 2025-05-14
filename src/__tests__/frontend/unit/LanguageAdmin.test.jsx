@@ -133,7 +133,7 @@ describe('LanguageAdmin Component', () => {
     });
 
     // Verify success message
-    expect(screen.getByText(/updated/i)).toBeInTheDocument();
+    expect(screen.getByText(/Updated "Updated Python"/)).toBeInTheDocument();
   });
 
   test('deletes a language successfully', async () => {
