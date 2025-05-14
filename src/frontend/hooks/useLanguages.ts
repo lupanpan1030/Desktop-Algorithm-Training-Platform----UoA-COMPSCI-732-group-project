@@ -6,14 +6,12 @@ import { useApi } from './useApi';
  * -----------------
  * This file centralises all logic for talking to the backend problem & language APIs
  * and adds caching plus error handling for the UI layer.
- * 该文件封装了访问后端题库与编程语言接口的所有逻辑，并为 UI 提供缓存与错误处理。
  */
 
 /**
- * normalizeLanguage ― 语言模型归一化
+ * normalizeLanguage 
  * ---------------------------------
  * Converts backend camelCase or legacy snake_case fields into a unified frontend model.
- * 将后端返回的 camelCase 或旧版 snake_case 字段转换为前端统一使用的属性。
  */
 const normalizeLanguage = (l: any) => ({
   id:         l.languageId ?? l.language_id,
@@ -26,7 +24,7 @@ const normalizeLanguage = (l: any) => ({
   isDefault:   l.isDefault ?? l.is_default ?? false,
 });
 
-// API Response Types (接口返回类型)
+// API Response Types 
 interface Problem {
   problemId: number;
   title: string;
@@ -65,10 +63,10 @@ interface SubmitResponse {
   results: TestResult[];
 }
 
-/** Legacy front‑end payload: snake_case fields (旧版前端 payload) */
+/** Legacy front‑end payload: snake_case fields */
 type OldLanguagePayload = Omit<Language, 'languageId'>;
 
-/** New API payload in camelCase (新版 API payload：camelCase 字段) */
+/** New API payload in camelCase  */
 interface NewLanguagePayload {
   name: string;
   runtimeCmd: string;
@@ -77,13 +75,13 @@ interface NewLanguagePayload {
   suffix: string;
 }
 
-/** Unified input type: compatible with both old & new (统一输入类型：兼容旧版与新版) */
+/** Unified input type: compatible with both old & new  */
 type LanguageInput = OldLanguagePayload | NewLanguagePayload;
 
-/** Type guard to detect new payload style (类型守卫：判断 payload 是否为新版格式) */
+/** Type guard to detect new payload style  */
 const isNewPayload = (p: LanguageInput): p is NewLanguagePayload => 'runtimeCmd' in p;
 
-/** Translate payload to backend Create/Update DTO (将任意输入 payload 转换为后端需要的 Create/Update DTO) */
+/** Translate payload to backend Create/Update DTO  */
 const toLanguageDto = (lang: LanguageInput) => ({
   name:        lang.name,
   suffix:      lang.suffix,
@@ -97,7 +95,7 @@ const toLanguageDto = (lang: LanguageInput) => ({
  * ------------
  * Thin wrapper around useApi that caches the language list locally so that the UI can
  * update optimistically and roll back if a request fails.
- * 该 Hook 通过 useApi 执行网络请求，并在本地缓存语言列表，以便 UI 即时响应。
+ * 
  */
 const useLanguages = () => {
   const {
@@ -113,12 +111,12 @@ const useLanguages = () => {
 
   const fetchLanguages = useCallback(async () => {
     const data = await getLanguages();
-    setLanguages(data.map(normalizeLanguage));      // 后端字段统一转换
+    setLanguages(data.map(normalizeLanguage));      
   }, [getLanguages]);
 
   const addLanguage = useCallback(async (lang: LanguageInput) => {
     try {
-      const res = await apiAddLanguage(lang as any); // 维持旧签名，避免类型不兼容
+      const res = await apiAddLanguage(lang as any); 
       if (res) setLanguages(prev => [...prev, normalizeLanguage(res)]);
       return res;
     } catch (e) {

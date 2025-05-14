@@ -23,7 +23,7 @@ if (!process.env.NODE_ENV) {
   console.log('NODE_ENV fallback:', process.env.NODE_ENV);
 }
 
-// 检查Monaco资源
+// Check Monaco resources
 const checkMonacoResources = (): void => {
   if (process.env.NODE_ENV === 'production') {
     const appPath = app.getAppPath();
@@ -31,20 +31,20 @@ const checkMonacoResources = (): void => {
     const exists = fs.existsSync(vsPath);
     console.log(`Monaco resources path: ${vsPath} - ${exists ? 'exist' : 'not exist'}`);
     
-    // 列出目录内容以帮助调试
+    // List the contents of the directory to help with debugging
     if (exists) {
       try {
         const files = fs.readdirSync(vsPath);
-        console.log('Monaco resources contents:', files);
+        console.log('Monaco resources contents of the directory:', files);
       } catch (err) {
-        console.error('Failed to read Monaco resources contents:', err);
+        console.error('Failed to read Monaco resources contents of the directory:', err);
       }
     }
   }
 };
 
 const createWindow = (): void => {
-  // 检查Monaco资源
+  // Check Monaco resources
   checkMonacoResources();
 
   // Create the browser window.
@@ -53,12 +53,12 @@ const createWindow = (): void => {
     width: 800,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      webSecurity: true, // 保持安全性启用，但我们会配置CSP
+      webSecurity: true, // Keep web security enabled, but we will configure CSP
       allowRunningInsecureContent: false,
     },
   });
 
-  // 设置CSP以允许Monaco编辑器加载
+  // Set Content-Security-Policy to allow Monaco Editor mounting
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -70,10 +70,10 @@ const createWindow = (): void => {
     });
   });
 
-  // 注册自定义协议处理程序，帮助定位Monaco资源
+  // Register custom protocol handlers to help locate Monaco resources
   if (process.env.NODE_ENV === 'production') {
     protocol.registerFileProtocol('monaco', (request, callback) => {
-      const url = request.url.substring(9); // 移除 'monaco://'
+      const url = request.url.substring(9); 
       const appPath = app.getAppPath();
       const filePath = path.join(appPath, '.webpack', 'renderer', url);
       callback(filePath);
@@ -88,7 +88,7 @@ const createWindow = (): void => {
     mainWindow.webContents.openDevTools();
   }
   
-  // 监听页面加载完成事件，打印调试信息
+  // Listen for page loading completion events and print debugging information
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('Page loading finished. Monaco Editor began to initialize');
   });

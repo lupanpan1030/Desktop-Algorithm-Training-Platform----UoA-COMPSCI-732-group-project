@@ -47,7 +47,7 @@ export default function DetailPage() {
         data.forEach((lang) => {
           const key = lang.name.toLowerCase();
           mapping[key] = lang.languageId;
-          // 兼容Monaco的'cpp'写法
+          // Compatible with Monaco's 'cpp' syntax
           if (key === "c++") mapping["cpp"] = lang.languageId;
         });
         setLanguageMap(mapping);

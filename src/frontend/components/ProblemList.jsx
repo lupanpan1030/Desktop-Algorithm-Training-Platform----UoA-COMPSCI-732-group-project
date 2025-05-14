@@ -3,7 +3,6 @@ import {
   List,
   ListItemButton,
   ListItemText,
-  Chip,
   Stack,
   Tooltip,
   Typography,

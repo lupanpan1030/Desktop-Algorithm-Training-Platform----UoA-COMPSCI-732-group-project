@@ -8,20 +8,20 @@ import { useLanguages, Language }    from '../hooks/useLanguages';
 import { strings } from '../i18n/messages';
 
 /**
- * Language Management Page (语言管理页面)
+ * Language Management Page 
  * ------------------------------------
  * The page manages available programming languages in the system.
- * 本页面用于管理系统支持的编程语言。
+ * 
  *
- * Main Components (主要组成):
+ * Main Components:
  *   • LanguageToolbar – top toolbar: add, toggle delete/edit mode, refresh list
  *   • LanguageTable   – table view: display languages and trigger inline edit/delete
  *   • LanguageFormDialog / DeleteConfirmDialog – modals: add/edit/delete
  *
- * Data source (数据来源):
+ * Data source:
  *   Uses custom hook `useLanguages` for CRUD; all UI state is kept locally in this component.
  */
-// Local state type definitions (本地状态类型定义)
+// Local state type definitions 
 interface EditState {
   open: boolean;
   lang: Language | null;
@@ -43,7 +43,7 @@ export default function LanguageAdmin() {
     fetchLanguages,
   } = useLanguages();
 
-  // Local UI state (本地 UI 可见状态)
+  // Local UI state 
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -62,7 +62,7 @@ export default function LanguageAdmin() {
     setSnack({ open: true, msg, sev });
   };
 
-  // CRUD handlers (增删改处理函数)
+  // CRUD handlers 
   const handleAdd = useCallback(
     async (v: any) => {
       try {
@@ -108,7 +108,7 @@ export default function LanguageAdmin() {
     }
   }, [del, deleteLanguage, fetchLanguages]);
 
-  // Render (渲染)
+  // Render 
   return (
     <>
       {loading && (
@@ -130,7 +130,7 @@ export default function LanguageAdmin() {
             showDelete={showDelete}
             showEdit={showEdit}
             onAdd={() => {
-              // Blur the triggering element before opening the dialog to avoid a11y warning (打开对话框前先失焦触发元素，避免 a11y 警告)
+              // Blur the triggering element before opening the dialog to avoid a11y warning 
               (document.activeElement as HTMLElement | null)?.blur();
               setAddOpen(true);
             }}
@@ -145,7 +145,7 @@ export default function LanguageAdmin() {
             severity="error"
             sx={{ mb: 2 }}
             onClose={() => {
-              /* TODO: optionally clear error state / 可选：清除错误状态 */
+              /* TODO: optionally clear error state  */
             }}
           >
             {error.message ?? String(error)}
