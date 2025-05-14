@@ -18,21 +18,26 @@ if (process.env.NODE_ENV === 'production') {
   initProdEnv();
 }
 
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = app.isPackaged ? 'production' : 'development';
+  console.log('NODE_ENV fallback:', process.env.NODE_ENV);
+}
+
 // 检查Monaco资源
 const checkMonacoResources = (): void => {
   if (process.env.NODE_ENV === 'production') {
     const appPath = app.getAppPath();
     const vsPath = path.join(appPath, '.webpack', 'renderer', 'vs');
     const exists = fs.existsSync(vsPath);
-    console.log(`Monaco资源路径: ${vsPath} - ${exists ? '存在' : '不存在'}`);
+    console.log(`Monaco resources path: ${vsPath} - ${exists ? 'exist' : 'not exist'}`);
     
     // 列出目录内容以帮助调试
     if (exists) {
       try {
         const files = fs.readdirSync(vsPath);
-        console.log('Monaco资源目录内容:', files);
+        console.log('Monaco resources contents:', files);
       } catch (err) {
-        console.error('读取Monaco资源目录失败:', err);
+        console.error('Failed to read Monaco resources contents:', err);
       }
     }
   }
@@ -85,7 +90,7 @@ const createWindow = (): void => {
   
   // 监听页面加载完成事件，打印调试信息
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('页面加载完成，Monaco编辑器应该开始初始化');
+    console.log('Page loading finished. Monaco Editor began to initialize');
   });
 };
 
