@@ -29,7 +29,7 @@ An algorithm puzzle ([Competitive programming](https://en.wikipedia.org/wiki/Com
 # Run Project
 
 ## Download Published Executable
-Please download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases/tag/v0.0.1).
+Please download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases).
 
 ## Run Source Code for Development
 More details for development are provided in [dev-doc.md](./dev-doc.md).
