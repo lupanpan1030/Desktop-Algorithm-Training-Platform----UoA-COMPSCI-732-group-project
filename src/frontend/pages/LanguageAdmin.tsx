@@ -1,17 +1,24 @@
-import React, { useState, useCallback } from 'react';
-import { Box, Snackbar, Alert, CircularProgress,Typography } from '@mui/material';
-import LanguageToolbar     from '../components/languages/LanguageToolbar';
-import LanguageTable       from '../components/languages/LanguageTable';
-import LanguageFormDialog  from '../components/languages/LanguageFormDialog';
-import DeleteConfirmDialog from '../components/languages/DeleteConfirmDialog';
-import { useLanguages, Language }    from '../hooks/useLanguages';
-import { strings } from '../i18n/messages';
+import React, { useState, useCallback } from "react";
+import {
+  Box,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  Stack,
+  Typography,
+} from "@mui/material";
+import LanguageToolbar from "../components/languages/LanguageToolbar";
+import LanguageTable from "../components/languages/LanguageTable";
+import LanguageFormDialog from "../components/languages/LanguageFormDialog";
+import DeleteConfirmDialog from "../components/languages/DeleteConfirmDialog";
+import { useLanguages, Language } from "../hooks/useLanguages";
+import { strings } from "../i18n/messages";
 
 /**
- * Language Management Page 
+ * Language Management Page
  * ------------------------------------
  * The page manages available programming languages in the system.
- * 
+ *
  *
  * Main Components:
  *   • LanguageToolbar – top toolbar: add, toggle delete/edit mode, refresh list
@@ -21,7 +28,7 @@ import { strings } from '../i18n/messages';
  * Data source:
  *   Uses custom hook `useLanguages` for CRUD; all UI state is kept locally in this component.
  */
-// Local state type definitions 
+// Local state type definitions
 interface EditState {
   open: boolean;
   lang: Language | null;
@@ -43,7 +50,7 @@ export default function LanguageAdmin() {
     fetchLanguages,
   } = useLanguages();
 
-  // Local UI state 
+  // Local UI state
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -62,7 +69,7 @@ export default function LanguageAdmin() {
     setSnack({ open: true, msg, sev });
   };
 
-  // CRUD handlers 
+  // CRUD handlers
   const handleAdd = useCallback(
     async (v: any) => {
       try {
@@ -108,7 +115,7 @@ export default function LanguageAdmin() {
     }
   }, [del, deleteLanguage, fetchLanguages]);
 
-  // Render 
+  // Render
   return (
     <>
       {loading && (
@@ -117,20 +124,24 @@ export default function LanguageAdmin() {
         </Box>
       )}
       <Box sx={{ p: 5 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
+        <Stack
+          direction={{ xs: "column", ssm: "row" }}
+          spacing={3}
+          alignItems={{ xs: "flex-start", ssm: "center" }}
+          justifyContent={{ ssm: "space-between" }}   // push toolbar to the right on ≥ ssm
+          my={{ xs: 2, ssm: 3 }}
+          // sx={{
+          //   display: "flex",
+          //   justifyContent: "space-between",
+          //   mb: 3,
+          // }}
         >
           <Typography variant="h4">Language Management</Typography>
           <LanguageToolbar
             showDelete={showDelete}
             showEdit={showEdit}
             onAdd={() => {
-              // Blur the triggering element before opening the dialog to avoid a11y warning 
+              // Blur the triggering element before opening the dialog to avoid a11y warning
               (document.activeElement as HTMLElement | null)?.blur();
               setAddOpen(true);
             }}
@@ -138,7 +149,7 @@ export default function LanguageAdmin() {
             onToggleEdit={() => setShowEdit((p) => !p)}
             onRefresh={fetchLanguages}
           />
-        </Box>
+        </Stack>
 
         {error && (
           <Alert
@@ -181,19 +192,19 @@ export default function LanguageAdmin() {
           initialValues={
             edit.lang
               ? {
-                name: edit.lang.name,
-                compilerCmd: edit.lang.compilerCmd ?? "",
-                runtimeCmd: edit.lang.runtimeCmd ?? "",
-                suffix: edit.lang.suffix,
-                version: edit.lang.version,
-              }
+                  name: edit.lang.name,
+                  compilerCmd: edit.lang.compilerCmd ?? "",
+                  runtimeCmd: edit.lang.runtimeCmd ?? "",
+                  suffix: edit.lang.suffix,
+                  version: edit.lang.version,
+                }
               : {
-                name: "",
-                compilerCmd: "",
-                runtimeCmd: "",
-                suffix: "",
-                version: "",
-              }
+                  name: "",
+                  compilerCmd: "",
+                  runtimeCmd: "",
+                  suffix: "",
+                  version: "",
+                }
           }
           languages={languages}
           ignoreId={edit.lang?.languageId}
