@@ -11,7 +11,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SendIcon from "@mui/icons-material/Send";
 import { useApi } from "../hooks/useApi";
 import TestResultCard from "./TestResultCard";
-import { alpha } from "@mui/material";
+import { useTheme,alpha } from "@mui/material";
 
 interface CodeSubmissionProps {
   problemId: number;
@@ -53,6 +53,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
     "info"
   );
   const [activeView, setActiveView] = useState<"run" | "submit" | null>(null);
+  const theme = useTheme();
 
   // run
   const handleRunCode = async () => {
@@ -117,7 +118,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <Button
           variant="contained"
-          sx={{backgroundColor:"#96d9d7","&:hover": {backgroundColor: alpha("#96d9d7", 0.9)}}}
+          sx={{backgroundColor:theme.palette.mode === "dark" ? theme.palette.primary.main :"#96d9d7","&:hover": {backgroundColor: alpha("#96d9d7", 0.9)}}}
           startIcon={<PlayArrowIcon />}
           onClick={handleRunCode}
           disabled={loading}
