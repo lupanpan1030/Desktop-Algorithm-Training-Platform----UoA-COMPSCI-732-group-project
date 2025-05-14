@@ -14,6 +14,7 @@ interface CodeSubmissionProps {
 interface TestResult {
   status: string;
   output?: string;
+  expectedOutput?: string;
   runtimeMs: number;
   memoryKb: number;
 }
@@ -143,6 +144,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
             {test.output && (
               <Typography variant="body2">Output: {test.output}</Typography>
             )}
+            <Typography variant="body2">Expect: {test.expectedOutput}</Typography>
             <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
             <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
           </Paper>
@@ -181,6 +183,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({ problemId, code, langua
             {test.output && (
               <Typography variant="body2">Output: {test.output}</Typography>
             )}
+            <Typography variant="body2">Expect: {test.expectedOutput}</Typography>
             <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
             <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
           </Paper>
