@@ -90,7 +90,7 @@ export class SubmissionService {
       testCases: limitedTestCases.map(tc => tc.input)
     });
 
-    // Check and map results including expectedOutput
+    // Check and map results
     const results: SubmissionResultDto[] = executionResults.map((result, index) => {
       let status = result.status;
       
@@ -108,7 +108,6 @@ export class SubmissionService {
       return {
         status,
         output: result.output,
-        expectedOutput: testCases[index].expectedOutput.trim(),
         runtimeMs: result.executionTime,
         memoryKb: result.executionMemoryKb
       };
@@ -160,7 +159,7 @@ export class SubmissionService {
       testCases: testCases.map(tc => tc.input)
     });
 
-    // Check and map results including expectedOutput
+    // Check and map results
     const results: SubmissionResultDto[] = executionResults.map((result, index) => {
       let status = result.status;
       
@@ -178,7 +177,6 @@ export class SubmissionService {
       return {
         status,
         output: result.output,
-        expectedOutput: testCases[index].expectedOutput.trim(),
         runtimeMs: result.executionTime,
         memoryKb: result.executionMemoryKb
       };

@@ -13,7 +13,6 @@ export class SubmitCodeDto {
 export interface SubmissionResultDto {
   status: string;
   output?: string;
-  expectedOutput?: string;
   runtimeMs: number;
   memoryKb: number;
 }

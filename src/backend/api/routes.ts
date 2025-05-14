@@ -66,7 +66,6 @@ const models: TsoaRoute.Models = {
         "properties": {
             "status": {"dataType":"string","required":true},
             "output": {"dataType":"string"},
-            "expectedOutput": {"dataType":"string"},
             "runtimeMs": {"dataType":"double","required":true},
             "memoryKb": {"dataType":"double","required":true},
         },
