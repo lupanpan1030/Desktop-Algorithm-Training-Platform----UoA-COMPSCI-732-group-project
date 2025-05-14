@@ -10,6 +10,7 @@ export default function NavBar({ darkMode, setDarkMode }) {
       <Toolbar>
         <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
           <ResponsiveButton
+            baseSize="large"
             component={Link}
             to="/"
             color="inherit"
@@ -17,6 +18,7 @@ export default function NavBar({ darkMode, setDarkMode }) {
             List
           </ResponsiveButton>
           <ResponsiveButton
+            baseSize="large"
             component={Link}
             to="/languages"
             color="inherit"

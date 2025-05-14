@@ -7,27 +7,35 @@ import {
   ToggleButtonGroup,
 } from "@mui/material";
 
-function useSmUp() {
+function useMdUp() {
   const theme = useTheme();
-  return useMediaQuery(theme.breakpoints.up("sm"));
+  return useMediaQuery(theme.breakpoints.up("md"));
 }
 
 export function ResponsiveButton(props) {
-  const smUp = useSmUp();
-  const { children, ...other } = props;
+  const { baseSize = "medium", children, ...other } = props;
+  const mdUp = useMdUp();
+  let size;
+  if (baseSize === "large") {
+    size = mdUp ? "large" : "medium";
+  } else if (baseSize === "medium") {
+    size = mdUp ? "medium" : "small";
+  } else {
+    size = baseSize;
+  }
   return (
-    <Button size={smUp ? "large" : "medium"} {...other}>
+    <Button size={size} {...other}>
       {children}
     </Button>
   );
 }
 
 export function ResponsiveChip(props) {
-  const smUp = useSmUp();
-  return <Chip size={smUp ? "medium" : "small"} {...props} />;
+  const mdUp = useMdUp();
+  return <Chip size={mdUp ? "medium" : "small"} {...props} />;
 }
 
 export function ResponsiveToggleGroup(props) {
-  const smUp = useSmUp();
-  return <ToggleButtonGroup size={smUp ? "medium" : "small"} {...props} />;
+  const mdUp = useMdUp();
+  return <ToggleButtonGroup size={mdUp ? "medium" : "small"} {...props} />;
 }

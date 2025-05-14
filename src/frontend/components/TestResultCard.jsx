@@ -25,10 +25,8 @@ export default function TestResultCard({ test }) {
       <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
         Status: {test.status}
       </Typography>
-      {test.output && (
-        <Typography variant="body2">Output: {test.output}</Typography>
-      )}
-      {test.expectedOutput && (<Typography variant="body2">Expect: {test.expectedOutput}</Typography>)}
+      <Typography variant="body2">Output: {test.output}</Typography>
+      <Typography variant="body2">Expect: {test.expectedOutput}</Typography>
       <Typography variant="body2">Runtime: {test.runtimeMs} ms</Typography>
       <Typography variant="body2">Memory: {test.memoryKb} KB</Typography>
     </Paper>

@@ -10,7 +10,9 @@ export function useAppTheme(darkMode) {
       breakpoints: {
         values: {
           xs: 0,
+          ssm:400,
           sm: 700,
+          md:900,
         },
       },
       palette: {
@@ -88,7 +90,7 @@ export function useAppTheme(darkMode) {
           styleOverrides: {
             root: ({ theme }) => ({
               fontSize: theme.typography.pxToRem(20), // ≈1.25rem
-              [theme.breakpoints.up("sm")]: {
+              [theme.breakpoints.up("md")]: {
                 fontSize: theme.typography.pxToRem(24), // ≈1.5rem
               },
             }),
@@ -124,7 +126,7 @@ export function useAppTheme(darkMode) {
           styleOverrides: {
             root: ({ theme }) => ({
               fontSize: theme.typography.pxToRem(12),
-              [theme.breakpoints.up("sm")]: {
+              [theme.breakpoints.up("md")]: {
                 fontSize: theme.typography.pxToRem(15),
               },
             }),
@@ -141,7 +143,7 @@ export function useAppTheme(darkMode) {
     theme = responsiveFontSizes(
       theme,
       {
-        breakpoints: ["sm"],
+        breakpoints: ["md"],
         factor: 2,
       },
       [darkMode]
