@@ -22,7 +22,7 @@ export const strings = {
   formEditTitle: 'Edit Language',
   formBlankWarn: 'Please fill all required fields (marked with *).',
   lblLanguage: 'Language *',
-  lblCompileCmd: 'Compile Cmd',
+  lblCompileCmd: 'Compile Cmd (if appicable)',
   lblRunCmd: 'Run Cmd *',
   lblSuffix: 'Suffix *',
   lblVersion: 'Version',

@@ -23,9 +23,9 @@ export default function DeleteConfirmDialog({ open, name, onClose, onConfirm }: 
       {/* Confirmation message with item name 确认信息，包含条目名称 */}
       <DialogContent>{strings.confirmDeleteMessage(name)}</DialogContent>
       {/* Cancel and Delete buttons 取消和删除按钮 */}
-      <DialogActions>
-        <Button variant="contained" onClick={onClose}>{strings.btnCancel}</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>{strings.btnDelete}</Button>
+      <DialogActions sx={{ px : 3, pb : 2}}>
+        <Button variant="contained" size="small" onClick={onClose} sx={{mr:1}}>{strings.btnCancel}</Button>
+        <Button variant="contained" color="secondary" size="small"onClick={onConfirm}>{strings.btnDelete}</Button>
       </DialogActions>
     </Dialog>
   );

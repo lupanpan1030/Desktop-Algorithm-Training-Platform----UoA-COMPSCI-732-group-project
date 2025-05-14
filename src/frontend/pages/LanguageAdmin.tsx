@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { Box, Snackbar, Alert, CircularProgress,Typography } from '@mui/material';
 import LanguageToolbar     from '../components/languages/LanguageToolbar';
 import LanguageTable       from '../components/languages/LanguageTable';
 import LanguageFormDialog  from '../components/languages/LanguageFormDialog';
@@ -43,45 +43,55 @@ export default function LanguageAdmin() {
     fetchLanguages,
   } = useLanguages();
 
-// Local UI state (本地 UI 可见状态)
+  // Local UI state (本地 UI 可见状态)
   const [showDelete, setShowDelete] = useState(false);
-  const [showEdit,   setShowEdit]   = useState(false);
-  const [addOpen, setAddOpen]       = useState(false);
-  const [edit, setEdit]             = useState<EditState>({ open:false, lang:null });
-  const [del,  setDel]              = useState<DelState>({ open:false, id:null, name:'' });
+  const [showEdit, setShowEdit] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [edit, setEdit] = useState<EditState>({ open: false, lang: null });
+  const [del, setDel] = useState<DelState>({ open: false, id: null, name: "" });
 
-  const [snack,setSnack] = useState<{open:boolean; msg:string; sev:'success'|'error'|'warning'}>({open:false, msg:'', sev:'success'});
+  const [snack, setSnack] = useState<{
+    open: boolean;
+    msg: string;
+    sev: "success" | "error" | "warning";
+  }>({ open: false, msg: "", sev: "success" });
   const notify = (
     msg: string,
-    sev: 'success' | 'error' | 'warning' = 'success'
+    sev: "success" | "error" | "warning" = "success"
   ) => {
     setSnack({ open: true, msg, sev });
   };
 
-// CRUD handlers (增删改处理函数)
-  const handleAdd = useCallback(async (v: any) => {
-    try {
-      await addLanguage(v);
-      notify(strings.addSuccess(v.name));
-    } catch (e: any) {
-      notify(e.message, 'error');
-    } finally {
-      setAddOpen(false);
-    }
-  }, [addLanguage]);
+  // CRUD handlers (增删改处理函数)
+  const handleAdd = useCallback(
+    async (v: any) => {
+      try {
+        await addLanguage(v);
+        notify(strings.addSuccess(v.name));
+      } catch (e: any) {
+        notify(e.message, "error");
+      } finally {
+        setAddOpen(false);
+      }
+    },
+    [addLanguage]
+  );
 
-  const handleSave = useCallback(async (v: any) => {
-    if (!edit.lang) return;
+  const handleSave = useCallback(
+    async (v: any) => {
+      if (!edit.lang) return;
 
-    try {
-      await updateLanguage(edit.lang.languageId, v);
-      notify(strings.updateSuccess(v.name));
-    } catch (e: any) {
-      notify(e.message, 'error');
-    } finally {
-      setEdit({ open: false, lang: null });
-    }
-  }, [edit, updateLanguage]);
+      try {
+        await updateLanguage(edit.lang.languageId, v);
+        notify(strings.updateSuccess(v.name));
+      } catch (e: any) {
+        notify(e.message, "error");
+      } finally {
+        setEdit({ open: false, lang: null });
+      }
+    },
+    [edit, updateLanguage]
+  );
 
   const confirmDel = useCallback(async () => {
     if (del.id == null) return;
@@ -90,96 +100,128 @@ export default function LanguageAdmin() {
       await deleteLanguage(del.id);
       notify(strings.deleteSuccess(del.name));
     } catch (e: any) {
-      notify(e.message, 'error');
+      notify(e.message, "error");
     } finally {
-      setDel({ open: false, id: null, name: '' });
+      setDel({ open: false, id: null, name: "" });
       setShowDelete(false);
     }
   }, [del, deleteLanguage]);
 
-// Render (渲染)
+  // Render (渲染)
   return (
     <>
-    {loading && (
-      <Box sx={{ display:'flex', justifyContent:'center', my:4 }}>
-        <CircularProgress />
-      </Box>
-    )}
-    <Box sx={{ p:3 }}>
-      <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:3 }}>
-        <h1 style={{margin:0}}>Language Management</h1>
-        <LanguageToolbar
-          showDelete={showDelete} showEdit={showEdit}
-          onAdd={() => {
-            // Blur the triggering element before opening the dialog to avoid a11y warning (打开对话框前先失焦触发元素，避免 a11y 警告)
-            (document.activeElement as HTMLElement | null)?.blur();
-            setAddOpen(true);
-          }}
-          onToggleDelete={() => setShowDelete((p)=>!p)}
-          onToggleEdit={() => setShowEdit((p)=>!p)}
-          onRefresh={fetchLanguages}
-        />
-      </Box>
-
-      {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          onClose={() => { /* TODO: optionally clear error state / 可选：清除错误状态 */ }}
-        >
-          {error.message ?? String(error)}
-        </Alert>
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
       )}
+      <Box sx={{ p: 5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4">Language Management</Typography>
+          <LanguageToolbar
+            showDelete={showDelete}
+            showEdit={showEdit}
+            onAdd={() => {
+              // Blur the triggering element before opening the dialog to avoid a11y warning (打开对话框前先失焦触发元素，避免 a11y 警告)
+              (document.activeElement as HTMLElement | null)?.blur();
+              setAddOpen(true);
+            }}
+            onToggleDelete={() => setShowDelete((p) => !p)}
+            onToggleEdit={() => setShowEdit((p) => !p)}
+            onRefresh={fetchLanguages}
+          />
+        </Box>
 
-      <LanguageTable
-        languages={languages}
-        showDelete={showDelete}
-        showEdit={showEdit}
-        onEdit={(lang: Language) => setEdit({open:true, lang})}
-        onDelete={(id,name) => setDel({open:true,id,name})}
-      />
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => {
+              /* TODO: optionally clear error state / 可选：清除错误状态 */
+            }}
+          >
+            {error.message ?? String(error)}
+          </Alert>
+        )}
 
-      {/* dialogs */}
-      <LanguageFormDialog
-        open={addOpen}
-        mode="add"
-        initialValues={{ name:'', compilerCmd:'', runtimeCmd:'', suffix:'', version:'' }}
-        languages={languages}
-        onSubmit={handleAdd}
-        onClose={() => setAddOpen(false)}
-      />
-      <LanguageFormDialog
-        open={edit.open}
-        mode="edit"
-        initialValues={
-          edit.lang
-            ? {
-                name:        edit.lang.name,
-                compilerCmd: edit.lang.compilerCmd ?? '',
-                runtimeCmd:  edit.lang.runtimeCmd ?? '',
-                suffix:      edit.lang.suffix,
-                version:     edit.lang.version,
+        <LanguageTable
+          languages={languages}
+          showDelete={showDelete}
+          showEdit={showEdit}
+          onEdit={(lang: Language) => setEdit({ open: true, lang })}
+          onDelete={(id, name) => setDel({ open: true, id, name })}
+        />
+
+        {/* dialogs */}
+        <LanguageFormDialog
+          open={addOpen}
+          mode="add"
+          initialValues={{
+            name: "",
+            compilerCmd: "",
+            runtimeCmd: "",
+            suffix: "",
+            version: "",
+          }}
+          languages={languages}
+          onSubmit={handleAdd}
+          onClose={() => setAddOpen(false)}
+        />
+        <LanguageFormDialog
+          open={edit.open}
+          mode="edit"
+          initialValues={
+            edit.lang
+              ? {
+                name: edit.lang.name,
+                compilerCmd: edit.lang.compilerCmd ?? "",
+                runtimeCmd: edit.lang.runtimeCmd ?? "",
+                suffix: edit.lang.suffix,
+                version: edit.lang.version,
               }
-            : { name:'', compilerCmd:'', runtimeCmd:'', suffix:'', version:'' }
-        }
-        languages={languages}
-        ignoreId={edit.lang?.languageId}
-        onSubmit={handleSave}
-        onClose={() => setEdit({open:false, lang:null})}
-      />
-      <DeleteConfirmDialog
-        open={del.open}
-        name={del.name}
-        onClose={() => setDel({open:false,id:null,name:''})}
-        onConfirm={confirmDel}
-      />
+              : {
+                name: "",
+                compilerCmd: "",
+                runtimeCmd: "",
+                suffix: "",
+                version: "",
+              }
+          }
+          languages={languages}
+          ignoreId={edit.lang?.languageId}
+          onSubmit={handleSave}
+          onClose={() => setEdit({ open: false, lang: null })}
+        />
+        <DeleteConfirmDialog
+          open={del.open}
+          name={del.name}
+          onClose={() => setDel({ open: false, id: null, name: "" })}
+          onConfirm={confirmDel}
+        />
 
-      {/* feedback */}
-      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack({...snack,open:false})}
-        anchorOrigin={{vertical:'bottom',horizontal:'center'}} >
-        <Alert severity={snack.sev} variant="filled" onClose={() => setSnack({...snack,open:false})}>{snack.msg}</Alert>
-      </Snackbar>
-    </Box>
+        {/* feedback */}
+        <Snackbar
+          open={snack.open}
+          autoHideDuration={3000}
+          onClose={() => setSnack({ ...snack, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            severity={snack.sev}
+            variant="filled"
+            onClose={() => setSnack({ ...snack, open: false })}
+          >
+            {snack.msg}
+          </Alert>
+        </Snackbar>
+      </Box>
     </>
   );
 }

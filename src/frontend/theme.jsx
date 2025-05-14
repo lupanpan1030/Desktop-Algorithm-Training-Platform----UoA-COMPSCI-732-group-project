@@ -22,7 +22,7 @@ export function useAppTheme(darkMode) {
           memoError: darkMode ? "#7d3333" : "#ffeff1", // dark red : light pink
         },
         primary: {
-          main: darkMode ? "#454545" : "#96d9d7", //  gray : mint green
+          main: darkMode ? "#454545" : "#eae5cf", //  gray : mint green
         },
         secondary: {
           main: darkMode ? "#4c8164" : "#cfd082", // green : grass
@@ -91,6 +91,32 @@ export function useAppTheme(darkMode) {
               [theme.breakpoints.up("sm")]: {
                 fontSize: theme.typography.pxToRem(24), // ≈1.5rem
               },
+            }),
+          },
+        },
+        MuiTable: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              borderCollapse: "collapse",
+              "& .MuiTableCell-root": {
+                border: `1px solid ${theme.palette.divider}`,
+              },
+            }),
+          },
+        },
+        MuiTableCell: {
+          defaultProps: {
+            align: "center",
+          },
+          styleOverrides: {
+            head: ({ theme }) => ({
+              ...theme.typography.body1,
+              fontWeight: theme.typography.fontWeightBold,
+              textAlign: "center",
+            }),
+            body: ({ theme }) => ({
+              ...theme.typography.body1,
+              textAlign: "center",
             }),
           },
         },

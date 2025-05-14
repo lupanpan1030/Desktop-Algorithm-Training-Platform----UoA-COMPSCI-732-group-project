@@ -28,7 +28,6 @@ export default function ListPage() {
       // difficulty filter
       const diffOK =
         !difficultyFilter.length || difficultyFilter.includes(p.difficulty);
-      // status filter (`Unattempted` when null/undefined)
       const statusOK =
         !statusFilter.length || statusFilter.includes(p.completionState);
       return diffOK && statusOK;
