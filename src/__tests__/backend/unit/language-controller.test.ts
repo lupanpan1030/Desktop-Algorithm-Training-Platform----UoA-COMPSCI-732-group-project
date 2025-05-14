@@ -42,7 +42,14 @@ describe("LanguageController", () => {
   /* ------------ GET /languages ------------ */
   describe("getLanguages()", () => {
     it("delegates to service.getAllLanguages and returns its result", async () => {
-      const fakeList = [
+      const fakeList: Array<{
+        languageId: number;
+        name: string;
+        suffix: string;
+        version: string;
+        compilerCmd: string | null;
+        runtimeCmd: string | null;
+      }> = [
         {
           languageId: 1,
           name: "Python",
