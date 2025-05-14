@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Button,
   Box,
   CircularProgress,
   Snackbar,
@@ -12,6 +11,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { useApi } from "../hooks/useApi";
 import TestResultCard from "./TestResultCard";
 import { useTheme,alpha } from "@mui/material";
+import { ResponsiveButton } from "./common/ResponsiveComponents";
 
 interface CodeSubmissionProps {
   problemId: number;
@@ -116,7 +116,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
     >
       {/* button */}
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <Button
+        <ResponsiveButton
           variant="contained"
           sx={{backgroundColor:theme.palette.mode === "dark" ? theme.palette.primary.main :"#96d9d7","&:hover": {backgroundColor: alpha("#96d9d7", 0.9)}}}
           startIcon={<PlayArrowIcon />}
@@ -124,9 +124,9 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
           disabled={loading}
         >
           {loading ? <CircularProgress size={24} /> : "Run"}
-        </Button>
+        </ResponsiveButton>
 
-        <Button
+        <ResponsiveButton
           variant="contained"
           color="secondary"
           startIcon={<SendIcon />}
@@ -134,7 +134,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
           disabled={loading}
         >
           {loading ? <CircularProgress size={24} /> : "Submit"}
-        </Button>
+        </ResponsiveButton>
       </Box>
 
       {/* result */}

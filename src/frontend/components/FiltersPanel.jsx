@@ -14,7 +14,6 @@ export default function FiltersPanel({
   onDifficultyChange,
   statusFilter,
   onStatusChange,
-  // horizontal = false,
 }) {
   return (
     <Stack
@@ -47,7 +46,6 @@ export default function FiltersPanel({
             <ToggleButton
               key={level}
               value={level}
-              // sx={{ fontSize: "1rem", px: 1.5 }}
             >
               {level}
             </ToggleButton>
@@ -59,7 +57,7 @@ export default function FiltersPanel({
       <Box
         sx={{
           order: { xs: 3, sm: 2 },
-          flexBasis: { xs: "100%", sm: "auto" }, // forces its own row on xs
+          flexBasis: { xs: "100%", sm: "auto" },
           alignSelf: "flex-start",
         }}
       >
@@ -90,6 +88,7 @@ export default function FiltersPanel({
         justifyContent="center"
         sx={{
           order: { xs: 2, sm: 3 },
+          display: { xs: "none", ssm: "flex" },   // hide on < ssm, show ≥ ssm
         }}
       >
         <Typography variant="body1" gutterBottom>
