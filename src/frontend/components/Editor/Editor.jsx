@@ -5,6 +5,8 @@ import FallbackEditor from './FallbackEditor';
 import EditorHeader from './EditorHeader';
 import MonacoConfig from './MonacoConfig';
 import useApi from '../../hooks/useApi';
+import { saveCodeToLocalStorage, getCodeFromLocalStorage } from '../../utils/localStorageHelper';
+
 
 const isPackaged = window.location.protocol === 'file:';
 loader.config({
@@ -37,6 +39,7 @@ export default function CodeEditor({ onCodeChange, problemId }) {
         const savedLanguage = localStorage.getItem(`editorLanguage_${problemId}`);
         return savedLanguage || 'python';
     });
+    const [languageMap, setLanguageMap] = useState({});
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [monacoError, setMonacoError] = useState(null);
     const [languages, setLanguages] = useState([
@@ -52,10 +55,32 @@ export default function CodeEditor({ onCodeChange, problemId }) {
             const data = await getLanguages();
             if (data) {
                 setLanguages(data);
+                
+                // Create language mapping for localStorage
+                const mapping = {};
+                data.forEach(lang => {
+                    const key = lang.name.toLowerCase();
+                    mapping[key] = lang.languageId;
+                    // Handle C++ / CPP mapping
+                    if (key === 'c++') mapping['cpp'] = lang.languageId;
+                });
+                setLanguageMap(mapping);
             }
         };
         fetchLanguages();
     }, [getLanguages]);
+
+    // Load saved code when component mounts or problem/language changes
+    useEffect(() => {
+        // Only try to load code once we have the language map
+        if (Object.keys(languageMap).length > 0) {
+            const savedLanguage = localStorage.getItem(`editorLanguage_${problemId}`) || 'python';
+            setLanguage(savedLanguage);
+            
+            const savedCode = getCodeFromLocalStorage(problemId, savedLanguage, languageMap);
+            setCode(savedCode);
+        }
+    }, [problemId, languageMap]);
 
     // Additional loading timeout detection
     useEffect(() => {      
@@ -92,17 +117,26 @@ export default function CodeEditor({ onCodeChange, problemId }) {
     const handleEditorChange = useCallback((value) => {
         const newCode = value || '';
         setCode(newCode);
-        localStorage.setItem(`editorCode_${problemId}`, newCode);
-    }, [problemId]);
+        // Save code to localStorage using helper function
+        if (Object.keys(languageMap).length > 0) {
+            saveCodeToLocalStorage(problemId, language, newCode, languageMap);
+        }
+    }, [problemId, language, languageMap]);
 
     const handleLanguageChange = useCallback((event) => {
         const newLanguage = event.target.value;
         setLanguage(newLanguage);
         localStorage.setItem(`editorLanguage_${problemId}`, newLanguage);
-        if (onCodeChange) {
-            onCodeChange({ code, language: newLanguage });
+        // Load saved code for the new language
+        let savedCode = '';
+        if (Object.keys(languageMap).length > 0) {
+            savedCode = getCodeFromLocalStorage(problemId, newLanguage, languageMap);
+            setCode(savedCode);
         }
-    }, [code, onCodeChange, problemId]);
+        if (onCodeChange) {
+            onCodeChange({ code: savedCode, language: newLanguage });
+        }
+    }, [code, onCodeChange, problemId, languageMap]);
 
     // When problemId changes, clear the cache of other problems
     useEffect(() => {
@@ -151,6 +185,28 @@ export default function CodeEditor({ onCodeChange, problemId }) {
             }, 100);
         }
     }, [isEditorReady]);
+
+    // Save code on any button click throughout the application
+    useEffect(() => {
+        const handleButtonClick = () => {
+            if (Object.keys(languageMap).length > 0) {
+                saveCodeToLocalStorage(problemId, language, code, languageMap);
+            }
+        };
+
+        // Add listener to all buttons in the document
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('click', handleButtonClick);
+        });
+
+        return () => {
+            // Clean up listeners when component unmounts
+            buttons.forEach(button => {
+                button.removeEventListener('click', handleButtonClick);
+            });
+        };
+    }, [problemId, language, code, languageMap]);
 
     if (monacoError) {
         return (
