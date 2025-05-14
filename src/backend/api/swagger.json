@@ -124,6 +124,9 @@
 					"output": {
 						"type": "string"
 					},
+					"expectedOutput": {
+						"type": "string"
+					},
 					"runtimeMs": {
 						"type": "number",
 						"format": "double"
@@ -1169,7 +1172,7 @@
 						}
 					}
 				},
-				"description": "List all programming languages",
+				"description": "List all programming languages.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1200,7 +1203,7 @@
 						}
 					}
 				},
-				"description": "Create a new programming language",
+				"description": "Create a new programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1245,7 +1248,7 @@
 						}
 					}
 				},
-				"description": "Get a programming language by its ID",
+				"description": "Get a programming language by its ID.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1297,7 +1300,7 @@
 						}
 					}
 				},
-				"description": "Update an existing programming language",
+				"description": "Update an existing programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1354,7 +1357,7 @@
 						}
 					}
 				},
-				"description": "Delete a programming language",
+				"description": "Delete a programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
