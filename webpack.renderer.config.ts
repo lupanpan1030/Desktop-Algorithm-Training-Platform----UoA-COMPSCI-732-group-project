@@ -6,7 +6,7 @@ import type { Configuration } from 'webpack';
 import { rules } from './webpack.rules';
 import { plugins } from './webpack.plugins';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'; // ✅ 引入插件
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'; 
 
 rules.push({
   test: /\.css$/,
@@ -19,7 +19,7 @@ rules.push({
   type: 'asset/resource',
 });
 
-// 更可靠的环境检测
+// More reliable environmental detection
 const isDevelopment = process.env.NODE_ENV === 'development';
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log(`Building in ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'} mode`);
@@ -34,7 +34,7 @@ if (!isDevelopment) {
     },
     output: {
       publicPath: './../',
-      globalObject: 'self',  // 确保worker正确初始化
+      globalObject: 'self',  // Make sure the worker is initialized correctly
     },
     
     plugins: [
@@ -52,13 +52,13 @@ if (!isDevelopment) {
         }
       }),
 
-      // Monaco支持插件配置
+      // Monaco supports plugin configuration
       new MonacoWebpackPlugin({
         languages: ['javascript', 'python', 'cpp', 'java'],
         filename: 'monaco-editor-workers/[name].worker.js',
       }),
 
-      // 复制Monaco编辑器资源 - 确保vs文件夹在正确位置
+      // Copy the Monaco editor resources - make sure the vs folder is in the correct location
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -112,11 +112,11 @@ else {
         }
       }),
 
-      // ✅ 插入 Monaco 支持插件
+      // Insert Monaco support plugin
       new MonacoWebpackPlugin({
         filename: 'vs/[name].worker.js',
         publicPath: 'vs/',
-        globalAPI: true, // ⬅️ 添加这个强制使用全局 loader 配置
+        globalAPI: true, // Add this to force the use of global loader configuration
         languages: ['javascript', 'python', 'cpp', 'java'],
       }),
 
