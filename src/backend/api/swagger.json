@@ -1172,7 +1172,7 @@
 						}
 					}
 				},
-				"description": "List all programming languages.\n列出所有编程语言。",
+				"description": "List all programming languages.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
@@ -1203,20 +1203,20 @@
 						}
 					}
 				},
-				"description": "Create a new programming language.\n创建新的编程语言。",
+				"description": "Create a new programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [],
 				"requestBody": {
-					"description": "Language information  编程语言信息",
+					"description": "Language information",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/CreateLanguageRequestDto",
-								"description": "Language information  编程语言信息"
+								"description": "Language information"
 							}
 						}
 					}
@@ -1248,14 +1248,14 @@
 						}
 					}
 				},
-				"description": "Get a programming language by its ID.\n根据 ID 获取编程语言。",
+				"description": "Get a programming language by its ID.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [
 					{
-						"description": "Language ID  编程语言 ID",
+						"description": "Language ID",
 						"in": "path",
 						"name": "id",
 						"required": true,
@@ -1300,14 +1300,14 @@
 						}
 					}
 				},
-				"description": "Update an existing programming language.\n更新已有的编程语言。",
+				"description": "Update an existing programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [
 					{
-						"description": "Language ID  编程语言 ID",
+						"description": "Language ID",
 						"in": "path",
 						"name": "id",
 						"required": true,
@@ -1318,13 +1318,13 @@
 					}
 				],
 				"requestBody": {
-					"description": "Updated language information  更新后的编程语言信息",
+					"description": "Updated language information",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/UpdateLanguageRequestDto",
-								"description": "Updated language information  更新后的编程语言信息"
+								"description": "Updated language information"
 							}
 						}
 					}
@@ -1357,14 +1357,14 @@
 						}
 					}
 				},
-				"description": "Delete a programming language.\n删除编程语言。",
+				"description": "Delete a programming language.",
 				"tags": [
 					"ProgrammingLanguage"
 				],
 				"security": [],
 				"parameters": [
 					{
-						"description": "Language ID  编程语言 ID",
+						"description": "Language ID",
 						"in": "path",
 						"name": "id",
 						"required": true,
