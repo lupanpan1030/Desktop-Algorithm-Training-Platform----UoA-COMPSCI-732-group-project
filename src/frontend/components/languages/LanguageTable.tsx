@@ -1,9 +1,8 @@
 /**
- * LanguageTable component ― 语言表格组件
+ * LanguageTable component
  * ------------------------------------
  * Renders a compact, responsive table listing all programming languages
  * and optionally shows inline edit / delete actions.
- * 渲染紧凑的响应式语言列表表格，并可选显示行内编辑 / 删除按钮。
  */
 import React from "react";
 import {
@@ -40,14 +39,13 @@ export interface Language {
   suffix?: string;
   version?: string;
   /**
-   * built‑in language flag (内置语言标记)
+   * built‑in language flag
    * When true, the language cannot be removed from the system.
-   * 当为 true 时，该语言不可被删除。
    */
   isDefault?: boolean;
 }
 
-// Component props (组件属性)
+// Component props
 interface Props {
   languages: Language[];
   showDelete?: boolean;
@@ -57,9 +55,8 @@ interface Props {
 }
 
 /**
- * Data table ― 列数据说明
+ * Data table
  * Columns: Language | Compile | Run | Suffix | Version (+ Action)
- * 列顺序：语言 | 编译命令 | 运行命令 | 后缀 | 版本 (+ 操作)
  */
 export default function LanguageTable({
   languages,
@@ -69,6 +66,7 @@ export default function LanguageTable({
   onDelete,
 }: Props) {
   const theme = useTheme();
+  console.log(languages);
 
   return (
     <TableContainer
@@ -109,7 +107,7 @@ export default function LanguageTable({
         <TableBody>
           {languages.map((l, idx) => {
             const canDelete = showDelete && !l.isDefault;
-            // Show trash icon only when delete‑mode is on and the language is not default (仅当删除模式开启且语言非内置时才显示删除按钮)
+            // Show trash icon only when delete‑mode is on and the language is not default
             return (
               <TableRow
                 key={l.languageId}

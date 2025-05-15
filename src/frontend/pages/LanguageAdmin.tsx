@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Box,
   Snackbar,
@@ -49,6 +49,14 @@ export default function LanguageAdmin() {
     deleteLanguage,
     fetchLanguages,
   } = useLanguages();
+
+  // local control for showing the error alert
+  const [showErrorAlert, setShowErrorAlert] = useState(true);
+  useEffect(() => {
+    if (error) {
+      setShowErrorAlert(true);
+    }
+  }, [error]);
 
   // Local UI state
   const [showDelete, setShowDelete] = useState(false);
@@ -130,11 +138,6 @@ export default function LanguageAdmin() {
           alignItems={{ xs: "flex-start", ssm: "center" }}
           justifyContent={{ ssm: "space-between" }}   // push toolbar to the right on ≥ ssm
           my={{ xs: 2, ssm: 3 }}
-          // sx={{
-          //   display: "flex",
-          //   justifyContent: "space-between",
-          //   mb: 3,
-          // }}
         >
           <Typography variant="h4">Language Management</Typography>
           <LanguageToolbar
@@ -151,13 +154,11 @@ export default function LanguageAdmin() {
           />
         </Stack>
 
-        {error && (
+        {error && showErrorAlert && (
           <Alert
             severity="error"
             sx={{ mb: 2 }}
-            onClose={() => {
-              /* TODO: optionally clear error state  */
-            }}
+            onClose={() => setShowErrorAlert(false)}
           >
             {error.message ?? String(error)}
           </Alert>

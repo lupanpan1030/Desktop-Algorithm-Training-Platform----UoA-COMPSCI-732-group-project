@@ -1,9 +1,8 @@
 /**
- * LanguageService — Application layer for programming languages (语言应用服务层)
+ * LanguageService — Application layer for programming languages
  * ---------------------------------------------------------------------------
  * Orchestrates business rules around programming language entities by calling
  * the DAO and converting database models to DTOs.
- * 该服务调用 DAO 并将数据库模型转换为 DTO，封装业务规则。
  */
 import { LanguageDao } from './language-dao';
 import { ProgrammingLanguage } from '@prisma/client';
@@ -39,16 +38,16 @@ export class LanguageService {
   }
 
   async deleteLanguage(id: number): Promise<void> {
-    // 1️ Fetch the language record first (先拿到语言记录)
+    // 1️ Fetch the language record first
     const lang = await LanguageDao.findLanguageById(id);
     if (!lang) throw new NotFoundError('Language not found');
 
-    // 2️ Disallow deletion if it's a default language (如果是默认语言则禁止删除)
+    // 2️ Disallow deletion if it's a default language
     if ((lang as any).is_default) {
       throw new ForbiddenError('Default language cannot be deleted');
     }
 
-    // 3️ Proceed with normal deletion (正常删除)
+    // 3️ Proceed with normal deletion
     try {
       await LanguageDao.deleteLanguage(id);
     } catch (err: any) {
@@ -59,7 +58,6 @@ export class LanguageService {
 
   /**
    * Convert Prisma model to API DTO.
-   * 将 Prisma 模型转换为 API DTO。
    */
   private toDto = (lang: ProgrammingLanguage): LanguageDto => ({
     languageId:  lang.language_id,

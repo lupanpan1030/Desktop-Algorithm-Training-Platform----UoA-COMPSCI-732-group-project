@@ -1,11 +1,8 @@
-// 引入 Prisma 客户端实例
 // Import Prisma client instance
 import prisma from '../prismaClient'
 
-//向 programmingLanguage 表中批量插入编程语言数据
 //Seed multiple programming languages into the "programmingLanguage" table
 export async function seedLanguage() {
-    // ① 保证只允许一条默认语言
     await prisma.$executeRawUnsafe(`
       CREATE UNIQUE INDEX IF NOT EXISTS uq_default_language
       ON ProgrammingLanguage(is_default)
