@@ -28,13 +28,9 @@ An algorithm puzzle ([Competitive programming](https://en.wikipedia.org/wiki/Com
 
 # Run Project
 
-## Download Published Executable
-- Please download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases).
-- Please **use terminal to start the executable**, otherwise unexpected problems can occur.
-  - For example (Linux, pwd is the folder where the compressed package is extracted)
-      ```bash
-      ./out/algo-platform-linux-x64/algo-platform
-      ```
+## Download & Run the Published Executable
+1. Download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases).
+2. To start the application, run the `./out/start_application` script.
 
 ## Run Source Code for Development
 More details for development are provided in [dev-doc.md](./dev-doc.md).
