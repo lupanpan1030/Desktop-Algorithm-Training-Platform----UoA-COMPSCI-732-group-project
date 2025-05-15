@@ -74,5 +74,6 @@ export class LanguageService {
     // legacy aliases (read‑only)
     compile_command: lang.compile_command ?? null,
     run_command:     lang.run_command,
+    isDefault:       lang.is_default,
   });
 }

@@ -64,6 +64,7 @@ export interface LanguageDto {
   compile_command?: string | null;
   /** @deprecated alias for runtimeCmd */
   run_command?: string;
+  isDefault: boolean;
 }
 
 // Simplified response for listings (列表使用的简化响应模型)
@@ -74,4 +75,5 @@ export interface LanguageResponseDto {
   version: string;
   compilerCmd: string | null;
   runtimeCmd: string;
+  isDefault: boolean;
 }
