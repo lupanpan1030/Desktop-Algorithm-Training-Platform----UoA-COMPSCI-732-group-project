@@ -107,19 +107,27 @@ describe('LanguageAdmin Component', () => {
       expect(screen.getByText('Python')).toBeInTheDocument();
     });
 
-    // Enable edit mode
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    // Enable edit mode and wait for it to take effect
+    fireEvent.click(screen.getByRole('button', { name: /edit mode/i }));
+    await waitFor(() => {
+      const table = screen.getByRole('table');
+      const editButtons = within(table).getAllByTestId('EditIcon');
+      expect(editButtons).toHaveLength(2);
+    });
 
     // Click edit button for Python
-    fireEvent.click(screen.getAllByTestId('EditIcon')[0]);
+    const table = screen.getByRole('table');
+    const editButtons = within(table).getAllByTestId('EditIcon');
+    fireEvent.click(editButtons[0]);
 
-    // Update the name
-    const form = screen.getByRole('dialog');
-    const nameInput = within(form).getByLabelText(/language/i);
-    fireEvent.change(nameInput, { target: { value: 'Updated Python' } });
-
-    // Save changes
-    fireEvent.click(within(form).getByRole('button', { name: /save/i }));
+    // Wait for dialog to appear and update the form
+    await waitFor(() => {
+      const dialog = screen.getByRole('dialog', { hidden: true });
+      expect(dialog).toBeInTheDocument();
+      const nameInput = within(dialog).getByLabelText(/language/i);
+      fireEvent.change(nameInput, { target: { value: 'Updated Python' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: /save/i }));
+    });
 
     // Verify updateLanguage was called with correct data
     await waitFor(() => {
@@ -145,15 +153,26 @@ describe('LanguageAdmin Component', () => {
       expect(screen.getByText('JavaScript')).toBeInTheDocument();
     });
 
-    // Enable delete mode
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    // Enable delete mode and wait for it to take effect
+    fireEvent.click(screen.getByRole('button', { name: /delete mode/i }));
+    await waitFor(() => {
+      const table = screen.getByRole('table');
+      const deleteButtons = within(table).getAllByTestId('DeleteIcon');
+      expect(deleteButtons).toHaveLength(1);
+    });
 
     // Click delete button for JavaScript (not Python because it's isDefault)
-    fireEvent.click(screen.getAllByTestId('DeleteIcon')[0]);
+    const table = screen.getByRole('table');
+    const deleteButtons = within(table).getAllByTestId('DeleteIcon');
+    fireEvent.click(deleteButtons[0]);
 
-    // Confirm deletion
-    const confirmDialog = screen.getByRole('dialog');
-    fireEvent.click(within(confirmDialog).getByRole('button', { name: /delete/i }));
+    // Wait for dialog to appear and confirm deletion
+    await waitFor(() => {
+      const dialog = screen.getByRole('dialog', { hidden: true });
+      expect(dialog).toBeInTheDocument();
+      const confirmButton = within(dialog).getByRole('button', { name: /delete/i });
+      fireEvent.click(confirmButton);
+    });
 
     // Verify deleteLanguage was called with correct ID
     await waitFor(() => {
@@ -173,11 +192,20 @@ describe('LanguageAdmin Component', () => {
     });
 
     // Enable delete mode
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /delete mode/i }));
 
-    // Verify delete button is not present for Python (default language)
+    // Get all delete buttons
     const deleteButtons = screen.getAllByTestId('DeleteIcon');
-    expect(deleteButtons).toHaveLength(1); // Only JavaScript should have delete button
+    
+    // Find the JavaScript row and verify it has a delete button
+    const jsRow = screen.getByText('JavaScript').closest('tr');
+    const jsDeleteButton = within(jsRow).getByTestId('DeleteIcon');
+    expect(jsDeleteButton).toBeInTheDocument();
+
+    // Find the Python row and verify it doesn't have a delete button
+    const pythonRow = screen.getByText('Python').closest('tr');
+    const pythonDeleteButton = within(pythonRow).queryByTestId('DeleteIcon');
+    expect(pythonDeleteButton).toBeNull();
   });
 
   test('handles API error gracefully', async () => {
