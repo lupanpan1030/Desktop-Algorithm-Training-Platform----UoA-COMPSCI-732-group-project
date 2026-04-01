@@ -1,14 +1,22 @@
-import path from 'path';
+import fs from "fs/promises";
+import path from "path";
+import { app } from "electron";
 
-export function initProdEnv() {
-    // SQLite database path
-    process.env.DATABASE_URL = "file:" + path.join(
-        process.resourcesPath,
-        "dev.db"
-    );
+export async function initProdEnv() {
+  const userDbPath = path.join(app.getPath("userData"), "dev.db");
+  const packagedSeedPath = path.join(process.resourcesPath, "seed.db");
+
+  await fs.mkdir(path.dirname(userDbPath), { recursive: true });
+
+  try {
+    await fs.access(userDbPath);
+  } catch {
+    await fs.copyFile(packagedSeedPath, userDbPath);
+  }
+
+  process.env.DATABASE_URL = "file:" + userDbPath;
 
   // Prisma engine binary paths
-  // Linux (Debian)
   if (process.platform === 'linux') {
     process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
       process.resourcesPath,
@@ -20,7 +28,6 @@ export function initProdEnv() {
       "libquery_engine-debian-openssl-3.0.x.so.node"
     );
   }
-  // Windows
   if (process.platform === 'win32') {
     process.env.PRISMA_QUERY_ENGINE_LIBRARY = path.join(
       process.resourcesPath,
@@ -32,7 +39,6 @@ export function initProdEnv() {
       "query_engine-windows.dll.node"
     );
   }
-  // macOS
   if (process.platform === 'darwin') {
     const libName = process.arch === 'arm64'
       ? "libquery_engine-darwin-arm64.dylib.node"

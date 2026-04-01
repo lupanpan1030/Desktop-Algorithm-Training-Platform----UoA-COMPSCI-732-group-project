@@ -35,7 +35,10 @@ export class CreateLanguageRequestDto {
   /** Optional compile command (null for interpreted languages) */
   public compilerCmd?: string | null;
   public version?: string | null;
-  public suffix?: string;
+  /**
+   * @minLength 1
+   */
+  public suffix!: string;
 }
 
 // Request body for updating a language
@@ -48,6 +51,9 @@ export class UpdateLanguageRequestDto {
   public compile_command?: string | null;
   public compilerCmd?: string | null;
   public version?: string | null;
+  /**
+   * @minLength 1
+   */
   public suffix?: string;
 }
 

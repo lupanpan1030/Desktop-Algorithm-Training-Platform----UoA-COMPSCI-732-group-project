@@ -1,26 +1,14 @@
-// src/backend/db/seeds/index.ts
+import prisma from "../prismaClient";
+import { seedSubmissionResults } from "./submissionResult.data";
+import { seedSubmission } from "./submission.data";
+import { seedProblemTags } from "./problemTag.data";
+import { seedTestCases } from "./testCase.data";
+import { seedTags } from "./tag.data";
+import { seedProblems } from "./problem.data";
+import { seedLanguage } from "./programmingLanguage.data";
 
-// Import Prisma client
-import prisma from '../prismaClient'
-
-
-// 从各个数据文件中引入清理函数和种子函数
-// Import clear and seed functions from different data modules
-import { clearSubmissionResults, seedSubmissionResults} from './submissionResult.data'
-import { clearSubmission, seedSubmission } from './submission.data'
-import { clearProblemTags, seedProblemTags } from './problemTag.data'
-import { clearTestCases, seedTestCases } from './testCase.data'
-import { clearTags, seedTags } from './tag.data'
-import { clearProblems, seedProblems } from './problem.data'
-import { clearLanguage, seedLanguage } from './programmingLanguage.data'
-
-
-// 主函数入口，负责种子数据的写入
-// Main function to seed the database
-async function main() {
+export async function seedFreshDatabase() {
   console.log('--- Seeding new data ---')
-  // 插入顺序：先父表，再子表，确保外键依赖顺序正确
-  // Insert order: parent tables first, then child tables (due to foreign key constraints)
   await seedLanguage()
   await seedTags()
   await seedProblems()
@@ -29,13 +17,13 @@ async function main() {
   await seedSubmission()
   await seedSubmissionResults()
   
-  // 断开数据库连接
-  // Disconnect Prisma from the database
-    await prisma.$disconnect()
-    console.log('Database seeding complete!')
+  await prisma.$disconnect()
+  console.log('Database seeding complete!')
 }
 
-main().catch(e => {
+if (require.main === module) {
+  seedFreshDatabase().catch(e => {
     console.error(e)
     process.exit(1)
-})
+  })
+}

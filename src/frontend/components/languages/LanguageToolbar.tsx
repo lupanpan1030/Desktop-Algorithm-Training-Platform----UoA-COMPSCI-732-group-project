@@ -5,14 +5,13 @@
  *
  */
 import React from 'react';
-import { Button, Stack, Tooltip, useTheme } from '@mui/material';
+import { Stack, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { strings } from '../../i18n/messages';
-import useMediaQuery from '@mui/material/useMediaQuery';
 
 // Component props
 interface Props {
@@ -32,7 +31,6 @@ export default function LanguageToolbar({
   onToggleEdit,
   onRefresh,
 }: Props) {
-
   return (
     <Stack direction="row" spacing={2}>
       <>

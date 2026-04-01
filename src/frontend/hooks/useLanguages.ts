@@ -24,15 +24,6 @@ const normalizeLanguage = (l: any) => ({
   isDefault:   l.isDefault ?? l.is_default ?? false,
 });
 
-// API Response Types 
-interface Problem {
-  problemId: number;
-  title: string;
-  description: string;
-  difficulty: string;
-  completionState?: string;
-}
-
 export interface Language {
   id?: number;
   languageId: number;
@@ -45,50 +36,7 @@ export interface Language {
   isDefault?: boolean;
 }
 
-interface TestResult {
-  status: string;
-  output?: string;
-  runtimeMs: number;
-  memoryKb: number;
-}
-
-interface RunResponse {
-  status: string;
-  results: TestResult[];
-}
-
-interface SubmitResponse {
-  submissionId: number;
-  overallStatus: string;
-  results: TestResult[];
-}
-
-/** Legacy front‑end payload: snake_case fields */
-type OldLanguagePayload = Omit<Language, 'languageId'>;
-
-/** New API payload in camelCase  */
-interface NewLanguagePayload {
-  name: string;
-  runtimeCmd: string;
-  compilerCmd?: string | null;
-  version?: string | null;
-  suffix: string;
-}
-
-/** Unified input type: compatible with both old & new  */
-type LanguageInput = OldLanguagePayload | NewLanguagePayload;
-
-/** Type guard to detect new payload style  */
-const isNewPayload = (p: LanguageInput): p is NewLanguagePayload => 'runtimeCmd' in p;
-
-/** Translate payload to backend Create/Update DTO  */
-const toLanguageDto = (lang: LanguageInput) => ({
-  name:        lang.name,
-  suffix:      lang.suffix,
-  version:     lang.version,
-  compilerCmd: lang.compilerCmd ?? null,
-  runtimeCmd:  lang.runtimeCmd,
-});
+type LanguageInput = Omit<Language, 'languageId' | 'id'>;
 
 /**
  * useLanguages
@@ -154,7 +102,7 @@ const useLanguages = () => {
   // Auto‑load languages once on mount
   useEffect(() => {
     fetchLanguages();
-  }, []); // run once on mount
+  }, [fetchLanguages]);
 
   return {
     loading,

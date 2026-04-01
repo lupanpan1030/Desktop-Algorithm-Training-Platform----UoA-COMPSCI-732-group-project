@@ -197,7 +197,7 @@ export default function LanguageAdmin() {
                   compilerCmd: edit.lang.compilerCmd ?? "",
                   runtimeCmd: edit.lang.runtimeCmd ?? "",
                   suffix: edit.lang.suffix,
-                  version: edit.lang.version,
+                  version: edit.lang.version ?? "",
                 }
               : {
                   name: "",

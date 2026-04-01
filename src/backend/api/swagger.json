@@ -166,7 +166,8 @@
 			"RunCodeDto": {
 				"properties": {
 					"code": {
-						"type": "string"
+						"type": "string",
+						"minLength": 1
 					},
 					"languageId": {
 						"type": "number",
@@ -207,7 +208,8 @@
 			"SubmitCodeDto": {
 				"properties": {
 					"code": {
-						"type": "string"
+						"type": "string",
+						"minLength": 1
 					},
 					"languageId": {
 						"type": "number",
@@ -435,6 +437,9 @@
 					"run_command": {
 						"type": "string",
 						"deprecated": true
+					},
+					"isDefault": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -443,7 +448,8 @@
 					"suffix",
 					"version",
 					"compilerCmd",
-					"runtimeCmd"
+					"runtimeCmd",
+					"isDefault"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -480,12 +486,14 @@
 						"nullable": true
 					},
 					"suffix": {
-						"type": "string"
+						"type": "string",
+						"minLength": 1
 					}
 				},
 				"required": [
 					"name",
-					"runtimeCmd"
+					"runtimeCmd",
+					"suffix"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -516,7 +524,8 @@
 						"nullable": true
 					},
 					"suffix": {
-						"type": "string"
+						"type": "string",
+						"minLength": 1
 					}
 				},
 				"type": "object",
@@ -559,8 +568,8 @@
 			"name": "MIT"
 		},
 		"contact": {
-			"name": "Junxiao Liao",
-			"email": "huruyuanxingke66@gmail.com"
+			"name": "Chen Lu (lupanpan)",
+			"email": "clu396@aucklanduni.ac.nz"
 		}
 	},
 	"paths": {
@@ -726,7 +735,7 @@
 			"post": {
 				"operationId": "RunCode",
 				"responses": {
-					"201": {
+					"200": {
 						"description": "Code ran successfully",
 						"content": {
 							"application/json": {
@@ -737,7 +746,7 @@
 						}
 					},
 					"404": {
-						"description": "Submission not found",
+						"description": "Problem, language or test case not found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -803,7 +812,7 @@
 						}
 					},
 					"404": {
-						"description": "Submission not found",
+						"description": "Problem, language or test case not found",
 						"content": {
 							"application/json": {
 								"schema": {

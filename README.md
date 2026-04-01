@@ -1,6 +1,12 @@
-# CS732 project - Team Delightful Dogs
+# Delightful Dogs
 
-Team members:
+This repository started as the CS732 group project from Team Delightful Dogs.
+
+It is now being independently redeveloped and maintained by:
+
+- Chen Lu _(clu396@aucklanduni.ac.nz)_ / `lupanpan`
+
+Original team members:
 
 - Manling Chen _(mche600@aucklanduni.ac.nz)_
 - Xinyang Guo _(xguo339@aucklanduni.ac.nz)_
@@ -11,8 +17,15 @@ Team members:
 
 ![](./Delightful%20Dogs.png)
 
-# Project Overview
+## Project Overview
 An algorithm puzzle ([Competitive programming](https://en.wikipedia.org/wiki/Competitive_programming)) training platform that runs on desktop in a completely local environment.
+
+This branch/version is the personal secondary-development edition of the original project. The current maintenance focus is:
+
+- stabilising the local desktop + backend runtime
+- making database/bootstrap flow reproducible
+- improving the judge execution pipeline
+- cleaning up tests, docs, and engineering basics
 
 ## Key Features
 - Local execution with a desktop GUI.
@@ -26,13 +39,13 @@ An algorithm puzzle ([Competitive programming](https://en.wikipedia.org/wiki/Com
 - Frontend: [react.js](https://react.dev/), [MUI](https://mui.com/), [monaco editor](https://microsoft.github.io/monaco-editor/), [webpack](https://webpack.js.org/)
 - Backend: [express.js](https://expressjs.com/), [TSOA](https://tsoa-community.github.io/docs/), [prisma](https://www.prisma.io/)
 
-# Run Project
+## Run Project
 
-## Download & Run the Published Executable
+### Download & Run the Published Executable
 1. Download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases).
 2. To start the application, run the `./out/start_application` script.
 
-## Run Source Code for Development
+### Run Source Code for Development
 More details for development are provided in [dev-doc.md](./dev-doc.md).
 
 - To start project for development:
@@ -41,10 +54,25 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
       ```bash
       npm start
       ```
+- To run backend only:
+  - Run in the project root directory.
+      ```bash
+      npm run dev
+      ```
 - To run tests:
   - Run in the project root directory.
       ```bash
       npm run test
+      ```
+- To initialize the local development database:
+  - Run in the project root directory.
+      ```bash
+      npm run db:init
+      ```
+- To reset and reseed the local development database:
+  - Run in the project root directory.
+      ```bash
+      npm run db:reset
       ```
 - To compile an executable for the current platform:
   - Run in the project root directory.

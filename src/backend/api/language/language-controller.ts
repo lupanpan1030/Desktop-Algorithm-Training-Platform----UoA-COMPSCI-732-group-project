@@ -26,8 +26,6 @@ import { ValidateError } from '../../utils/errors/validation-error';
 import { NotFoundError } from '../../utils/errors/not-found-error';
 import { ForbiddenError } from '../../utils/errors/forbidden-error';
 
-const service = new LanguageService();
-
 @Route('languages')
 @Tags('ProgrammingLanguage')
 export class LanguageController extends Controller {

@@ -12,7 +12,7 @@ import AssignmentLateOutlinedIcon from "@mui/icons-material/AssignmentLateOutlin
 import { Link } from "react-router-dom";
 import { ResponsiveChip } from "./common/ResponsiveComponents";
 
-export default function ProblemList({ problems, filtersOpen }) {
+export default function ProblemList({ problems }) {
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case "EASY":

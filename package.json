@@ -4,25 +4,24 @@
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".webpack/main",
-  "prisma": {
-    "schema": "src/backend/db/prisma/schema.prisma"
-  },
   "scripts": {
     "start": "cross-env NODE_ENV=development electron-forge start",
-    "package": "cross-env NODE_ENV=production prisma db push && npx ts-node src/backend/db/seeds/init-db+drop.ts && npx prisma generate && electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx .",
+    "package": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge package",
+    "make": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge make",
+    "publish": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge publish",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src prisma.config.ts",
     "test": "npm run test:front && npm run test:back",
     "test:front": "vitest --config=vitest.config.ts --project frontend",
     "test:back": "vitest --config=vitest.config.ts --project backend",
-    "dev": "ts-node-dev --respawn src/backend/api/app.ts",
-    "db:push": "prisma db push --schema=src/backend/db/prisma/schema.prisma"
+    "dev": "ts-node-dev --respawn src/backend/api/server.ts",
+    "db:init": "npx ts-node src/backend/db/seeds/init-db_first.ts",
+    "db:reset": "npx ts-node src/backend/db/seeds/init-db+drop.ts",
+    "db:prepare-package-db": "npx ts-node src/backend/db/prepare-package-db.ts"
   },
   "keywords": [],
   "author": {
-    "name": "Junxiao Liao",
-    "email": "huruyuanxingke66@gmail.com"
+    "name": "Chen Lu (lupanpan)",
+    "email": "clu396@aucklanduni.ac.nz"
   },
   "license": "MIT",
   "devDependencies": {
@@ -66,7 +65,7 @@
     "jsdom": "^26.1.0",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "node-loader": "^2.1.0",
-    "prisma": "^6.5.0",
+    "prisma": "^6.18.0",
     "sqlite3": "^5.1.7",
     "style-loader": "^3.3.4",
     "supertest": "^7.1.0",
@@ -82,7 +81,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^7.0.1",
     "@mui/material": "^7.0.1",
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^6.18.0",
     "axios": "^1.8.4",
     "copy-webpack-plugin": "^13.0.0",
     "cors": "^2.8.5",

@@ -6,6 +6,7 @@ import express, {
 import { RegisterRoutes } from "./routes"; // path to the generated routes file
 import { ValidateError } from "tsoa";
 import { NotFoundError } from "../utils/errors/not-found-error";
+import { ForbiddenError } from "../utils/errors/forbidden-error";
 import swaggerUi from "swagger-ui-express";
 import cors from "cors";
 
@@ -48,6 +49,11 @@ export async function createApp() {
       });
     }
     if (err instanceof NotFoundError) {
+      return res.status(err.statusCode).json({
+        message: err.message,
+      });
+    }
+    if (err instanceof ForbiddenError) {
       return res.status(err.statusCode).json({
         message: err.message,
       });

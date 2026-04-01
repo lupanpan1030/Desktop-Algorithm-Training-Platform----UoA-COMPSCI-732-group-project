@@ -93,7 +93,7 @@ export default function CodeEditor({ onCodeChange, problemId }) {
         }, 10000);
         
         return () => clearTimeout(timeoutId);
-    }, [isEditorReady, isPackaged]);
+    }, [isEditorReady]);
 
     // Listen for global errors and capture Monaco-related errors
     useEffect(() => {
@@ -136,19 +136,9 @@ export default function CodeEditor({ onCodeChange, problemId }) {
         if (onCodeChange) {
             onCodeChange({ code: savedCode, language: newLanguage });
         }
-    }, [code, onCodeChange, problemId, languageMap]);
+    }, [onCodeChange, problemId, languageMap]);
 
-    // When problemId changes, clear the cache of other problems
-    useEffect(() => {
-        const keys = Object.keys(localStorage);
-        const editorKeys = keys.filter(key => 
-            (key.startsWith('editorCode_') || key.startsWith('editorLanguage_')) && 
-            !key.endsWith(`_${problemId}`)
-        );
-        editorKeys.forEach(key => localStorage.removeItem(key));
-    }, [problemId]);
-
-    const handleEditorDidMount = useCallback((editor, monaco) => {
+    const handleEditorDidMount = useCallback((editor, _monaco) => {
         editorRef.current = editor;
         setIsEditorReady(true);
         setMonacoError(null);
@@ -188,28 +178,6 @@ export default function CodeEditor({ onCodeChange, problemId }) {
             }, 100);
         }
     }, [isEditorReady]);
-
-    // Save code on any button click throughout the application
-    useEffect(() => {
-        const handleButtonClick = () => {
-            if (Object.keys(languageMap).length > 0) {
-                saveCodeToLocalStorage(problemId, language, code, languageMap);
-            }
-        };
-
-        // Add listener to all buttons in the document
-        const buttons = document.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.addEventListener('click', handleButtonClick);
-        });
-
-        return () => {
-            // Clean up listeners when component unmounts
-            buttons.forEach(button => {
-                button.removeEventListener('click', handleButtonClick);
-            });
-        };
-    }, [problemId, language, code, languageMap]);
 
     if (monacoError) {
         return (

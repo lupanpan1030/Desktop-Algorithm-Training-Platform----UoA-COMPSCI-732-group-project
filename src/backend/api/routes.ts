@@ -56,7 +56,7 @@ const models: TsoaRoute.Models = {
             "input": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "expectedOutput": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "timeLimitMs": {"dataType":"double","required":true,"validators":{"minimum":{"value":100},"maximum":{"value":10000}}},
-            "memoryLimitMb": {"dataType":"double","required":true,"validators":{"minimum":{"errorMsg":"* 1024","value":16},"maximum":{"errorMsg":"* 1024","value":1024}}},
+            "memoryLimitMb": {"dataType":"double","required":true,"validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
         },
         "additionalProperties": false,
     },
@@ -85,7 +85,7 @@ const models: TsoaRoute.Models = {
     "RunCodeDto": {
         "dataType": "refObject",
         "properties": {
-            "code": {"dataType":"string","required":true},
+            "code": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "languageId": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
@@ -104,7 +104,7 @@ const models: TsoaRoute.Models = {
     "SubmitCodeDto": {
         "dataType": "refObject",
         "properties": {
-            "code": {"dataType":"string","required":true},
+            "code": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "languageId": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
@@ -204,6 +204,7 @@ const models: TsoaRoute.Models = {
             "runtimeCmd": {"dataType":"string","required":true},
             "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "run_command": {"dataType":"string"},
+            "isDefault": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },
@@ -217,7 +218,7 @@ const models: TsoaRoute.Models = {
             "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "compilerCmd": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "version": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "suffix": {"dataType":"string"},
+            "suffix": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
         },
         "additionalProperties": false,
     },
@@ -231,7 +232,7 @@ const models: TsoaRoute.Models = {
             "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "compilerCmd": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "version": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "suffix": {"dataType":"string"},
+            "suffix": {"dataType":"string","validators":{"minLength":{"value":1}}},
         },
         "additionalProperties": false,
     },
@@ -380,7 +381,7 @@ export function RegisterRoutes(app: Router) {
                 response,
                 next,
                 validatedArgs,
-                successStatus: 201,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

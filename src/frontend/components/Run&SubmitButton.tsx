@@ -12,6 +12,7 @@ import { useApi } from "../hooks/useApi";
 import TestResultCard from "./TestResultCard";
 import { useTheme,alpha } from "@mui/material";
 import { ResponsiveButton } from "./common/ResponsiveComponents";
+import { clearProblemCode } from "../utils/localStorageHelper";
 
 interface CodeSubmissionProps {
   problemId: number;
@@ -66,12 +67,18 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
 
     console.log("Running code with language ID:", languageId);
 
-    const response = await runCode(problemId, code, languageId);
-    if (response) {
-      setRunResults(response);
-      setActiveView("run");
-      setSnackbarMessage("Run Completed");
-      setSeverity("info");
+    try {
+      const response = await runCode(problemId, code, languageId);
+      if (response) {
+        setRunResults(response);
+        setActiveView("run");
+        setSnackbarMessage("Run Completed");
+        setSeverity("info");
+        setOpenSnackbar(true);
+      }
+    } catch {
+      setSnackbarMessage("Run failed");
+      setSeverity("error");
       setOpenSnackbar(true);
     }
   };
@@ -87,17 +94,20 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
 
     console.log("Submitting code with language ID:", languageId);
 
-    const response = await submitCode(problemId, code, languageId);
-    if (response) {
-      setSubmitResults(response);
-      setActiveView("submit");
-      setSnackbarMessage("Submitted!");
-      setSeverity("info");
+    try {
+      const response = await submitCode(problemId, code, languageId);
+      if (response) {
+        setSubmitResults(response);
+        setActiveView("submit");
+        setSnackbarMessage("Submitted!");
+        setSeverity("info");
+        setOpenSnackbar(true);
+        clearProblemCode(problemId);
+      }
+    } catch {
+      setSnackbarMessage("Submit failed");
+      setSeverity("error");
       setOpenSnackbar(true);
-
-      // Clear saved code after successful submission
-      localStorage.removeItem(`editorCode_${problemId}`);
-      localStorage.removeItem(`editorLanguage_${problemId}`);
     }
   };
 

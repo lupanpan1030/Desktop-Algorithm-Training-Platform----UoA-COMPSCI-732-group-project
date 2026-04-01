@@ -1,12 +1,18 @@
 // DTOs for request bodies
 export class RunCodeDto {
-  code: string;
-  languageId: number;
+  /**
+   * @minLength 1
+   */
+  public code!: string;
+  public languageId!: number;
 }
 
 export class SubmitCodeDto {
-  code: string;
-  languageId: number;
+  /**
+   * @minLength 1
+   */
+  public code!: string;
+  public languageId!: number;
 }
 
 // DTOs for response bodies

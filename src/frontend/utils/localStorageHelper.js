@@ -23,7 +23,6 @@ export const saveCodeToLocalStorage = (problemId, language, code, languageMap = 
     const languageId = getLanguageIdFromName(language, languageMap);
     const key = `leetcode_clone_problem_${problemId}_lang_${languageId}`;
     localStorage.setItem(key, code);
-    console.log(`Code saved for problem ${problemId} with language ${language} (ID: ${languageId})`);
   } catch (error) {
     console.error('Error saving code to localStorage:', error);
   }
@@ -85,8 +84,7 @@ export const getLanguageIdFromName = (langName, languageMap = {}) => {
     return languageMap[normalizedName] || 1;
   })();
 
-  console.log(`Language "${langName}" is mapped to ID: ${resolvedId}`); 
-  return languageMap[normalizedName] || 1;
+  return resolvedId;
 };
 
 /**
@@ -109,7 +107,6 @@ export const clearProblemCode = (problemId) => {
     
     // Remove all related keys
     problemKeys.forEach(key => localStorage.removeItem(key));
-    console.log(`Cleared all saved code for problem ${problemId}`);
   } catch (error) {
     console.error('Error clearing problem code from localStorage:', error);
   }

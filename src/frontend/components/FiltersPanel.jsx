@@ -101,7 +101,7 @@ export default function FiltersPanel({
           }}
           aria-label="clear filters"
         >
-          <ReplayIcon font />
+          <ReplayIcon />
         </IconButton>
       </Stack>
     </Stack>

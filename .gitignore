@@ -1,4 +1,6 @@
 .DS_Store
+build-resources/
+dev.db
 node_modules/
 .webpack/
 out/

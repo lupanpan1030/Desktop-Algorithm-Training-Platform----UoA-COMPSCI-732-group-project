@@ -22,7 +22,7 @@ export async function seedSubmission() {
         // Merge Two Sorted Lists
         submission_id: 3,
         problem_id: 10,
-        language_id: 1,
+        language_id: 2,
         code: `function mergeTwoLists(l1, l2) {
   // … your implementation …
 }`,
@@ -33,10 +33,10 @@ export async function seedSubmission() {
         // Maximum Subarray
         submission_id: 4,
         problem_id: 11,
-        language_id: 2,
-        code: `class Solution:
-    def maxSubArray(self, nums):
-        # … your implementation …`,
+        language_id: 1,
+        code: `def max_sub_array(nums):
+    # … your implementation …
+    return 0`,
         status: "ACCEPTED",
         submitted_at: new Date("2025-05-09T10:05:00.000Z"),
       },
@@ -44,7 +44,7 @@ export async function seedSubmission() {
         // Longest Substring Without Repeating Characters
         submission_id: 5,
         problem_id: 12,
-        language_id: 1,
+        language_id: 2,
         code: `function lengthOfLongestSubstring(s) {
   // … your implementation …
 }`,

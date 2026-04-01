@@ -15,7 +15,7 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     extraResource: [
-      "./src/backend/db/prisma/dev.db",
+      "./build-resources/seed.db",
     ]
   },
   rebuildConfig: {},

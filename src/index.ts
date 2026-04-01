@@ -14,10 +14,6 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-if (process.env.NODE_ENV === 'production') {
-  initProdEnv();
-}
-
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = app.isPackaged ? 'production' : 'development';
   console.log('NODE_ENV fallback:', process.env.NODE_ENV);
@@ -98,6 +94,9 @@ const createWindow = (): void => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
+  if (process.env.NODE_ENV === 'production') {
+    await initProdEnv();
+  }
   await startBackend();
   if (process.env.NODE_ENV === 'development') {
     await waitForBackend();

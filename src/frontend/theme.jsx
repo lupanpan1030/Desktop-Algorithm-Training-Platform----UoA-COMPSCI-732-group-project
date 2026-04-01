@@ -140,14 +140,10 @@ export function useAppTheme(darkMode) {
         h5: {},
       },
     });
-    theme = responsiveFontSizes(
-      theme,
-      {
-        breakpoints: ["md"],
-        factor: 2,
-      },
-      [darkMode]
-    );
+    theme = responsiveFontSizes(theme, {
+      breakpoints: ["md"],
+      factor: 2,
+    });
     return theme;
-  });
+  }, [darkMode]);
 }

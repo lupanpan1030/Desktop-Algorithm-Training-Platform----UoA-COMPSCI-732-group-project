@@ -26,8 +26,8 @@ export class CreateTestCaseParams {
   timeLimitMs!: number;
 
     /**
-     * @minimum 16 * 1024
-     * @maximum 1024 * 1024
+     * @minimum 16
+     * @maximum 1024
      */
   memoryLimitMb!: number;
 }

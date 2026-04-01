@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import CodeSubmission from '../../../frontend/components/Run&SubmitButton';
 import { afterEach, describe,  expect,  test } from 'vitest';
+import api from '../../../frontend/api/axiosInstance';
 
-const mock = new MockAdapter(axios);
+const mock = new MockAdapter(api);
 
 afterEach(() => {
     cleanup();
@@ -15,7 +15,7 @@ afterEach(() => {
 describe("Run Button", () => {
   //test run result
     test('Show run result', async () => {
-        mock.onPost('http://localhost:6785/problems/1/run')
+        mock.onPost('/problems/1/run')
             .reply(200, {
                 status: 'success',
                 results: [
@@ -45,11 +45,10 @@ describe("Run Button", () => {
     })
  
 
-
 describe("Submit Button", () => {
   //test submit result
   test('Submit Button', async () => {
-    mock.onPost('http://localhost:6785/problems/1/submit').reply(200, {
+    mock.onPost('/problems/1/submit').reply(200, {
       submissionId: 2,
       overallStatus: 'sucess',
       results: [
@@ -87,7 +86,7 @@ describe("None input", () => {
 
 describe("Excute error", () => {
   test('Error', async () => {
-    mock.onPost('/api/run-code').reply(500);
+    mock.onPost('/problems/8/run').reply(500);
 
     render(<CodeSubmission code="console.log('test')" problemId={8} languageId={2}/>);
     
@@ -98,4 +97,3 @@ describe("Excute error", () => {
     });
   });
 })
-

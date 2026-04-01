@@ -44,7 +44,7 @@ describe("LanguageDao", () => {
       expect(all).toHaveLength(2);
 
       const names = all.map(l => l.name).sort();
-      expect(names).toEqual(["Java", "Python"].sort());
+      expect(names).toEqual(["JavaScript", "Python"].sort());
       expect(all[0].language_id).toBe(1);
     });
   });
@@ -54,8 +54,8 @@ describe("LanguageDao", () => {
     it("returns the correct language when it exists", async () => {
       const lang = await LanguageDao.findLanguageById(2);
       expect(lang).not.toBeNull();
-      expect((lang as ProgrammingLanguage).name).toBe("Java");
-      expect((lang as ProgrammingLanguage).suffix).toBe("java");
+      expect((lang as ProgrammingLanguage).name).toBe("JavaScript");
+      expect((lang as ProgrammingLanguage).suffix).toBe("js");
       expect((lang as ProgrammingLanguage).is_default).toBe(false);
     });
 

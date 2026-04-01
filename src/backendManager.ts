@@ -1,9 +1,5 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as http from 'http';
-import * as path from 'path';
-import { app } from 'electron';
-
-// Import the necessary modules for direct server execution in production
 import 'dotenv/config';
 import { createApp } from './backend/api/app';
 

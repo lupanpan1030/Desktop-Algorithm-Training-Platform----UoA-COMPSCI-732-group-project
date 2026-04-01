@@ -10,6 +10,7 @@ import { useTheme } from "@mui/material/styles";
 
 export default function DetailPage() {
   const { id } = useParams();
+  const problemId = Number(id);
   const [problem, setProblem] = useState(null);
   const [editorState, setEditorState] = useState({
     code: "",
@@ -184,7 +185,7 @@ export default function DetailPage() {
         <Box className="editor-result-container">
           <Box ref={editorPaneRef} className="editor-pane">
             <Paper className="editor-section">
-              <CodeEditor onCodeChange={handleCodeChange} problemId={id} />
+              <CodeEditor onCodeChange={handleCodeChange} problemId={problemId} />
             </Paper>
           </Box>
 
@@ -205,7 +206,7 @@ export default function DetailPage() {
             <Paper className="result-section">
               {problem && (
                 <CodeSubmission
-                  problemId={id}
+                  problemId={problemId}
                   code={editorState.code}
                   languageId={getLanguageId()}
                 />

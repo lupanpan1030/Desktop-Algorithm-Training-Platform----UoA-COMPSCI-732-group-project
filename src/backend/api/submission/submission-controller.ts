@@ -37,9 +37,9 @@ export class ProblemSubmissionController extends Controller {
    * @param problemId The problem ID
    * @param dto The code and language ID
    */
-  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<NotFoundError>(404, 'Problem, language or test case not found')
   @Response<ValidateError>(422, 'Validation Failed')
-  @SuccessResponse(201, 'Code ran successfully')
+  @SuccessResponse(200, 'Code ran successfully')
   @Post('{problemId}/run')
   public async runCode(
     @Path() problemId: number,
@@ -53,7 +53,7 @@ export class ProblemSubmissionController extends Controller {
    * @param problemId The problem ID
    * @param dto The code and language ID
    */
-  @Response<NotFoundError>(404, 'Submission not found')
+  @Response<NotFoundError>(404, 'Problem, language or test case not found')
   @Response<ValidateError>(422, 'Validation Failed')
   @SuccessResponse(201, 'Code submitted successfully')
   @Post('{problemId}/submit')

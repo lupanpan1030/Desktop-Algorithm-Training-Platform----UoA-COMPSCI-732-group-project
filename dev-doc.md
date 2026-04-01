@@ -58,24 +58,25 @@ npm run test:back
 
 ## DB initialization
 
-Run the following commands
+Run the following commands in the project root:
 
-- Create Tables
+- First-time database setup:
 
   ```bash
-  npx prisma migrate dev --schema=src/backend/db/prisma/schema.prisma
+  npm run db:init
   ```
 
-- Insert Predefined Data
-  -- First-time Database Setup
-  `bash
-    npx ts-node src/backend/db/seeds/init-db_first.ts
-    `
-- Insert Predefined Data
-  -- Reset and Reinitialize the Database
-  `bash
-    npx ts-node src/backend/db/seeds/init-db+drop.ts
-    `
+- Reset and reseed the database:
+
+  ```bash
+  npm run db:reset
+  ```
+
+- Prepare the packaged seed database used by production builds:
+
+  ```bash
+  npm run db:prepare-package-db
+  ```
 
 ## Architecture
 

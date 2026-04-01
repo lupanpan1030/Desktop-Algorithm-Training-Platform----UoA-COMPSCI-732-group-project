@@ -44,7 +44,7 @@ describe("LanguageDao", () => {
 
     // Verify fields
     const names = all.map(l => l.name).sort();
-    expect(names).toEqual(["Java", "Python"]);
+    expect(names).toEqual(["JavaScript", "Python"]);
     expect(all[0]).toEqual(
       expect.objectContaining({
         language_id: 1,
@@ -56,8 +56,8 @@ describe("LanguageDao", () => {
 
   /* ---------- findLanguageById ---------- */
   it("findLanguageById() — returns language when it exists and null otherwise", async () => {
-    const java = await LanguageDao.findLanguageById(2);
-    expect(java?.name).toBe("Java");                     // 存在
+    const javaScript = await LanguageDao.findLanguageById(2);
+    expect(javaScript?.name).toBe("JavaScript");
 
     const none = await LanguageDao.findLanguageById(999);
     expect(none).toBeNull();                             // 不存在

@@ -14,18 +14,18 @@ export async function seedLanguage() {
         language_id: 1,
         name: 'Python',
         suffix: 'py',
-        version: '3.9',
+        version: '3.12',
         compile_command: null,  
-        run_command: 'python',
+        run_command: 'python3 {source}',
         is_default: true
         },
         {
         language_id: 2,
-        name: 'Java',
-        suffix: 'java',
-        version: '11',
+        name: 'JavaScript',
+        suffix: 'js',
+        version: '20',
         compile_command: null,  
-        run_command: 'java',
+        run_command: 'node {source}',
         is_default: false
         },
         {
@@ -33,8 +33,8 @@ export async function seedLanguage() {
         name: 'C++',
         suffix: 'cpp',
         version: '17',
-        compile_command: 'g++ -o main', 
-        run_command: './main',
+        compile_command: 'g++ -std=c++17 -O2 -o {executable} {source}', 
+        run_command: './{executable}',
         is_default: false
         },
         {
@@ -43,7 +43,7 @@ export async function seedLanguage() {
             suffix: 'go',
             version: '1.21',
             compile_command: null, 
-            run_command: 'go run',
+            run_command: 'go run {source}',
             is_default: false
         },
         {
@@ -51,8 +51,8 @@ export async function seedLanguage() {
             name: 'Rust',
             suffix: 'rs',
             version: '1.86',
-            compile_command: 'rustc -o main',
-            run_command: './main',
+            compile_command: 'rustc -O -o {executable} {source}',
+            run_command: './{executable}',
             is_default: false
         },
     ],

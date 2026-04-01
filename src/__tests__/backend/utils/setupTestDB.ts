@@ -1,10 +1,10 @@
 import 'dotenv/config';
-import { execSync } from "child_process";
 import { PrismaClient } from "@prisma/client";
 import { setPrisma } from "../../../backend/db/prisma/prisma";
 import path from "path";
 import os from "os";
 import fs from "fs/promises";
+import { bootstrapSqliteDatabase } from "../../../backend/db/prisma/bootstrap-sqlite";
 
 let tmpFile: string;
 let originalDbUrl: string | undefined;
@@ -20,12 +20,11 @@ export async function setupTestDB() {
   originalDbUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = url;
 
-  // push schema into that file
   const schemaPath = path.resolve(
     __dirname,
     "../../../backend/db/prisma/schema.prisma"
   );
-  execSync(`npx prisma db push --schema="${schemaPath}"`, { stdio: "inherit" });
+  await bootstrapSqliteDatabase(tmpFile, schemaPath);
 
   // instantiate the client pointing at the same file
   testPrisma = new PrismaClient({
@@ -130,18 +129,18 @@ export async function dropAndSeedLanguage() {
         language_id: 1,
         name: 'Python',
         suffix: 'py',
-        version: '3.9',
+        version: '3.12',
         compile_command: null,  
-        run_command: 'python',
+        run_command: 'python3 {source}',
         is_default: true
         },
         {
         language_id: 2,
-        name: 'Java',
-        suffix: 'java',
-        version: '11',
+        name: 'JavaScript',
+        suffix: 'js',
+        version: '20',
         compile_command: null,  
-        run_command: 'java',
+        run_command: 'node {source}',
         is_default: false
         },
     ],
@@ -164,37 +163,23 @@ export async function dropAndSeedSubmission() {
         problem_id: 5,
         language_id: 2,
         code: `
-        class Solution {
-            public String longestPalindrome(String s) {
-                if (s.isEmpty())
-                return "";
-
-                // (start, end) indices of the longest palindrome in s
-                int[] indices = {0, 0};
-
-                for (int i = 0; i < s.length(); ++i) {
-                int[] indices1 = extend(s, i, i);
-                if (indices1[1] - indices1[0] > indices[1] - indices[0])
-                    indices = indices1;
-                if (i + 1 < s.length() && s.charAt(i) == s.charAt(i + 1)) {
-                    int[] indices2 = extend(s, i, i + 1);
-                    if (indices2[1] - indices2[0] > indices[1] - indices[0])
-                    indices = indices2;
-                }
-                }
-
-                return s.substring(indices[0], indices[1] + 1);
+        function longestPalindrome(s) {
+          let best = "";
+          for (let i = 0; i < s.length; i += 1) {
+            for (let j = i + 1; j <= s.length; j += 1) {
+              const candidate = s.slice(i, j);
+              if (
+                candidate === candidate.split("").reverse().join("") &&
+                candidate.length > best.length
+              ) {
+                best = candidate;
+              }
             }
-
-            // Returns the (start, end) indices of the longest palindrome extended from
-            // the substring s[i..j].
-            private int[] extend(final String s, int i, int j) {
-                for (; i >= 0 && j < s.length(); --i, ++j)
-                if (s.charAt(i) != s.charAt(j))
-                    break;
-                return new int[] {i + 1, j - 1};
-            }
-            }`,
+          }
+          return best;
+        }
+        console.log(longestPalindrome("babad"));
+        `,
         status: "ACCEPTED",
       },
     ],

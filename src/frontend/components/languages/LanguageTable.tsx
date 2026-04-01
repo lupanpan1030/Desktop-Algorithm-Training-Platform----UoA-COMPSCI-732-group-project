@@ -66,7 +66,6 @@ export default function LanguageTable({
   onDelete,
 }: Props) {
   const theme = useTheme();
-  console.log(languages);
 
   return (
     <TableContainer

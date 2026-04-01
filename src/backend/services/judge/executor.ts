@@ -1,13 +1,11 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { SubmissionStatus } from '@prisma/client';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const execAsync = promisify(exec);
-
-const TIME_LIMIT = 10 * 1000;
+const DEFAULT_TIME_LIMIT = 10 * 1000;
+const JAVA_MAIN_CLASS = "Main";
 
 export const EXECUTABLE_NAME = "main";
 
@@ -21,9 +19,15 @@ export enum ExecutionMode {
 export interface ExecutionResult {
     succeeded: boolean;
     executionTime: number;
-    executionMemoryKb: number; // new field for memory in KB
+    // Cross-platform child-process memory tracking is not implemented yet.
+    executionMemoryKb: number;
     output: string;
     status: SubmissionStatus;
+}
+
+export interface JudgeTestCase {
+    input: string;
+    timeLimitMs?: number;
 }
 
 interface JudgeOptions {
@@ -31,133 +35,298 @@ interface JudgeOptions {
     fileSuffix: string;
     interpretCmd?: string;
     compileCmd?: string;
+    runCmd?: string;
     executable?: string;
-    testCases: string[];
+    testCases: Array<string | JudgeTestCase>;
 }
 
-// Utility function to run a command with platform consideration, timeout, and tuple error handling
-async function runCommand(command: string): Promise<ExecutionResult> {
-    const startTime = Date.now();
-    // Adjust command for Windows
-    if (process.platform === 'win32') {
-        command = `cmd.exe /c "${command}"`;
-    }
-    try {
-        const { stdout, stderr } = await execAsync(command, { timeout: TIME_LIMIT });
-        const elapsed = Date.now() - startTime;
-        const memoryKb = Math.round(process.memoryUsage().rss / 1024); // record memory usage
-        return {
-            succeeded: true,
-            executionTime: elapsed,
-            executionMemoryKb: memoryKb,
-            output: (stdout || stderr).trim(),
-            status: SubmissionStatus.ACCEPTED
-        };
-    } catch (error: any) {
-        const elapsed = Date.now() - startTime;
-        const memoryKb = Math.round(process.memoryUsage().rss / 1024); // record memory usage
-        if (error.killed) {
-            return {
-                succeeded: false,
-                executionTime: TIME_LIMIT,
-                executionMemoryKb: memoryKb,
-                output: 'time limit exceed',
-                status: SubmissionStatus.TIME_LIMIT_EXCEEDED
-            };
+interface CommandSpec {
+    command: string;
+    args: string[];
+    includesSource: boolean;
+}
+
+function normalizeSuffix(fileSuffix: string) {
+    const normalized = fileSuffix.replace(/^\.+/, "");
+    return normalized || "txt";
+}
+
+function tokenizeCommand(command: string): string[] {
+    const matches = command.match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
+    return matches.map((token) => {
+        if (
+            (token.startsWith('"') && token.endsWith('"')) ||
+            (token.startsWith("'") && token.endsWith("'"))
+        ) {
+            return token.slice(1, -1);
         }
-        return {
-            succeeded: false,
-            executionTime: elapsed,
-            executionMemoryKb: memoryKb,
-            output: error.message,
-            status: SubmissionStatus.RUNTIME_ERROR
+        return token;
+    });
+}
+
+function replacePlaceholders(token: string, replacements: Record<string, string>) {
+    return token.replace(/\{(\w+)\}/g, (_, key: string) => replacements[key] ?? "");
+}
+
+function buildCommand(template: string, replacements: Record<string, string>): CommandSpec {
+    const tokens = tokenizeCommand(template);
+    const includesSource = tokens.some((token) => token.includes("{source}"));
+    const replaced = tokens.map((token) => replacePlaceholders(token, replacements));
+
+    if (replaced.length === 0) {
+        throw new Error("Execution command cannot be empty.");
+    }
+
+    return {
+        command: replaced[0],
+        args: replaced.slice(1),
+        includesSource,
+    };
+}
+
+function normalizeTestCase(testCase: string | JudgeTestCase): JudgeTestCase {
+    if (typeof testCase === "string") {
+        return { input: testCase };
+    }
+    return testCase;
+}
+
+function formatOutput(stdout: string, stderr: string) {
+    const output = stdout.length > 0 ? stdout : stderr;
+    return output.replace(/\r\n/g, "\n").trimEnd();
+}
+
+async function runProcess(
+    command: string,
+    args: string[],
+    options: {
+        cwd: string;
+        input?: string;
+        timeoutMs?: number;
+        failureStatus: SubmissionStatus;
+    }
+): Promise<ExecutionResult> {
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIME_LIMIT;
+    const startTime = Date.now();
+
+    return await new Promise<ExecutionResult>((resolve) => {
+        const child = spawn(command, args, {
+            cwd: options.cwd,
+            stdio: "pipe",
+        });
+
+        let stdout = "";
+        let stderr = "";
+        let finished = false;
+
+        const finish = (result: ExecutionResult) => {
+            if (finished) {
+                return;
+            }
+            finished = true;
+            clearTimeout(timer);
+            resolve(result);
         };
+
+        const timer = setTimeout(() => {
+            child.kill("SIGKILL");
+            finish({
+                succeeded: false,
+                executionTime: timeoutMs,
+                executionMemoryKb: 0,
+                output: "time limit exceeded",
+                status: SubmissionStatus.TIME_LIMIT_EXCEEDED
+            });
+        }, timeoutMs);
+
+        child.stdout.on("data", (chunk) => {
+            stdout += chunk.toString();
+        });
+
+        child.stderr.on("data", (chunk) => {
+            stderr += chunk.toString();
+        });
+
+        child.on("error", (error) => {
+            finish({
+                succeeded: false,
+                executionTime: Date.now() - startTime,
+                executionMemoryKb: 0,
+                output: error.message,
+                status: options.failureStatus,
+            });
+        });
+
+        child.on("close", (code, signal) => {
+            if (signal === "SIGKILL") {
+                finish({
+                    succeeded: false,
+                    executionTime: timeoutMs,
+                    executionMemoryKb: 0,
+                    output: "time limit exceeded",
+                    status: SubmissionStatus.TIME_LIMIT_EXCEEDED,
+                });
+                return;
+            }
+
+            const output = formatOutput(stdout, stderr);
+            if (code === 0) {
+                finish({
+                    succeeded: true,
+                    executionTime: Date.now() - startTime,
+                    executionMemoryKb: 0,
+                    output,
+                    status: SubmissionStatus.ACCEPTED,
+                });
+                return;
+            }
+
+            finish({
+                succeeded: false,
+                executionTime: Date.now() - startTime,
+                executionMemoryKb: 0,
+                output: output || `Process exited with code ${code ?? "unknown"}`,
+                status: options.failureStatus,
+            });
+        });
+
+        if (options.input !== undefined) {
+            child.stdin.write(options.input);
+        }
+        child.stdin.end();
+    });
+}
+
+async function interprete(
+    interpretCmd: string,
+    cwd: string,
+    codeFile: string,
+    testCase: JudgeTestCase,
+    replacements: Record<string, string>
+): Promise<ExecutionResult> {
+    const spec = buildCommand(interpretCmd, replacements);
+    if (!spec.includesSource) {
+        spec.args.push(codeFile);
     }
+
+    return runProcess(spec.command, spec.args, {
+        cwd,
+        input: testCase.input,
+        timeoutMs: testCase.timeLimitMs,
+        failureStatus: SubmissionStatus.RUNTIME_ERROR,
+    });
 }
 
-// Function to interpret a script with test case input piped in
-async function interprete(interpretCmd: string, codeFile: string, testCase: string): Promise<ExecutionResult> {
-    const command = `echo "${testCase}" | ${interpretCmd} ${codeFile}`;
-    return runCommand(command);
-}
-
-// Function to compile a source file
-async function compile(compileCmd: string, codeFile: string): Promise<ExecutionResult> {
-    const command = `${compileCmd} ${codeFile}`;
-    const result = await runCommand(command);
-    // mark compile errors explicitly
-    if (!result.succeeded) {
-        result.status = SubmissionStatus.COMPILE_ERROR;
+async function compile(
+    compileCmd: string,
+    cwd: string,
+    codeFile: string,
+    replacements: Record<string, string>
+): Promise<ExecutionResult> {
+    const spec = buildCommand(compileCmd, replacements);
+    if (!spec.includesSource) {
+        spec.args.push(codeFile);
     }
-    return result;
+
+    return runProcess(spec.command, spec.args, {
+        cwd,
+        failureStatus: SubmissionStatus.COMPILE_ERROR,
+    });
 }
 
-// Function to run a compiled executable with test case input piped in
-async function runExecutable(executable: string, testCase: string): Promise<ExecutionResult> {
-    let command: string;
-    if (process.platform === 'win32') {
-        // Ensure .exe extension for Windows
-        const exePath = executable.endsWith('.exe') ? executable : `${executable}.exe`;
-        command = `echo "${testCase}" | .\\${path.basename(exePath)}`;
-    } else {
-        command = `echo "${testCase}" | ./${path.basename(executable)}`;
+async function runExecutable(
+    cwd: string,
+    runCmd: string | undefined,
+    executablePath: string,
+    testCase: JudgeTestCase,
+    replacements: Record<string, string>
+): Promise<ExecutionResult> {
+    if (!runCmd) {
+        return runProcess(executablePath, [], {
+            cwd,
+            input: testCase.input,
+            timeoutMs: testCase.timeLimitMs,
+            failureStatus: SubmissionStatus.RUNTIME_ERROR,
+        });
     }
-    return runCommand(command);
+
+    const spec = buildCommand(runCmd, replacements);
+    return runProcess(spec.command, spec.args, {
+        cwd,
+        input: testCase.input,
+        timeoutMs: testCase.timeLimitMs,
+        failureStatus: SubmissionStatus.RUNTIME_ERROR,
+    });
 }
 
-// Judge function to run several test cases.
-// Depending on mode, it uses the interpreter directly,
-// or compiles once and then runs the executable for each test case.
 export async function judgeSolution(
     mode: ExecutionMode,
     options: JudgeOptions
 ): Promise<Array<ExecutionResult>> {
     const results: Array<ExecutionResult> = [];
-    // Create a temporary source file using code and fileSuffix.
-    const tempFile = path.join(os.tmpdir(), `temp_${Date.now()}.${options.fileSuffix}`);
-    fs.writeFileSync(tempFile, options.code);
+    const normalizedSuffix = normalizeSuffix(options.fileSuffix);
+    const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "judge-"));
+    const sourceBaseName = normalizedSuffix === "java" ? JAVA_MAIN_CLASS : EXECUTABLE_NAME;
+    const sourceFile = path.join(workDir, `${sourceBaseName}.${normalizedSuffix}`);
+    const executableBaseName = options.executable || EXECUTABLE_NAME;
+    const executableName =
+        process.platform === "win32" ? `${executableBaseName}.exe` : executableBaseName;
+    const executablePath = path.join(workDir, executableName);
+    const replacements = {
+        source: sourceFile,
+        sourceName: path.basename(sourceFile),
+        sourceBase: sourceBaseName,
+        executable: executableName,
+        executablePath,
+        mainClass: sourceBaseName,
+    };
+
+    fs.writeFileSync(sourceFile, options.code);
+
     try {
         if (mode === ExecutionMode.Interprete) {
             if (!options.interpretCmd) 
                 throw new Error("interpretCmd is required for interprete mode.");
             for (const testCase of options.testCases) {
-                const output = await interprete(options.interpretCmd, tempFile, testCase);
+                const output = await interprete(
+                    options.interpretCmd,
+                    workDir,
+                    sourceFile,
+                    normalizeTestCase(testCase),
+                    replacements
+                );
                 results.push(output);
             }
         } else if (mode === ExecutionMode.Compiled) {
-            if (!options.compileCmd || !options.executable) {
-                throw new Error("compileCmd and executable are required for compiled mode.");
+            if (!options.compileCmd) {
+                throw new Error("compileCmd is required for compiled mode.");
             }
-            // Compile and capture any compile error.
-            const compileResult = await compile(options.compileCmd, tempFile);
-            // if compilation failed, stop here
+
+            const compileResult = await compile(
+                options.compileCmd,
+                workDir,
+                sourceFile,
+                replacements
+            );
             if (!compileResult.succeeded) {
                 results.push(compileResult);
                 return results;
             }
-            // otherwise run the executable on each test case
+
             for (const testCase of options.testCases) {
-                const output = await runExecutable(options.executable, testCase);
+                const output = await runExecutable(
+                    workDir,
+                    options.runCmd,
+                    executablePath,
+                    normalizeTestCase(testCase),
+                    replacements
+                );
                 results.push(output);
-            }
-            // Cleanup the executable after running.
-            if (process.platform === 'win32') {
-                const exePath = options.executable.endsWith('.exe')
-                    ? options.executable
-                    : options.executable + '.exe';
-                if (fs.existsSync(exePath)) {
-                    fs.unlinkSync(exePath);
-                }
-            } else {
-                if (fs.existsSync(options.executable)) {
-                    fs.unlinkSync(options.executable);
-                }
             }
         }
     } finally {
-        // Cleanup the temporary source file.
-        if (fs.existsSync(tempFile)) {
-            fs.unlinkSync(tempFile);
+        if (fs.existsSync(workDir)) {
+            fs.rmSync(workDir, { recursive: true, force: true });
         }
     }
     return results;

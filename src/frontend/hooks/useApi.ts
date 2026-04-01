@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 
 // API Response Types
 interface Problem {
@@ -13,10 +13,13 @@ interface Problem {
 interface Language {
   languageId: number;
   name: string;
-  compile_command?: string;
-  run_command: string;
+  compilerCmd?: string | null;
+  runtimeCmd: string;
+  compile_command?: string | null;
+  run_command?: string;
   suffix: string;
-  version?: string;
+  version?: string | null;
+  isDefault?: boolean;
 }
 
 interface TestResult {
@@ -49,12 +52,12 @@ export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = useCallback(async <T>({ url, method = 'GET', body, headers }: ApiOptions): Promise<T | null> => {
+  const request = useCallback(async <T>({ url, method = 'GET', body, headers }: ApiOptions): Promise<T> => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await axios({
+      const response = await api({
         url,
         method,
         data: body,
@@ -65,67 +68,77 @@ export const useApi = () => {
       });
       return response.data as T;
     } catch (err) {
-      setError(err as Error);
-      return null;
+      const normalizedError = err instanceof Error ? err : new Error('Request failed');
+      setError(normalizedError);
+      throw normalizedError;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Problem related APIs
   const getProblems = useCallback(async (): Promise<Problem[]> => {
-    return await fetchData<Problem[]>({ url: 'http://localhost:6785/problems' }) || [];
-  }, [fetchData]);
+    try {
+      return await request<Problem[]>({ url: '/problems' });
+    } catch {
+      return [];
+    }
+  }, [request]);
 
   const getProblem = useCallback(async (id: number): Promise<Problem | null> => {
-    return await fetchData<Problem>({ url: `http://localhost:6785/problems/${id}` });
-  }, [fetchData]);
+    try {
+      return await request<Problem>({ url: `/problems/${id}` });
+    } catch {
+      return null;
+    }
+  }, [request]);
 
-  // Language related APIs
   const getLanguages = useCallback(async (): Promise<Language[]> => {
-    return await fetchData<Language[]>({ url: 'http://localhost:6785/languages' }) || [];
-  }, [fetchData]);
+    try {
+      return await request<Language[]>({ url: '/languages' });
+    } catch {
+      return [];
+    }
+  }, [request]);
 
   const addLanguage = useCallback(async (language: Omit<Language, 'languageId'>): Promise<Language | null> => {
-    return await fetchData<Language>({
-      url: 'http://localhost:6785/languages',
+    return await request<Language>({
+      url: '/languages',
       method: 'POST',
       body: language
     });
-  }, [fetchData]);
+  }, [request]);
 
   const updateLanguage = useCallback(async (id: number, language: Partial<Language>): Promise<Language | null> => {
-    return await fetchData<Language>({
-      url: `http://localhost:6785/languages/${id}`,
+    return await request<Language>({
+      url: `/languages/${id}`,
       method: 'PUT',
       body: language
     });
-  }, [fetchData]);
+  }, [request]);
 
   const deleteLanguage = useCallback(async (id: number): Promise<boolean> => {
-    const result = await fetchData<{ success: boolean }>({
-      url: `http://localhost:6785/languages/${id}`,
+    await request<void>({
+      url: `/languages/${id}`,
       method: 'DELETE'
     });
-    return result?.success || false;
-  }, [fetchData]);
+    return true;
+  }, [request]);
 
-  // Code submission APIs
   const runCode = useCallback(async (problemId: number, code: string, languageId: number): Promise<RunResponse | null> => {
-    return await fetchData<RunResponse>({
-      url: `http://localhost:6785/problems/${problemId}/run`,
+    return await request<RunResponse>({
+      url: `/problems/${problemId}/run`,
       method: 'POST',
       body: { code, languageId }
     });
-  }, [fetchData]);
+  }, [request]);
 
   const submitCode = useCallback(async (problemId: number, code: string, languageId: number): Promise<SubmitResponse | null> => {
-    return await fetchData<SubmitResponse>({
-      url: `http://localhost:6785/problems/${problemId}/submit`,
+    return await request<SubmitResponse>({
+      url: `/problems/${problemId}/submit`,
       method: 'POST',
       body: { code, languageId }
     });
-  }, [fetchData]);
+  }, [request]);
 
   return {
     loading,

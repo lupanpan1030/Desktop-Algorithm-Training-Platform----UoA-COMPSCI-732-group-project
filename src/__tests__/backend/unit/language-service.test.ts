@@ -57,6 +57,7 @@ const expectedDto: {
   runtimeCmd: string;
   compile_command: string | null;
   run_command: string;
+  isDefault: boolean;
 } = {
   languageId: 1,
   name: "Python",
@@ -66,6 +67,7 @@ const expectedDto: {
   runtimeCmd: "python",
   compile_command: null,
   run_command: "python",
+  isDefault: false,
 };
 
 describe("LanguageService", () => {
