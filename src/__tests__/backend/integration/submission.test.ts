@@ -43,7 +43,6 @@ describe("Submissions API (integration)", () => {
       for (const item of res.body) {
         expect(item).toMatchObject({
           submissionId: expect.any(Number),
-          code: expect.any(String),
           languageId: expect.any(Number),
           status: expect.any(String),
           submittedAt: expect.any(String),

@@ -22,21 +22,34 @@ interface Language {
   isDefault?: boolean;
 }
 
-interface TestResult {
+export interface TestResult {
   status: string;
   output?: string;
+  expectedOutput?: string;
   runtimeMs: number;
   memoryKb: number;
 }
 
-interface RunResponse {
+export interface RunResponse {
   status: string;
   results: TestResult[];
 }
 
-interface SubmitResponse {
+export interface SubmitResponse {
   submissionId: number;
   overallStatus: string;
+  results: TestResult[];
+}
+
+export interface SubmissionListItem {
+  submissionId: number;
+  languageId: number;
+  status: string;
+  submittedAt: string;
+}
+
+export interface SubmissionDetail extends SubmissionListItem {
+  code: string;
   results: TestResult[];
 }
 
@@ -140,6 +153,26 @@ export const useApi = () => {
     });
   }, [request]);
 
+  const getSubmissions = useCallback(async (problemId: number): Promise<SubmissionListItem[]> => {
+    try {
+      return await request<SubmissionListItem[]>({
+        url: `/problems/${problemId}/submissions`
+      });
+    } catch {
+      return [];
+    }
+  }, [request]);
+
+  const getSubmission = useCallback(async (problemId: number, submissionId: number): Promise<SubmissionDetail | null> => {
+    try {
+      return await request<SubmissionDetail>({
+        url: `/problems/${problemId}/submissions/${submissionId}`
+      });
+    } catch {
+      return null;
+    }
+  }, [request]);
+
   return {
     loading,
     error,
@@ -150,7 +183,9 @@ export const useApi = () => {
     updateLanguage,
     deleteLanguage,
     runCode,
-    submitCode
+    submitCode,
+    getSubmissions,
+    getSubmission
   };
 };
 

@@ -28,8 +28,9 @@ const monacoLanguageMap = {
   swift: 'swift',
 };
 
-export default function CodeEditor({ onCodeChange, problemId }) {
+export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
     const editorRef = useRef(null);
+    const lastAppliedDraftRef = useRef(null);
     const { getLanguages, loading: languagesLoading, error: languagesError } = useApi();
     const [code, setCode] = useState(() => {
         const savedCode = localStorage.getItem(`editorCode_${problemId}`);
@@ -82,9 +83,30 @@ export default function CodeEditor({ onCodeChange, problemId }) {
         }
     }, [problemId, languageMap]);
 
+    useEffect(() => {
+        if (!loadedDraft?.revision) {
+            return;
+        }
+
+        if (lastAppliedDraftRef.current === loadedDraft.revision) {
+            return;
+        }
+
+        const nextLanguage = loadedDraft.language || 'python';
+        const nextCode = loadedDraft.code || '';
+
+        setLanguage(nextLanguage);
+        setCode(nextCode);
+        saveCodeToLocalStorage(problemId, nextLanguage, nextCode, languageMap);
+        lastAppliedDraftRef.current = loadedDraft.revision;
+
+        if (editorRef.current) {
+            editorRef.current.focus();
+        }
+    }, [languageMap, loadedDraft, problemId]);
+
     // Additional loading timeout detection
     useEffect(() => {      
-        console.log('Monaco Editor loading...');
         const timeoutId = setTimeout(() => {
             if (!isEditorReady) {
                 console.warn('Monaco Editor loading timeout - switching to fallback editor');

@@ -114,7 +114,6 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "submissionId": {"dataType":"double","required":true},
-            "code": {"dataType":"string","required":true},
             "languageId": {"dataType":"double","required":true},
             "status": {"dataType":"string","required":true},
             "submittedAt": {"dataType":"string","required":true},

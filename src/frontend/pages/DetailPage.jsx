@@ -16,7 +16,11 @@ export default function DetailPage() {
     code: "",
     language: "python",
   });
-  const [languageMap, setLanguageMap] = useState({});
+  const [editorDraft, setEditorDraft] = useState(null);
+  const [languageMaps, setLanguageMaps] = useState({
+    byName: {},
+    byId: {},
+  });
   const { getProblem, getLanguages, loading, error } = useApi();
 
   // Reference for resizable elements
@@ -43,15 +47,17 @@ export default function DetailPage() {
     async function fetchLanguages() {
       const data = await getLanguages();
       if (data) {
-        // Creating Language Name to ID Mappings
-        const mapping = {};
+        const byName = {};
+        const byId = {};
         data.forEach((lang) => {
           const key = lang.name.toLowerCase();
-          mapping[key] = lang.languageId;
-          // Compatible with Monaco's 'cpp' syntax
-          if (key === "c++") mapping["cpp"] = lang.languageId;
+          byName[key] = lang.languageId;
+          byId[lang.languageId] = lang.name;
+          if (key === "c++") {
+            byName.cpp = lang.languageId;
+          }
         });
-        setLanguageMap(mapping);
+        setLanguageMaps({ byName, byId });
       }
     }
     fetchLanguages();
@@ -114,22 +120,31 @@ export default function DetailPage() {
   }, [resizingHorizontal, resizingVertical]);
 
   const handleCodeChange = useCallback((newState) => {
-    console.log("Editor state changed:", newState);
     setEditorState(newState);
   }, []);
 
-  // Get languageId
+  const handleRestoreSubmission = useCallback(
+    (submission) => {
+      const restoredLanguage =
+        languageMaps.byId[submission.languageId]?.toLowerCase() ||
+        editorState.language ||
+        "python";
+      const nextState = {
+        code: submission.code,
+        language: restoredLanguage,
+      };
+
+      setEditorState(nextState);
+      setEditorDraft({
+        ...nextState,
+        revision: Date.now(),
+      });
+    },
+    [editorState.language, languageMaps.byId]
+  );
+
   const getLanguageId = () => {
-    const id = languageMap[editorState.language.toLowerCase()] || 1;
-    console.log(
-      "Using language:",
-      editorState.language,
-      "with ID:",
-      id,
-      "from map:",
-      languageMap
-    );
-    return id;
+    return languageMaps.byName[editorState.language.toLowerCase()] || 1;
   };
   const theme = useTheme();
   const bgcolor = theme.palette.mode ==='dark'? theme.palette.primary.main : theme.palette.divider;
@@ -185,7 +200,11 @@ export default function DetailPage() {
         <Box className="editor-result-container">
           <Box ref={editorPaneRef} className="editor-pane">
             <Paper className="editor-section">
-              <CodeEditor onCodeChange={handleCodeChange} problemId={problemId} />
+              <CodeEditor
+                onCodeChange={handleCodeChange}
+                problemId={problemId}
+                loadedDraft={editorDraft}
+              />
             </Paper>
           </Box>
 
@@ -209,6 +228,8 @@ export default function DetailPage() {
                   problemId={problemId}
                   code={editorState.code}
                   languageId={getLanguageId()}
+                  languageLabels={languageMaps.byId}
+                  onRestoreSubmission={handleRestoreSubmission}
                 />
               )}
             </Paper>

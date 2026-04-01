@@ -229,9 +229,6 @@
 						"type": "number",
 						"format": "double"
 					},
-					"code": {
-						"type": "string"
-					},
 					"languageId": {
 						"type": "number",
 						"format": "double"
@@ -245,7 +242,6 @@
 				},
 				"required": [
 					"submissionId",
-					"code",
 					"languageId",
 					"status",
 					"submittedAt"

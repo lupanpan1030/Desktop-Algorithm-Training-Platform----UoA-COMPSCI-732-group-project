@@ -1,16 +1,25 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Box,
   CircularProgress,
   Snackbar,
-  Alert,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SendIcon from "@mui/icons-material/Send";
-import { useApi } from "../hooks/useApi";
+import { alpha, useTheme } from "@mui/material";
+import {
+  SubmitResponse,
+  SubmissionDetail,
+  SubmissionListItem,
+  RunResponse,
+  useApi,
+} from "../hooks/useApi";
 import TestResultCard from "./TestResultCard";
-import { useTheme,alpha } from "@mui/material";
+import SubmissionHistoryPanel from "./submissions/SubmissionHistoryPanel";
 import { ResponsiveButton } from "./common/ResponsiveComponents";
 import { clearProblemCode } from "../utils/localStorageHelper";
 
@@ -18,97 +27,314 @@ interface CodeSubmissionProps {
   problemId: number;
   code: string;
   languageId: number;
+  languageLabels?: Record<number, string>;
+  onRestoreSubmission?: (submission: SubmissionDetail) => void;
 }
 
-interface TestResult {
-  status: string;
-  output?: string;
-  runtimeMs: number;
-  memoryKb: number;
-}
+type ResultView = "history" | "run" | "submit";
 
-interface RunResponse {
-  status: string;
-  results: TestResult[];
-}
+const EMPTY_LANGUAGE_LABELS: Record<number, string> = {};
+const ALL_SUBMISSION_STATUSES = "ALL";
 
-interface SubmitResponse {
-  submissionId: number;
-  overallStatus: string;
-  results: TestResult[];
-}
+const buildFailureMessage = (fallback: string, error: unknown) =>
+  error instanceof Error && error.message ? error.message : fallback;
+
+const ResultList = ({
+  title,
+  statusLabel,
+  results,
+}: {
+  title: string;
+  statusLabel?: string;
+  results: Array<{
+    status: string;
+    output?: string;
+    expectedOutput?: string;
+    runtimeMs: number;
+    memoryKb: number;
+  }>;
+}) => (
+  <>
+    <Typography variant="h6" gutterBottom>
+      {title}
+    </Typography>
+    {statusLabel && (
+      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: "bold" }}>
+        Overall Status:{" "}
+        <Box
+          component="span"
+          sx={{
+            color: statusLabel === "ACCEPTED" ? "success.main" : "error.main",
+          }}
+        >
+          {statusLabel}
+        </Box>
+      </Typography>
+    )}
+    {results.map((test, index) => (
+      <TestResultCard key={`${title}-${index}`} test={test} />
+    ))}
+  </>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <Box sx={{ py: 3 }}>
+    <Typography variant="body2" color="text.secondary">
+      {message}
+    </Typography>
+  </Box>
+);
 
 const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   problemId,
   code,
   languageId,
+  languageLabels = EMPTY_LANGUAGE_LABELS,
+  onRestoreSubmission,
 }) => {
-  const { runCode, submitCode, loading, error } = useApi();
+  const { runCode, submitCode, getSubmissions, getSubmission } = useApi();
   const [runResults, setRunResults] = useState<RunResponse | null>(null);
   const [submitResults, setSubmitResults] = useState<SubmitResponse | null>(
     null
+  );
+  const [submissions, setSubmissions] = useState<SubmissionListItem[]>([]);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<
+    number | null
+  >(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<SubmissionDetail | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const [historyStatusFilter, setHistoryStatusFilter] = useState(
+    ALL_SUBMISSION_STATUSES
   );
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [severity, setSeverity] = useState<"success" | "error" | "info">(
     "info"
   );
-  const [activeView, setActiveView] = useState<"run" | "submit" | null>(null);
+  const [activeView, setActiveView] = useState<ResultView>("history");
   const theme = useTheme();
 
-  // run
-  const handleRunCode = async () => {
-    if (!code?.trim()) {
-      setSnackbarMessage("Please set your code!");
-      setSeverity("error");
-      setOpenSnackbar(true);
+  const availableStatuses = useMemo(
+    () => Array.from(new Set(submissions.map((submission) => submission.status))),
+    [submissions]
+  );
+
+  const visibleSubmissions = useMemo(() => {
+    if (historyStatusFilter === ALL_SUBMISSION_STATUSES) {
+      return submissions;
+    }
+
+    return submissions.filter(
+      (submission) => submission.status === historyStatusFilter
+    );
+  }, [historyStatusFilter, submissions]);
+
+  const fetchSubmissionDetail = useCallback(
+    async (submissionId: number) => {
+      setDetailLoading(true);
+      const detail = await getSubmission(problemId, submissionId);
+      if (!detail) {
+        setPanelError("Failed to load submission details.");
+        setSelectedSubmission(null);
+      } else {
+        setPanelError(null);
+        setSelectedSubmissionId(submissionId);
+        setSelectedSubmission(detail);
+      }
+      setDetailLoading(false);
+    },
+    [getSubmission, problemId]
+  );
+
+  const loadSubmissionHistory = useCallback(
+    async (preferredSubmissionId?: number) => {
+      setHistoryLoading(true);
+      const list = await getSubmissions(problemId);
+      setSubmissions(list);
+      setHistoryLoading(false);
+      setPanelError(null);
+
+      const eligibleSubmissions =
+        historyStatusFilter === ALL_SUBMISSION_STATUSES
+          ? list
+          : list.filter(
+              (submission) => submission.status === historyStatusFilter
+            );
+
+      if (eligibleSubmissions.length === 0) {
+        setSelectedSubmissionId(null);
+        setSelectedSubmission(null);
+        return;
+      }
+
+      const fallbackSubmissionId = eligibleSubmissions[0].submissionId;
+      const selectedStillExists =
+        selectedSubmissionId != null &&
+        eligibleSubmissions.some(
+          (submission) => submission.submissionId === selectedSubmissionId
+        );
+      const preferredStillExists =
+        preferredSubmissionId != null &&
+        eligibleSubmissions.some(
+          (submission) => submission.submissionId === preferredSubmissionId
+        );
+
+      const nextSubmissionId = preferredStillExists
+        ? preferredSubmissionId
+        : selectedStillExists
+          ? selectedSubmissionId
+          : fallbackSubmissionId;
+
+      await fetchSubmissionDetail(nextSubmissionId);
+    },
+    [
+      fetchSubmissionDetail,
+      getSubmissions,
+      historyStatusFilter,
+      problemId,
+      selectedSubmissionId,
+    ]
+  );
+
+  const initializeHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    const list = await getSubmissions(problemId);
+    setSubmissions(list);
+    setHistoryLoading(false);
+    setPanelError(null);
+
+    if (list.length === 0) {
+      setSelectedSubmissionId(null);
+      setSelectedSubmission(null);
       return;
     }
 
-    console.log("Running code with language ID:", languageId);
+    await fetchSubmissionDetail(list[0].submissionId);
+  }, [fetchSubmissionDetail, getSubmissions, problemId]);
+
+  useEffect(() => {
+    setRunResults(null);
+    setSubmitResults(null);
+    setPanelError(null);
+    setHistoryStatusFilter(ALL_SUBMISSION_STATUSES);
+    setActiveView("history");
+    void initializeHistory();
+  }, [initializeHistory, problemId]);
+
+  const showSnackbar = (
+    message: string,
+    nextSeverity: "success" | "error" | "info"
+  ) => {
+    setSnackbarMessage(message);
+    setSeverity(nextSeverity);
+    setOpenSnackbar(true);
+  };
+
+  const handleRunCode = async () => {
+    if (!code?.trim()) {
+      showSnackbar("Please set your code!", "error");
+      return;
+    }
+
+    setActionLoading(true);
+    setPanelError(null);
+    setActiveView("run");
 
     try {
       const response = await runCode(problemId, code, languageId);
       if (response) {
         setRunResults(response);
-        setActiveView("run");
-        setSnackbarMessage("Run Completed");
-        setSeverity("info");
-        setOpenSnackbar(true);
+        showSnackbar("Run completed.", "info");
       }
-    } catch {
-      setSnackbarMessage("Run failed");
-      setSeverity("error");
-      setOpenSnackbar(true);
+    } catch (error) {
+      const message = buildFailureMessage("Run failed.", error);
+      setPanelError(message);
+      showSnackbar(message, "error");
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  // submit
   const handleSubmitCode = async () => {
     if (!code?.trim()) {
-      setSnackbarMessage("Please set your code!");
-      setSeverity("error");
-      setOpenSnackbar(true);
+      showSnackbar("Please set your code!", "error");
       return;
     }
 
-    console.log("Submitting code with language ID:", languageId);
+    setActionLoading(true);
+    setPanelError(null);
+    setActiveView("submit");
 
     try {
       const response = await submitCode(problemId, code, languageId);
       if (response) {
         setSubmitResults(response);
-        setActiveView("submit");
-        setSnackbarMessage("Submitted!");
-        setSeverity("info");
-        setOpenSnackbar(true);
         clearProblemCode(problemId);
+        await loadSubmissionHistory(response.submissionId);
+        showSnackbar("Submitted successfully.", "success");
       }
-    } catch {
-      setSnackbarMessage("Submit failed");
-      setSeverity("error");
-      setOpenSnackbar(true);
+    } catch (error) {
+      const message = buildFailureMessage("Submit failed.", error);
+      setPanelError(message);
+      showSnackbar(message, "error");
+    } finally {
+      setActionLoading(false);
     }
+  };
+
+  const handleSelectSubmission = async (submissionId: number) => {
+    setPanelError(null);
+    setSelectedSubmissionId(submissionId);
+    setActiveView("history");
+    await fetchSubmissionDetail(submissionId);
+  };
+
+  const handleRefreshHistory = async () => {
+    await loadSubmissionHistory(selectedSubmissionId ?? undefined);
+    showSnackbar("Submission history refreshed.", "info");
+  };
+
+  const handleStatusFilterChange = async (nextStatus: string) => {
+    setHistoryStatusFilter(nextStatus);
+    setPanelError(null);
+
+    const filteredSubmissions =
+      nextStatus === ALL_SUBMISSION_STATUSES
+        ? submissions
+        : submissions.filter((submission) => submission.status === nextStatus);
+
+    if (filteredSubmissions.length === 0) {
+      setSelectedSubmissionId(null);
+      setSelectedSubmission(null);
+      return;
+    }
+
+    if (
+      selectedSubmissionId != null &&
+      filteredSubmissions.some(
+        (submission) => submission.submissionId === selectedSubmissionId
+      )
+    ) {
+      return;
+    }
+
+    await fetchSubmissionDetail(filteredSubmissions[0].submissionId);
+  };
+
+  const handleRestoreSelectedSubmission = () => {
+    if (!selectedSubmission || !onRestoreSubmission) {
+      return;
+    }
+
+    onRestoreSubmission(selectedSubmission);
+    showSnackbar(
+      `Loaded submission #${selectedSubmission.submissionId} into the editor.`,
+      "success"
+    );
   };
 
   const handleCloseSnackbar = () => {
@@ -124,16 +350,25 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
         flexDirection: "column",
       }}
     >
-      {/* button */}
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <ResponsiveButton
           variant="contained"
-          sx={{backgroundColor:theme.palette.mode === "dark" ? theme.palette.primary.main :"#96d9d7","&:hover": {backgroundColor: alpha("#96d9d7", 0.9)}}}
+          sx={{
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? theme.palette.primary.main
+                : "#96d9d7",
+            "&:hover": { backgroundColor: alpha("#96d9d7", 0.9) },
+          }}
           startIcon={<PlayArrowIcon />}
           onClick={handleRunCode}
-          disabled={loading}
+          disabled={actionLoading}
         >
-          {loading ? <CircularProgress size={24} /> : "Run"}
+          {actionLoading && activeView === "run" ? (
+            <CircularProgress size={24} />
+          ) : (
+            "Run"
+          )}
         </ResponsiveButton>
 
         <ResponsiveButton
@@ -141,13 +376,26 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
           color="secondary"
           startIcon={<SendIcon />}
           onClick={handleSubmitCode}
-          disabled={loading}
+          disabled={actionLoading}
         >
-          {loading ? <CircularProgress size={24} /> : "Submit"}
+          {actionLoading && activeView === "submit" ? (
+            <CircularProgress size={24} />
+          ) : (
+            "Submit"
+          )}
         </ResponsiveButton>
       </Box>
 
-      {/* result */}
+      <Tabs
+        value={activeView}
+        onChange={(_, value: ResultView) => setActiveView(value)}
+        sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+      >
+        <Tab value="history" label="History" />
+        <Tab value="run" label="Run Output" />
+        <Tab value="submit" label="Submit Output" />
+      </Tabs>
+
       <Box
         sx={{
           flex: 1,
@@ -168,56 +416,51 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
             pb: 2,
           }}
         >
-          {activeView === "run" && runResults && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Run Results
-              </Typography>
-              {runResults.results.map((test, index) => (
-                <TestResultCard key={index} test={test} />
-              ))}
-            </>
+          {activeView === "history" && (
+            <SubmissionHistoryPanel
+              submissions={visibleSubmissions}
+              totalSubmissionCount={submissions.length}
+              availableStatuses={availableStatuses}
+              statusFilter={historyStatusFilter}
+              selectedSubmissionId={selectedSubmissionId}
+              selectedSubmission={selectedSubmission}
+              listLoading={historyLoading}
+              detailLoading={detailLoading}
+              errorMessage={panelError}
+              languageLabels={languageLabels}
+              onChangeStatusFilter={handleStatusFilterChange}
+              onRefresh={handleRefreshHistory}
+              onSelectSubmission={handleSelectSubmission}
+              onRestoreSubmission={handleRestoreSelectedSubmission}
+            />
           )}
 
-          {activeView === "submit" && submitResults && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Submit Results
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ fontWeight: "bold" }}
-              >
-                Overall Status:{" "}
-                <Box
-                  component="span"
-                  sx={{
-                    color:
-                      submitResults.overallStatus === "ACCEPTED"
-                        ? "success.main"
-                        : "error.main",
-                  }}
-                >
-                  {submitResults.overallStatus}
-                </Box>
-              </Typography>
-              {submitResults.results.map((test, index) => (
-                <TestResultCard key={index} test={test} />
-              ))}
-            </>
-          )}
+          {activeView === "run" &&
+            (runResults ? (
+              <ResultList title="Run Results" results={runResults.results} />
+            ) : (
+              <EmptyState message="Run your code to inspect sample testcase results here." />
+            ))}
 
-          {/* Error message */}
-          {error && (
+          {activeView === "submit" &&
+            (submitResults ? (
+              <ResultList
+                title="Submit Results"
+                statusLabel={submitResults.overallStatus}
+                results={submitResults.results}
+              />
+            ) : (
+              <EmptyState message="Submit your code to store a judged result and compare attempts." />
+            ))}
+
+          {panelError && activeView !== "history" && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              Failed: {error.message || "Try later!"}
+              Failed: {panelError}
             </Alert>
           )}
         </Box>
       </Box>
 
-      {/* Notification */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}

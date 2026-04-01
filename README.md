@@ -27,6 +27,8 @@ This branch/version is the personal secondary-development edition of the origina
 - improving the judge execution pipeline
 - cleaning up tests, docs, and engineering basics
 
+The current redevelopment plan is tracked in [ROADMAP.md](./ROADMAP.md).
+
 ## Key Features
 - Local execution with a desktop GUI.
 - Configuring any programming language (as long as it exists in the local environment).

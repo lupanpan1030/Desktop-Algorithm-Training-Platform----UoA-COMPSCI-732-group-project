@@ -37,7 +37,6 @@ export interface SubmitCodeResponseDto {
 
 export interface SubmissionListItemDto {
   submissionId: number;
-  code: string;
   languageId: number;
   status: string;
   submittedAt: string; // ISO8601 format

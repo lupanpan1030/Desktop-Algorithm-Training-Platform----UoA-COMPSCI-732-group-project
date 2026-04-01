@@ -15,7 +15,6 @@ export class SubmissionDao {
     });
     return submissions.map(sub => ({
       submissionId: sub.submission_id,
-      code: sub.code,
       languageId: sub.language_id,
       status: sub.status,
       submittedAt: sub.submitted_at.toISOString()
