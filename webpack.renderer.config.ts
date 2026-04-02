@@ -1,12 +1,16 @@
 console.log('✅ MonacoWebpackPlugin injected');
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import { fileURLToPath } from 'node:url';
 import * as path from 'path';
 import type { Configuration } from 'webpack';
-import { rules } from './webpack.rules';
-import { plugins } from './webpack.plugins';
+import { rules } from './webpack.rules.ts';
+import { plugins } from './webpack.plugins.ts';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'; 
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 rules.push({
   test: /\.css$/,

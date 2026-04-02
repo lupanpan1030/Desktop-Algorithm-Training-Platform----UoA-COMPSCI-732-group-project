@@ -8,8 +8,8 @@ import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
-import { mainConfig } from './webpack.main.config';
-import { rendererConfig } from './webpack.renderer.config';
+import { mainConfig } from './webpack.main.config.ts';
+import { rendererConfig } from './webpack.renderer.config.ts';
 
 const config: ForgeConfig = {
   packagerConfig: {

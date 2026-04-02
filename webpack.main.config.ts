@@ -1,8 +1,8 @@
 import type { Configuration } from 'webpack';
 import webpack from 'webpack';
 
-import { rules } from './webpack.rules';
-import { plugins } from './webpack.plugins';
+import { rules } from './webpack.rules.ts';
+import { plugins } from './webpack.plugins.ts';
 
 export const mainConfig: Configuration = {
   /**

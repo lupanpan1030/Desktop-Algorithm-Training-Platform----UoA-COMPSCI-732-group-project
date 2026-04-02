@@ -50,6 +50,11 @@ The current redevelopment plan is tracked in [ROADMAP.md](./ROADMAP.md).
 ### Run Source Code for Development
 More details for development are provided in [dev-doc.md](./dev-doc.md).
 
+- Recommended environment isolation:
+  - This repository now includes [environment.yml](./environment.yml) for a dedicated conda environment.
+  - Create it with `conda env create -f environment.yml`
+  - Activate it with `conda activate delightful-dogs-dev`
+
 - To start project for development:
   - Ensure Node.js and npm are properly set up.
   - Run in the project root directory.

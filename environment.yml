@@ -1,0 +1,5 @@
+name: delightful-dogs-dev
+channels:
+  - conda-forge
+dependencies:
+  - nodejs=24
