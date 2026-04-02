@@ -12,6 +12,10 @@ export class TestCaseDao {
     const prisma: PrismaClient = getPrisma();
     return prisma.testCase.findMany({
       where: { problem_id: problemId },
+      orderBy: [
+        { is_sample: 'desc' },
+        { testcase_id: 'asc' },
+      ],
     });
   }
 
@@ -22,7 +26,13 @@ export class TestCaseDao {
    */
   public static async createTestCase(
     problemId: number,
-    params: { input: string; expectedOutput: string; timeLimitMs: number; memoryLimitMb: number }
+    params: {
+      input: string;
+      expectedOutput: string;
+      timeLimitMs: number;
+      memoryLimitMb: number;
+      isSample?: boolean;
+    }
   ): Promise<TestCase> {
     const prisma: PrismaClient = getPrisma();
     return prisma.testCase.create({
@@ -31,9 +41,47 @@ export class TestCaseDao {
         expected_output: params.expectedOutput,
         time_limit_ms: params.timeLimitMs,
         memory_limit_mb: params.memoryLimitMb,
+        is_sample: params.isSample ?? false,
         problem: {
           connect: { problem_id: problemId },
         },
+      },
+    });
+  }
+
+  public static async updateTestCase(
+    problemId: number,
+    testcaseId: number,
+    params: {
+      input?: string;
+      expectedOutput?: string;
+      timeLimitMs?: number;
+      memoryLimitMb?: number;
+      isSample?: boolean;
+    }
+  ): Promise<TestCase | null> {
+    const prisma: PrismaClient = getPrisma();
+    const existing = await prisma.testCase.findFirst({
+      where: {
+        testcase_id: testcaseId,
+        problem_id: problemId,
+      },
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    return prisma.testCase.update({
+      where: {
+        testcase_id: testcaseId,
+      },
+      data: {
+        input_data: params.input,
+        expected_output: params.expectedOutput,
+        time_limit_ms: params.timeLimitMs,
+        memory_limit_mb: params.memoryLimitMb,
+        is_sample: params.isSample,
       },
     });
   }

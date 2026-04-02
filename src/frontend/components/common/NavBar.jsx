@@ -25,6 +25,14 @@ export default function NavBar({ darkMode, setDarkMode }) {
           >
             Languages
           </ResponsiveButton>
+          <ResponsiveButton
+            baseSize="large"
+            component={Link}
+            to="/admin/problems"
+            color="inherit"
+          >
+            Problem Admin
+          </ResponsiveButton>
         </Box>
 
         <IconButton

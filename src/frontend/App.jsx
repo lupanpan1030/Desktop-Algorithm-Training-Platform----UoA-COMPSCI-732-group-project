@@ -7,6 +7,7 @@ import ListPage from './pages/ListPage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
 import LanguageAdmin from "./pages/LanguageAdmin.tsx";
+import ProblemAdmin from "./pages/ProblemAdmin.tsx";
 import './styles/global.css';
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<ListPage />} />
                             <Route path="/problems/:id" element={<DetailPage />} />
+                            <Route path="/admin/problems" element={<ProblemAdmin />} />
                             <Route path="/languages" element={<LanguageAdmin />} />
                         </Routes>
                     </div>

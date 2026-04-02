@@ -44,8 +44,28 @@ describe("ProblemsController", () => {
   describe("getAllProblems()", () => {
     it("forwards to service.getAllProblems and returns its result", async () => {
       const fakeSummaries = [
-        { problemId: 1, title: "A", difficulty: "EASY" },
-        { problemId: 2, title: "B", difficulty: "HARD" },
+        {
+          problemId: 1,
+          title: "A",
+          difficulty: "EASY",
+          source: "LOCAL",
+          locale: "local",
+          sourceSlug: null,
+          externalProblemId: null,
+          judgeReady: true,
+          testcaseCount: 2,
+        },
+        {
+          problemId: 2,
+          title: "B",
+          difficulty: "HARD",
+          source: "LEETCODE",
+          locale: "zh-CN",
+          sourceSlug: "b",
+          externalProblemId: "2",
+          judgeReady: false,
+          testcaseCount: 0,
+        },
       ];
       serviceMock.getAllProblems.mockResolvedValue(fakeSummaries);
 
@@ -63,6 +83,13 @@ describe("ProblemsController", () => {
         description: "Desc",
         difficulty: "MEDIUM",
         createdAt: new Date().toISOString(),
+        source: "LOCAL",
+        locale: "local",
+        sourceSlug: null as string | null,
+        externalProblemId: null as string | null,
+        judgeReady: true,
+        testcaseCount: 2,
+        sampleTestcase: null as string | null,
       };
       serviceMock.getProblem.mockResolvedValue(fakeDetail);
 
@@ -95,6 +122,13 @@ describe("ProblemsController", () => {
         description: "Desc",
         difficulty: "HARD",
         createdAt: new Date().toISOString(),
+        source: "LOCAL",
+        locale: "local",
+        sourceSlug: null as string | null,
+        externalProblemId: null as string | null,
+        judgeReady: false,
+        testcaseCount: 0,
+        sampleTestcase: null as string | null,
       };
       serviceMock.createProblem.mockResolvedValue(fakeDetail);
 
@@ -115,6 +149,13 @@ describe("ProblemsController", () => {
         description: "New",
         difficulty: "EASY",
         createdAt: new Date().toISOString(),
+        source: "LEETCODE",
+        locale: "zh-CN",
+        sourceSlug: "d",
+        externalProblemId: "4",
+        judgeReady: true,
+        testcaseCount: 3,
+        sampleTestcase: "1 2",
       };
       serviceMock.updateProblem.mockResolvedValue(fakeDetail);
 

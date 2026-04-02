@@ -35,15 +35,16 @@ describe("TestCase routes", () => {
     const res = await request(app).get("/problems/1/testcases").expect(200);
 
     expect(res.body).toHaveLength(2);
-    expect(res.body[0]).toEqual(
-      expect.objectContaining({
-        testcaseId: expect.any(Number),
-        input: "[2,7,11,15], 9",
-        expectedOutput: "[0,1]",
-        timeLimitMs: 1000,
-        memoryLimitMb: 128,
-      })
-    );
+      expect(res.body[0]).toEqual(
+        expect.objectContaining({
+          testcaseId: expect.any(Number),
+          input: "[2,7,11,15], 9",
+          expectedOutput: "[0,1]",
+          timeLimitMs: 1000,
+          memoryLimitMb: 128,
+          isSample: true,
+        })
+      );
   });
 
   it("GET /problems/:id/testcases ⇒ 404 when problem does not exist", async () => {
@@ -57,6 +58,7 @@ describe("TestCase routes", () => {
       expectedOutput: "[0,2]",
       timeLimitMs: 1500,
       memoryLimitMb: 256,
+      isSample: false,
     };
 
     const res = await request(app)
@@ -67,6 +69,25 @@ describe("TestCase routes", () => {
     // Response must include the auto-generated testcaseId
     expect(res.body).toEqual(expect.objectContaining(newData));
     expect(res.body.testcaseId).toBeDefined();
+  });
+
+  it("PUT /problems/:id/testcases/:tid ⇒ 200 and returns the updated record", async () => {
+    const res = await request(app)
+      .put("/problems/1/testcases/1")
+      .send({
+        expectedOutput: "[7,11]",
+        isSample: false,
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        testcaseId: 1,
+        input: "[2,7,11,15], 9",
+        expectedOutput: "[7,11]",
+        isSample: false,
+      })
+    );
   });
 
   it("POST /problems/:id/testcases ⇒ 422 when body is invalid", async () => {

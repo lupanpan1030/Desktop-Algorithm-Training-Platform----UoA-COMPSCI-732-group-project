@@ -4,6 +4,7 @@ import {
   setupTestDB,
   teardownTestDB,
   dropAndSeedProblems,
+  dropAndSeedTestCases,
   testPrisma,
 } from "../utils/setupTestDB";
 import { createApp } from "../../../backend/api/app";
@@ -21,6 +22,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   // Reset just the problems table
   await dropAndSeedProblems();
+  await dropAndSeedTestCases();
 });
 
 afterAll(async () => {
@@ -39,6 +41,10 @@ describe("Problems API (integration)", () => {
         problemId: expect.any(Number),
         title: expect.any(String),
         difficulty: expect.any(String),
+        testcaseCount: expect.any(Number),
+        judgeReady: expect.any(Boolean),
+        source: expect.any(String),
+        locale: expect.any(String),
       });
     });
   });
@@ -53,6 +59,10 @@ describe("Problems API (integration)", () => {
         description: expect.stringContaining("Given an array"),
         difficulty: "EASY",
         createdAt: expect.any(String),
+        testcaseCount: 2,
+        judgeReady: true,
+        source: "LOCAL",
+        locale: "local",
       });
       // ISO check
       expect(() => new Date(res.body.createdAt)).not.toThrow();
@@ -78,6 +88,10 @@ describe("Problems API (integration)", () => {
         problemId: expect.any(Number),
         ...createParams,
         createdAt: expect.any(String),
+        testcaseCount: 0,
+        judgeReady: false,
+        source: "LOCAL",
+        locale: "local",
       });
     });
 
@@ -154,6 +168,10 @@ describe("Problems API (integration)", () => {
         difficulty: update.difficulty,
         description: expect.any(String),
         createdAt: expect.any(String),
+        testcaseCount: 2,
+        judgeReady: true,
+        source: "LOCAL",
+        locale: "local",
       });
     });
   

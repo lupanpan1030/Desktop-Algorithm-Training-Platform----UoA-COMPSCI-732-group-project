@@ -26,6 +26,7 @@ const models: TsoaRoute.Models = {
             "expectedOutput": {"dataType":"string","required":true},
             "timeLimitMs": {"dataType":"double","required":true},
             "memoryLimitMb": {"dataType":"double","required":true},
+            "isSample": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },
@@ -57,6 +58,19 @@ const models: TsoaRoute.Models = {
             "expectedOutput": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
             "timeLimitMs": {"dataType":"double","required":true,"validators":{"minimum":{"value":100},"maximum":{"value":10000}}},
             "memoryLimitMb": {"dataType":"double","required":true,"validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
+            "isSample": {"dataType":"boolean"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateTestCaseParams": {
+        "dataType": "refObject",
+        "properties": {
+            "input": {"dataType":"string","validators":{"minLength":{"value":1}}},
+            "expectedOutput": {"dataType":"string","validators":{"minLength":{"value":1}}},
+            "timeLimitMs": {"dataType":"double","validators":{"minimum":{"value":100},"maximum":{"value":10000}}},
+            "memoryLimitMb": {"dataType":"double","validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
+            "isSample": {"dataType":"boolean"},
         },
         "additionalProperties": false,
     },
@@ -156,6 +170,12 @@ const models: TsoaRoute.Models = {
             "title": {"dataType":"string","required":true},
             "difficulty": {"ref":"Difficulty","required":true},
             "completionState": {"ref":"CompletionState","required":true},
+            "source": {"dataType":"string","required":true},
+            "locale": {"dataType":"string","required":true},
+            "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "judgeReady": {"dataType":"boolean","required":true},
+            "testcaseCount": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -168,6 +188,13 @@ const models: TsoaRoute.Models = {
             "difficulty": {"ref":"Difficulty","required":true},
             "description": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string","required":true},
+            "source": {"dataType":"string","required":true},
+            "locale": {"dataType":"string","required":true},
+            "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "judgeReady": {"dataType":"boolean","required":true},
+            "testcaseCount": {"dataType":"double","required":true},
+            "sampleTestcase": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -176,7 +203,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "title": {"dataType":"string","required":true,"validators":{"minLength":{"value":5},"maxLength":{"value":100}}},
-            "description": {"dataType":"string","required":true,"validators":{"minLength":{"value":10},"maxLength":{"value":2000}}},
+            "description": {"dataType":"string","required":true,"validators":{"minLength":{"value":10},"maxLength":{"value":200000}}},
             "difficulty": {"ref":"Difficulty","required":true},
         },
         "additionalProperties": false,
@@ -186,7 +213,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "title": {"dataType":"string","validators":{"minLength":{"value":5},"maxLength":{"value":100}}},
-            "description": {"dataType":"string","validators":{"minLength":{"value":10},"maxLength":{"value":2000}}},
+            "description": {"dataType":"string","validators":{"minLength":{"value":10},"maxLength":{"value":200000}}},
             "difficulty": {"ref":"Difficulty"},
         },
         "additionalProperties": false,
@@ -319,6 +346,38 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTestCaseController_updateTestCase: Record<string, TsoaRoute.ParameterSchema> = {
+                problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
+                testcaseId: {"in":"path","name":"testcaseId","required":true,"dataType":"double"},
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"UpdateTestCaseParams"},
+        };
+        app.put('/problems/:problemId/testcases/:testcaseId',
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController)),
+            ...(fetchMiddlewares<RequestHandler>(TestCaseController.prototype.updateTestCase)),
+
+            async function TestCaseController_updateTestCase(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTestCaseController_updateTestCase, request, response });
+
+                const controller = new TestCaseController();
+
+              await templateService.apiHandler({
+                methodName: 'updateTestCase',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

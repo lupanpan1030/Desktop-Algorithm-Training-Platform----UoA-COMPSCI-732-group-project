@@ -10,13 +10,22 @@ vi.mock("../../../backend/api/testcase/testcase-dao", () => ({
   TestCaseDao: {
     getTestCasesByProblem: vi.fn(),
     createTestCase: vi.fn(),
+    updateTestCase: vi.fn(),
     deleteTestCase: vi.fn(),
+  },
+}));
+
+vi.mock("../../../backend/api/problem/problem-dao", () => ({
+  ProblemsDao: {
+    syncJudgeReadiness: vi.fn(),
   },
 }));
 
 // Type helper: make TS treat the mocked DAO as a real object
 import { TestCaseDao } from "../../../backend/api/testcase/testcase-dao";
 const mockedDao = vi.mocked(TestCaseDao);
+import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
+const mockedProblemsDao = vi.mocked(ProblemsDao);
 
 // ────────────────────────────────────────────────────────────
 // Test suite
@@ -52,6 +61,7 @@ describe("TestCaseService", () => {
           expectedOutput: "[0,1]",
           timeLimitMs: 1_000,
           memoryLimitMb: 128,
+          isSample: false,
         },
       ]);
     });
@@ -81,12 +91,47 @@ describe("TestCaseService", () => {
       const created = await service.createTestCase(5, params);
 
       expect(mockedDao.createTestCase).toHaveBeenCalledWith(5, params);
+      expect(mockedProblemsDao.syncJudgeReadiness).toHaveBeenCalledWith(5);
       expect(created).toEqual({
         testcaseId: 9,
         input: 's = "abba"',
         expectedOutput: "abba",
         timeLimitMs: 2_000,
         memoryLimitMb: 256,
+        isSample: false,
+      });
+    });
+  });
+
+  describe("updateTestCase()", () => {
+    it("passes args through to DAO and returns the mapped entity", async () => {
+      const daoReturn = {
+        testcase_id: 9,
+        problem_id: 5,
+        input_data: 's = "abba"',
+        expected_output: "abba",
+        time_limit_ms: 2_000,
+        memory_limit_mb: 256,
+        is_sample: true,
+      };
+      mockedDao.updateTestCase.mockResolvedValue(daoReturn);
+
+      const params = {
+        expectedOutput: "abba",
+        isSample: true,
+      };
+
+      const updated = await service.updateTestCase(5, 9, params);
+
+      expect(mockedDao.updateTestCase).toHaveBeenCalledWith(5, 9, params);
+      expect(mockedProblemsDao.syncJudgeReadiness).toHaveBeenCalledWith(5);
+      expect(updated).toEqual({
+        testcaseId: 9,
+        input: 's = "abba"',
+        expectedOutput: "abba",
+        timeLimitMs: 2_000,
+        memoryLimitMb: 256,
+        isSample: true,
       });
     });
   });
@@ -97,6 +142,7 @@ describe("TestCaseService", () => {
       mockedDao.deleteTestCase.mockResolvedValue(undefined);
       await service.deleteTestCase(1, 42);
       expect(mockedDao.deleteTestCase).toHaveBeenCalledWith(1, 42);
+      expect(mockedProblemsDao.syncJudgeReadiness).toHaveBeenCalledWith(1);
     });
   });
 });

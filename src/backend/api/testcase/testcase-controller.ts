@@ -8,13 +8,14 @@ import {
   Get,
   Path,
   Post,
+  Put,
   Response,
   SuccessResponse,
   Route,
   Tags,
   Middlewares,
 } from "tsoa";
-import { TestCase, CreateTestCaseParams } from "./testcase";
+import { TestCase, CreateTestCaseParams, UpdateTestCaseParams } from "./testcase";
 import { TestCaseService } from "./testcase-service";
 import { validateProblemId } from "../../utils/validate-problem-id";
 import { ValidateError } from "../../utils/errors/validation-error";
@@ -51,6 +52,24 @@ export class TestCaseController extends Controller {
   ): Promise<TestCase> {
     this.setStatus(201);
     return this.testCaseService.createTestCase(problemId, requestBody);
+  }
+
+  /**
+   * Updates a test case for a given problem.
+   * @param problemId The ID of the problem.
+   * @param testcaseId The ID of the test case to update.
+   * @param requestBody The test case data to update.
+   */
+  @Response<NotFoundError>(404, "Problem or test case not found")
+  @Response<ValidateError>(422, "Validation Failed")
+  @SuccessResponse("200", "OK")
+  @Put("{testcaseId}")
+  public async updateTestCase(
+    @Path() problemId: number,
+    @Path() testcaseId: number,
+    @Body() requestBody: UpdateTestCaseParams
+  ): Promise<TestCase> {
+    return this.testCaseService.updateTestCase(problemId, testcaseId, requestBody);
   }
 
   /**

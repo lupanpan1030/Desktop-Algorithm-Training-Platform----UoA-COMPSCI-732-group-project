@@ -7,6 +7,7 @@ import {
   CompletionState,
   CreateProblemParams,
   UpdateProblemParams,
+  ProblemWithCounts,
 } from "./problem";
 import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError } from "../../utils/errors/not-found-error";
@@ -18,6 +19,22 @@ const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
 };
 
 export class ProblemsService {
+  private mapProblemDetails(problem: ProblemWithCounts): ProblemDetails {
+    return {
+      problemId: problem.problem_id,
+      title: problem.title,
+      description: problem.description,
+      difficulty: problem.difficulty,
+      createdAt: problem.created_at.toISOString(),
+      source: problem.source,
+      locale: problem.locale,
+      sourceSlug: problem.source_slug,
+      externalProblemId: problem.external_problem_id,
+      judgeReady: problem.judge_ready,
+      testcaseCount: problem._count.test_cases,
+      sampleTestcase: problem.sample_testcase,
+    };
+  }
 
   /**
    * Retrieves a list of all problems with summary information.
@@ -31,6 +48,12 @@ export class ProblemsService {
       completionState: deriveState(
         problem.submissions.map((s) => s.status)
       ),
+      source: problem.source,
+      locale: problem.locale,
+      sourceSlug: problem.source_slug,
+      externalProblemId: problem.external_problem_id,
+      judgeReady: problem.judge_ready,
+      testcaseCount: problem._count.test_cases,
     }));
   }
 
@@ -43,13 +66,7 @@ export class ProblemsService {
     if (!problem) {
       throw new NotFoundError("Problem not found");
     }
-    return {
-      problemId: problem.problem_id,
-      title: problem.title,
-      description: problem.description,
-      difficulty: problem.difficulty,
-      createdAt: problem.created_at.toISOString(),
-    };
+    return this.mapProblemDetails(problem);
   }
 
   /**
@@ -60,13 +77,7 @@ export class ProblemsService {
     params: CreateProblemParams
   ): Promise<ProblemDetails> {
     const problem = await ProblemsDao.createProblem(params);
-    return {
-      problemId: problem.problem_id,
-      title: problem.title,
-      description: problem.description,
-      difficulty: problem.difficulty,
-      createdAt: problem.created_at.toISOString(),
-    };
+    return this.mapProblemDetails(problem);
   }
 
   /**
@@ -82,13 +93,7 @@ export class ProblemsService {
     if (!problem) {
       throw new NotFoundError("Problem not found");
     }
-    return {
-      problemId: problem.problem_id,
-      title: problem.title,
-      description: problem.description,
-      difficulty: problem.difficulty,
-      createdAt: problem.created_at.toISOString(),
-    };
+    return this.mapProblemDetails(problem);
   }
 
   /**

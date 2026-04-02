@@ -90,32 +90,40 @@ export async function dropAndSeedTestCases() {
   await testPrisma.testCase.createMany({
     data: [
       {
+        testcase_id: 1,
         problem_id: 1,
         input_data: "[2,7,11,15], 9",
         expected_output: "[0,1]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,
+        is_sample: true,
       },
       {
+        testcase_id: 2,
         problem_id: 1,
         input_data: "[3,2,4], 6",
         expected_output: "[1,2]",
         time_limit_ms: 1 * 1000,
         memory_limit_mb: 128,
+        is_sample: false,
       },
       {
+        testcase_id: 3,
         problem_id: 5,
         input_data: 's = "babad"',
         expected_output: "bab",
         time_limit_ms: 2 * 1000,
         memory_limit_mb: 256,
+        is_sample: true,
       },
       {
+        testcase_id: 4,
         problem_id: 5,
         input_data: 's = "cbbd"',
         expected_output: "bb",
         time_limit_ms: 2 * 1000,
         memory_limit_mb: 256,
+        is_sample: false,
       },
     ],
   });

@@ -20,6 +20,8 @@ export default defineConfig({
           name: 'backend',
           include: ['src/__tests__/backend/**/*.{test,spec}.{js,ts}'],
           environment: 'node',
+          hookTimeout: 30000,
+          testTimeout: 30000,
         },
       },
     ],

@@ -10,6 +10,12 @@ export interface ProblemSummary {
   title: string;
   difficulty: Difficulty;
   completionState: CompletionState; // optional field for completed status
+  source: string;
+  locale: string;
+  sourceSlug?: string | null;
+  externalProblemId?: string | null;
+  judgeReady: boolean;
+  testcaseCount: number;
 }
 
 // Detailed view of a problem (for getting a single problem's details)
@@ -19,6 +25,13 @@ export interface ProblemDetails {
   difficulty: Difficulty;
   description: string;
   createdAt: string; // ISO date string
+  source: string;
+  locale: string;
+  sourceSlug?: string | null;
+  externalProblemId?: string | null;
+  judgeReady: boolean;
+  testcaseCount: number;
+  sampleTestcase?: string | null;
 }
 
 // Used for intermediary data transfer between the database and the API
@@ -27,6 +40,21 @@ export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
     submissions: {
       select: {
         status: true;
+      };
+    };
+    _count: {
+      select: {
+        test_cases: true;
+      };
+    };
+  };
+}>;
+
+export type ProblemWithCounts = Prisma.ProblemGetPayload<{
+  include: {
+    _count: {
+      select: {
+        test_cases: true;
       };
     };
   };
@@ -44,7 +72,7 @@ export class CreateProblemParams {
 
   /**
    * @minLength 10
-   * @maxLength 2000
+   * @maxLength 200000
    */
   public description!: string;
 
@@ -62,7 +90,7 @@ export class UpdateProblemParams {
 
   /**
    * @minLength 10
-   * @maxLength 2000
+   * @maxLength 200000
    */
   public description?: string;
 

@@ -26,6 +26,9 @@
 					"memoryLimitMb": {
 						"type": "number",
 						"format": "double"
+					},
+					"isSample": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -33,7 +36,8 @@
 					"input",
 					"expectedOutput",
 					"timeLimitMs",
-					"memoryLimitMb"
+					"memoryLimitMb",
+					"isSample"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -105,6 +109,9 @@
 						"format": "double",
 						"minimum": 16,
 						"maximum": 1024
+					},
+					"isSample": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -113,6 +120,35 @@
 					"timeLimitMs",
 					"memoryLimitMb"
 				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTestCaseParams": {
+				"properties": {
+					"input": {
+						"type": "string",
+						"minLength": 1
+					},
+					"expectedOutput": {
+						"type": "string",
+						"minLength": 1
+					},
+					"timeLimitMs": {
+						"type": "number",
+						"format": "double",
+						"minimum": 100,
+						"maximum": 10000
+					},
+					"memoryLimitMb": {
+						"type": "number",
+						"format": "double",
+						"minimum": 16,
+						"maximum": 1024
+					},
+					"isSample": {
+						"type": "boolean"
+					}
+				},
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -319,13 +355,38 @@
 					},
 					"completionState": {
 						"$ref": "#/components/schemas/CompletionState"
+					},
+					"source": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					},
+					"sourceSlug": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalProblemId": {
+						"type": "string",
+						"nullable": true
+					},
+					"judgeReady": {
+						"type": "boolean"
+					},
+					"testcaseCount": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
 					"problemId",
 					"title",
 					"difficulty",
-					"completionState"
+					"completionState",
+					"source",
+					"locale",
+					"judgeReady",
+					"testcaseCount"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -347,6 +408,31 @@
 					},
 					"createdAt": {
 						"type": "string"
+					},
+					"source": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					},
+					"sourceSlug": {
+						"type": "string",
+						"nullable": true
+					},
+					"externalProblemId": {
+						"type": "string",
+						"nullable": true
+					},
+					"judgeReady": {
+						"type": "boolean"
+					},
+					"testcaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"sampleTestcase": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -354,7 +440,11 @@
 					"title",
 					"difficulty",
 					"description",
-					"createdAt"
+					"createdAt",
+					"source",
+					"locale",
+					"judgeReady",
+					"testcaseCount"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -369,7 +459,7 @@
 					"description": {
 						"type": "string",
 						"minLength": 10,
-						"maxLength": 2000
+						"maxLength": 200000
 					},
 					"difficulty": {
 						"$ref": "#/components/schemas/Difficulty"
@@ -393,7 +483,7 @@
 					"description": {
 						"type": "string",
 						"minLength": 10,
-						"maxLength": 2000
+						"maxLength": 200000
 					},
 					"difficulty": {
 						"$ref": "#/components/schemas/Difficulty"
@@ -681,6 +771,80 @@
 			}
 		},
 		"/problems/{problemId}/testcases/{testcaseId}": {
+			"put": {
+				"operationId": "UpdateTestCase",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestCase"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem or test case not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Updates a test case for a given problem.",
+				"tags": [
+					"TestCases"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The ID of the problem.",
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"description": "The ID of the test case to update.",
+						"in": "path",
+						"name": "testcaseId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "The test case data to update.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTestCaseParams",
+								"description": "The test case data to update."
+							}
+						}
+					}
+				}
+			},
 			"delete": {
 				"operationId": "DeleteTestCase",
 				"responses": {

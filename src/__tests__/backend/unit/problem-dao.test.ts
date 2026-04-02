@@ -2,10 +2,11 @@ import { beforeAll, beforeEach, afterAll, describe, it, expect } from "vitest";
 import {
   setupTestDB,
   dropAndSeedProblems,
+  dropAndSeedTestCases,
   teardownTestDB,
 } from "../utils/setupTestDB";
 import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
-import type { PrismaClient, Problem} from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { setPrisma } from "../../../backend/db/prisma/prisma";
 
 let testPrisma: PrismaClient;
@@ -19,6 +20,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   // clear and re-seed the problems table
   await dropAndSeedProblems();
+  await dropAndSeedTestCases();
 });
 
 afterAll(async () => {
@@ -37,8 +39,10 @@ describe("ProblemsDao", () => {
       expect(titles).toEqual(["Longest Palindromic Substring", "Two Sum"].sort());
       expect(all[0].problem_id).toBe(1);
       expect(all[0].difficulty).toBe("EASY");
+      expect(all[0]._count.test_cases).toBe(2);
       expect(all[1].problem_id).toBe(5);
       expect(all[1].difficulty).toBe("MEDIUM");
+      expect(all[1]._count.test_cases).toBe(2);
     });
   });
 
@@ -46,10 +50,11 @@ describe("ProblemsDao", () => {
     it("returns the correct problem when it exists", async () => {
       const p1 = await ProblemsDao.getProblemById(1);
       expect(p1).not.toBeNull();
-      expect((p1 as Problem).problem_id).toBe(1);
-      expect((p1 as Problem).title).toBe("Two Sum");
-      expect((p1 as Problem).description).toContain("return indices of the two numbers such that they add up to target");
-      expect((p1 as Problem).difficulty).toBe("EASY");
+      expect(p1?.problem_id).toBe(1);
+      expect(p1?.title).toBe("Two Sum");
+      expect(p1?.description).toContain("return indices of the two numbers such that they add up to target");
+      expect(p1?.difficulty).toBe("EASY");
+      expect(p1?._count.test_cases).toBe(2);
     });
 
     it("returns null when the problem does not exist", async () => {
@@ -76,7 +81,9 @@ describe("ProblemsDao", () => {
         where: { problem_id: created.problem_id },
       });
       expect(fromDb).not.toBeNull();
-      expect((fromDb as Problem).description).toContain("reverse the list");
+      expect(fromDb?.description).toContain("reverse the list");
+      expect(created.judge_ready).toBe(false);
+      expect(created._count.test_cases).toBe(0);
     });
   });
 
@@ -89,8 +96,8 @@ describe("ProblemsDao", () => {
       const updated = await ProblemsDao.updateProblem(1, updates);
 
       expect(updated).not.toBeNull();
-      expect((updated as Problem).title).toBe(updates.title);
-      expect((updated as Problem).difficulty).toBe(updates.difficulty);
+      expect(updated?.title).toBe(updates.title);
+      expect(updated?.difficulty).toBe(updates.difficulty);
     });
 
     it("returns null when trying to update a non-existent problem", async () => {

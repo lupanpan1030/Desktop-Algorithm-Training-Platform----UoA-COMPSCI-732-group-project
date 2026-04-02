@@ -1,7 +1,7 @@
 // This file interacts with the database to perform CRUD operations on problems.
 
-import {Problem, Difficulty } from "@prisma/client";
-import { ProblemWithStatuses } from "./problem";
+import { Difficulty } from "@prisma/client";
+import { ProblemWithCounts, ProblemWithStatuses } from "./problem";
 import { getPrisma } from "../../db/prisma/prisma";
 
 
@@ -20,6 +20,11 @@ export class ProblemsDao {
         submissions: {
           select: { status: true },
         },
+        _count: {
+          select: {
+            test_cases: true,
+          },
+        },
       },
       orderBy: { problem_id: 'asc' },
     });
@@ -31,10 +36,17 @@ export class ProblemsDao {
    */
   public static async getProblemById(
     problemId: number
-  ): Promise<Problem | null> {
+  ): Promise<ProblemWithCounts | null> {
     return this.db.problem.findUnique({
       where: {
         problem_id: problemId,
+      },
+      include: {
+        _count: {
+          select: {
+            test_cases: true,
+          },
+        },
       },
     });
   }
@@ -47,12 +59,20 @@ export class ProblemsDao {
     title: string;
     description: string;
     difficulty: Difficulty;
-  }): Promise<Problem> {
+  }): Promise<ProblemWithCounts> {
     return this.db.problem.create({
       data: {
         title: params.title,
         description: params.description,
         difficulty: params.difficulty,
+        judge_ready: false,
+      },
+      include: {
+        _count: {
+          select: {
+            test_cases: true,
+          },
+        },
       },
     });
   }
@@ -69,7 +89,7 @@ export class ProblemsDao {
       description?: string;
       difficulty?: Difficulty;
     }
-  ): Promise<Problem | null> {
+  ): Promise<ProblemWithCounts | null> {
     try {
       return await this.db.problem.update({
         where: { problem_id: problemId },
@@ -77,6 +97,13 @@ export class ProblemsDao {
           title: params.title,
           description: params.description,
           difficulty: params.difficulty,
+        },
+        include: {
+          _count: {
+            select: {
+              test_cases: true,
+            },
+          },
         },
       });
     } catch (error) {
@@ -97,5 +124,20 @@ export class ProblemsDao {
       // Do nothing because a not existing problem does not need to be deleted
       return;
     }
+  }
+
+  public static async syncJudgeReadiness(problemId: number): Promise<void> {
+    const testcaseCount = await this.db.testCase.count({
+      where: {
+        problem_id: problemId,
+      },
+    });
+
+    await this.db.problem.updateMany({
+      where: { problem_id: problemId },
+      data: {
+        judge_ready: testcaseCount > 0,
+      },
+    });
   }
 }

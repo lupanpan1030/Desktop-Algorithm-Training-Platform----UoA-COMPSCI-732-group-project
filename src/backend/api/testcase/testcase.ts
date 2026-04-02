@@ -6,6 +6,7 @@ export interface TestCase {
   expectedOutput: string;
   timeLimitMs: number;
   memoryLimitMb: number;
+  isSample: boolean;
 }
 
 export class CreateTestCaseParams {
@@ -30,4 +31,32 @@ export class CreateTestCaseParams {
      * @maximum 1024
      */
   memoryLimitMb!: number;
+
+  isSample?: boolean;
+}
+
+export class UpdateTestCaseParams {
+  /**
+   * @minLength 1
+   */
+  input?: string;
+
+  /**
+   * @minLength 1
+   */
+  expectedOutput?: string;
+
+  /**
+   * @minimum 100
+   * @maximum 10000
+   */
+  timeLimitMs?: number;
+
+  /**
+   * @minimum 16
+   * @maximum 1024
+   */
+  memoryLimitMb?: number;
+
+  isSample?: boolean;
 }

@@ -2,12 +2,23 @@ import { useState, useCallback } from 'react';
 import api from '../api/axiosInstance';
 
 // API Response Types
-interface Problem {
+export interface ProblemSummary {
   problemId: number;
   title: string;
-  description: string;
   difficulty: string;
   completionState?: string;
+  source: string;
+  locale: string;
+  sourceSlug?: string | null;
+  externalProblemId?: string | null;
+  judgeReady: boolean;
+  testcaseCount: number;
+}
+
+export interface ProblemDetails extends ProblemSummary {
+  description: string;
+  createdAt: string;
+  sampleTestcase?: string | null;
 }
 
 interface Language {
@@ -53,6 +64,29 @@ export interface SubmissionDetail extends SubmissionListItem {
   results: TestResult[];
 }
 
+export interface TestCase {
+  testcaseId: number;
+  input: string;
+  expectedOutput: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  isSample: boolean;
+}
+
+export interface ProblemMutationPayload {
+  title: string;
+  description: string;
+  difficulty: string;
+}
+
+export interface TestCaseMutationPayload {
+  input: string;
+  expectedOutput: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  isSample?: boolean;
+}
+
 // API Request Options
 interface ApiOptions {
   url: string;
@@ -89,20 +123,44 @@ export const useApi = () => {
     }
   }, []);
 
-  const getProblems = useCallback(async (): Promise<Problem[]> => {
+  const getProblems = useCallback(async (): Promise<ProblemSummary[]> => {
     try {
-      return await request<Problem[]>({ url: '/problems' });
+      return await request<ProblemSummary[]>({ url: '/problems' });
     } catch {
       return [];
     }
   }, [request]);
 
-  const getProblem = useCallback(async (id: number): Promise<Problem | null> => {
+  const getProblem = useCallback(async (id: number): Promise<ProblemDetails | null> => {
     try {
-      return await request<Problem>({ url: `/problems/${id}` });
+      return await request<ProblemDetails>({ url: `/problems/${id}` });
     } catch {
       return null;
     }
+  }, [request]);
+
+  const addProblem = useCallback(async (problem: ProblemMutationPayload): Promise<ProblemDetails | null> => {
+    return await request<ProblemDetails>({
+      url: '/problems',
+      method: 'POST',
+      body: problem,
+    });
+  }, [request]);
+
+  const updateProblem = useCallback(async (id: number, problem: Partial<ProblemMutationPayload>): Promise<ProblemDetails | null> => {
+    return await request<ProblemDetails>({
+      url: `/problems/${id}`,
+      method: 'PUT',
+      body: problem,
+    });
+  }, [request]);
+
+  const deleteProblem = useCallback(async (id: number): Promise<boolean> => {
+    await request<void>({
+      url: `/problems/${id}`,
+      method: 'DELETE',
+    });
+    return true;
   }, [request]);
 
   const getLanguages = useCallback(async (): Promise<Language[]> => {
@@ -173,11 +231,58 @@ export const useApi = () => {
     }
   }, [request]);
 
+  const getTestCases = useCallback(async (problemId: number): Promise<TestCase[]> => {
+    try {
+      return await request<TestCase[]>({
+        url: `/problems/${problemId}/testcases`,
+      });
+    } catch {
+      return [];
+    }
+  }, [request]);
+
+  const addTestCase = useCallback(async (
+    problemId: number,
+    testcase: TestCaseMutationPayload
+  ): Promise<TestCase | null> => {
+    return await request<TestCase>({
+      url: `/problems/${problemId}/testcases`,
+      method: 'POST',
+      body: testcase,
+    });
+  }, [request]);
+
+  const updateTestCase = useCallback(async (
+    problemId: number,
+    testcaseId: number,
+    testcase: Partial<TestCaseMutationPayload>
+  ): Promise<TestCase | null> => {
+    return await request<TestCase>({
+      url: `/problems/${problemId}/testcases/${testcaseId}`,
+      method: 'PUT',
+      body: testcase,
+    });
+  }, [request]);
+
+  const deleteTestCase = useCallback(async (
+    problemId: number,
+    testcaseId: number
+  ): Promise<boolean> => {
+    await request<void>({
+      url: `/problems/${problemId}/testcases/${testcaseId}`,
+      method: 'DELETE',
+    });
+    return true;
+  }, [request]);
+
   return {
     loading,
     error,
     getProblems,
     getProblem,
+    addProblem,
+    updateProblem,
+    deleteProblem,
     getLanguages,
     addLanguage,
     updateLanguage,
@@ -185,7 +290,11 @@ export const useApi = () => {
     runCode,
     submitCode,
     getSubmissions,
-    getSubmission
+    getSubmission,
+    getTestCases,
+    addTestCase,
+    updateTestCase,
+    deleteTestCase
   };
 };
 

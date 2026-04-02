@@ -1,23 +1,36 @@
 // This file contains the TestCaseService class, which provides methods to interact with test cases in the database.
 
-import { TestCase } from "./testcase";
-import { CreateTestCaseParams } from "./testcase";
+import { CreateTestCaseParams, TestCase, UpdateTestCaseParams } from "./testcase";
 import { TestCaseDao } from "./testcase-dao";
+import { ProblemsDao } from "../problem/problem-dao";
+import { NotFoundError } from "../../utils/errors/not-found-error";
 
 export class TestCaseService {
+  private mapTestCase(tc: {
+    testcase_id: number;
+    input_data: string;
+    expected_output: string;
+    time_limit_ms: number;
+    memory_limit_mb: number;
+    is_sample: boolean;
+  }): TestCase {
+    return {
+      testcaseId: tc.testcase_id,
+      input: tc.input_data,
+      expectedOutput: tc.expected_output,
+      timeLimitMs: tc.time_limit_ms,
+      memoryLimitMb: tc.memory_limit_mb,
+      isSample: tc.is_sample,
+    };
+  }
+
   /**
    * Retrieves the list of test cases for a given problem.
    * @param problemId The ID of the problem.
    */
   public async getTestCases(problemId: number): Promise<TestCase[]> {
     const testcases = await TestCaseDao.getTestCasesByProblem(problemId);
-    return testcases.map((tc) => ({
-      testcaseId: tc.testcase_id,
-      input: tc.input_data,
-      expectedOutput: tc.expected_output,
-      timeLimitMs: tc.time_limit_ms,
-      memoryLimitMb: tc.memory_limit_mb,
-    }));
+    return testcases.map((tc) => this.mapTestCase(tc));
   }
 
   /**
@@ -30,13 +43,22 @@ export class TestCaseService {
     params: CreateTestCaseParams
   ): Promise<TestCase> {
     const testcase = await TestCaseDao.createTestCase(problemId, params);
-    return {
-      testcaseId: testcase.testcase_id,
-      input: testcase.input_data,
-      expectedOutput: testcase.expected_output,
-      timeLimitMs: testcase.time_limit_ms,
-      memoryLimitMb: testcase.memory_limit_mb,
-    };
+    await ProblemsDao.syncJudgeReadiness(problemId);
+    return this.mapTestCase(testcase);
+  }
+
+  public async updateTestCase(
+    problemId: number,
+    testcaseId: number,
+    params: UpdateTestCaseParams
+  ): Promise<TestCase> {
+    const testcase = await TestCaseDao.updateTestCase(problemId, testcaseId, params);
+    if (!testcase) {
+      throw new NotFoundError("Test case not found");
+    }
+
+    await ProblemsDao.syncJudgeReadiness(problemId);
+    return this.mapTestCase(testcase);
   }
 
   /**
@@ -49,5 +71,6 @@ export class TestCaseService {
     testcaseId: number
   ): Promise<void> {
     await TestCaseDao.deleteTestCase(problemId, testcaseId);
+    await ProblemsDao.syncJudgeReadiness(problemId);
   }
 }

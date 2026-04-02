@@ -60,7 +60,9 @@ export class SubmissionService {
     if (!testCases || testCases.length === 0) {
       throw new NotFoundError(`No test cases found for problem ID ${problemId}`);
     }
-    const limitedTestCases = testCases.slice(0, testCaseLimit);
+    const sampleTestCases = testCases.filter((testCase) => testCase.isSample);
+    const runnableTestCases = sampleTestCases.length > 0 ? sampleTestCases : testCases;
+    const limitedTestCases = runnableTestCases.slice(0, testCaseLimit);
     
     const mode = language.compilerCmd ? ExecutionMode.Compiled : ExecutionMode.Interprete;
     const executionResults = await judgeSolution(mode, {
