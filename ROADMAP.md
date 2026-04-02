@@ -42,6 +42,7 @@ Goal: make the local desktop app safer to upgrade and easier to carry across mac
 
 Tasks:
 - add explicit import/export for SQLite data
+- add repeatable external-dataset importers for personal local use
 - add lightweight backup/restore support before destructive admin actions
 - separate seed data, user data, and generated package data more clearly
 - define a migration strategy for future schema changes

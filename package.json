@@ -16,7 +16,8 @@
     "dev": "ts-node-dev --respawn src/backend/api/server.ts",
     "db:init": "npx ts-node src/backend/db/seeds/init-db_first.ts",
     "db:reset": "npx ts-node src/backend/db/seeds/init-db+drop.ts",
-    "db:prepare-package-db": "npx ts-node src/backend/db/prepare-package-db.ts"
+    "db:prepare-package-db": "npx ts-node src/backend/db/prepare-package-db.ts",
+    "import:leetcode-cn": "npx ts-node src/backend/db/importers/import-leetcode-cn.ts"
   },
   "keywords": [],
   "author": {

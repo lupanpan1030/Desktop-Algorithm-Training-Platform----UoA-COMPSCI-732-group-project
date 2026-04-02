@@ -12,10 +12,20 @@ model Problem {
     title        String
     description  String
     difficulty   Difficulty
+    source       String       @default("LOCAL")
+    source_slug  String?
+    external_problem_id String?
+    import_key   String?      @unique
+    locale       String       @default("local")
+    judge_ready  Boolean      @default(true)
+    sample_testcase String?
     created_at   DateTime     @default(now())
     test_cases   TestCase[]
     submissions  Submission[]
     problem_tags ProblemTag[]
+    starter_codes ProblemStarterCode[]
+
+    @@index([source, locale])
 }
 
 model TestCase {
@@ -24,6 +34,7 @@ model TestCase {
     expected_output String
     time_limit_ms      Int @map("time_limit")
     memory_limit_mb    Int @map("memory_limit")
+    is_sample       Boolean  @default(false)
     problem         Problem  @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id      Int
 }
@@ -76,6 +87,17 @@ model ProblemTag {
     tag_id    Int
 
     @@id([problem_id, tag_id])
+}
+
+model ProblemStarterCode {
+    starter_code_id Int     @id @default(autoincrement())
+    problem         Problem @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
+    problem_id      Int
+    language_slug   String
+    language_name   String
+    template        String
+
+    @@unique([problem_id, language_slug])
 }
 
 enum Difficulty {

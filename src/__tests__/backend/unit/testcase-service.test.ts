@@ -38,6 +38,7 @@ describe("TestCaseService", () => {
           expected_output: "[0,1]",
           time_limit_ms: 1_000,
           memory_limit_mb: 128,
+          is_sample: false,
         },
       ]);
 
@@ -66,6 +67,7 @@ describe("TestCaseService", () => {
         expected_output: "abba",
         time_limit_ms: 2_000,
         memory_limit_mb: 256,
+        is_sample: false,
       };
       mockedDao.createTestCase.mockResolvedValue(daoReturn);
 

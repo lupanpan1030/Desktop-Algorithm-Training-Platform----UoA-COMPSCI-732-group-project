@@ -81,6 +81,18 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
       ```bash
       npm run db:reset
       ```
+- To import LeetCode CN problems from a local `leetcode-problemset` checkout:
+  - Dry-run the importer first.
+      ```bash
+      npm run import:leetcode-cn -- --source /Users/ethan/Documents/GitHub/leetcode-problemset/leetcode-cn/originData --limit 20 --dry-run --verbose
+      ```
+  - Then run the real import.
+      ```bash
+      npm run import:leetcode-cn -- --source /Users/ethan/Documents/GitHub/leetcode-problemset/leetcode-cn/originData --limit 20
+      ```
+  - Imported problems are stored as content-first entries.
+  - The importer keeps your later testcase/judge work intact by preserving `judge_ready` and existing testcase rows.
+  - Imported LeetCode problems will still need manual testcase completion before they become fully runnable in the local judge.
 - To compile an executable for the current platform:
   - Run in the project root directory.
       ```bash
