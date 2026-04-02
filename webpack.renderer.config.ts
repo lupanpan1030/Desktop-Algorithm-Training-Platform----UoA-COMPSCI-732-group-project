@@ -11,6 +11,10 @@ import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const devRendererCsp =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; worker-src 'self' blob:;";
+const prodRendererCsp =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:6785; img-src 'self' data:; worker-src 'self' blob:;";
 
 rules.push({
   test: /\.css$/,
@@ -33,6 +37,7 @@ let rendererConfigPreparation: Configuration;
 
 if (!isDevelopment) {
   rendererConfigPreparation = {
+    devtool: 'source-map',
     module: {
       rules,
     },
@@ -49,9 +54,7 @@ if (!isDevelopment) {
         meta: {
           'Content-Security-Policy': {
             'http-equiv': 'Content-Security-Policy',
-            content: isDevelopment
-              ? "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: http://localhost:6785; connect-src 'self' http://localhost:6785; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
-              : "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: http://localhost:6785; connect-src 'self' http://localhost:6785; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;"
+            content: prodRendererCsp
           }
         }
       }),
@@ -94,6 +97,7 @@ if (!isDevelopment) {
 }
 else {
   rendererConfigPreparation = {
+    devtool: 'source-map',
     module: {
       rules,
     },
@@ -109,9 +113,7 @@ else {
         meta: {
           'Content-Security-Policy': {
             'http-equiv': 'Content-Security-Policy',
-            content: isDevelopment
-              ? "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: http://localhost:6785; connect-src 'self' http://localhost:6785; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
-              : "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: http://localhost:6785; connect-src 'self' http://localhost:6785; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+            content: devRendererCsp
           }
         }
       }),

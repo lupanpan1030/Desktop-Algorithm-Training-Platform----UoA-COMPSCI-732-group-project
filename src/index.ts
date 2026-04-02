@@ -54,13 +54,23 @@ const createWindow = (): void => {
     },
   });
 
-  // Set Content-Security-Policy to allow Monaco Editor mounting
+  const rendererCsp =
+    process.env.NODE_ENV === 'development'
+      ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; worker-src 'self' blob:;"
+      : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:6785; img-src 'self' data:; worker-src 'self' blob:;";
+
+  // Set Content-Security-Policy for the main document while allowing dev-server websockets.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.resourceType !== 'mainFrame' && details.resourceType !== 'subFrame') {
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
+
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:*; img-src 'self' data:; worker-src 'self' blob:;"
+          rendererCsp
         ]
       }
     });

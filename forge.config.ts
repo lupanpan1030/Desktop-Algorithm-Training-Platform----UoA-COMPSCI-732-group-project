@@ -11,6 +11,9 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import { mainConfig } from './webpack.main.config.ts';
 import { rendererConfig } from './webpack.renderer.config.ts';
 
+const developmentCsp =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; worker-src 'self' blob:;";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
@@ -24,7 +27,7 @@ const config: ForgeConfig = {
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
       mainConfig,
-      devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
+      devContentSecurityPolicy: developmentCsp,
       renderer: {
         config: rendererConfig,
         entryPoints: [
