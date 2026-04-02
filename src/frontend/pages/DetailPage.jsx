@@ -7,6 +7,7 @@ import "../styles/DetailPage.css";
 import CodeSubmission from "../components/Run&SubmitButton";
 import { useApi } from "../hooks/useApi";
 import { useTheme } from "@mui/material/styles";
+import { useProblemLocale } from "../problem-locale";
 
 export default function DetailPage() {
   const { id } = useParams();
@@ -22,6 +23,7 @@ export default function DetailPage() {
     byId: {},
   });
   const { getProblem, getLanguages, loading, error } = useApi();
+  const { locale, setLocale } = useProblemLocale();
 
   // Reference for resizable elements
   const leftPaneRef = useRef(null);
@@ -34,13 +36,15 @@ export default function DetailPage() {
 
   useEffect(() => {
     async function fetchProblem() {
-      const data = await getProblem(Number(id));
+      const data = await getProblem(Number(id), locale, true);
       if (data) {
         setProblem(data);
+      } else {
+        setProblem(null);
       }
     }
     fetchProblem();
-  }, [id, getProblem]);
+  }, [id, getProblem, locale]);
 
   // Get a list of supported programming languages and create a mapping
   useEffect(() => {
@@ -173,7 +177,10 @@ export default function DetailPage() {
                 </Typography>
               </Box>
             ) : problem ? (
-              <ProblemContent problem={problem} />
+              <ProblemContent
+                problem={problem}
+                onLocaleChange={setLocale}
+              />
             ) : (
               <Box sx={{ p: 3 }}>
                 <Typography>

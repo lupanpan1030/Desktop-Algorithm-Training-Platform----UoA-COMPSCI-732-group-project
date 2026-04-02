@@ -93,13 +93,13 @@ describe("reconcileProblemCatalog", () => {
     });
 
     expect(remainingProblems).toHaveLength(1);
-    expect(remainingProblems[0].problem_id).toBe(102);
-    expect(remainingProblems[0].title).toBe("两数之和");
+    expect(remainingProblems[0].problem_id).toBe(101);
+    expect(remainingProblems[0].title).toBe("Two Sum");
     expect(remainingProblems[0].judge_ready).toBe(true);
 
     const movedTestcases = await testPrisma.testCase.findMany({
       where: {
-        problem_id: 102,
+        problem_id: 101,
       },
     });
     expect(movedTestcases).toHaveLength(1);
@@ -107,10 +107,23 @@ describe("reconcileProblemCatalog", () => {
 
     const movedSubmissions = await testPrisma.submission.findMany({
       where: {
-        problem_id: 102,
+        problem_id: 101,
       },
     });
     expect(movedSubmissions).toHaveLength(1);
     expect(movedSubmissions[0].submission_id).toBe(1001);
+
+    const translations = await testPrisma.problemTranslation.findMany({
+      where: {
+        problem_id: 101,
+      },
+      orderBy: {
+        locale: "asc",
+      },
+    });
+    expect(translations.map((translation) => translation.locale)).toEqual([
+      "en",
+      "zh-CN",
+    ]);
   });
 });

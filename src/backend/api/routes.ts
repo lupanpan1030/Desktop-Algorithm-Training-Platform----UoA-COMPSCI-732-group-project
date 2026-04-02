@@ -172,6 +172,8 @@ const models: TsoaRoute.Models = {
             "completionState": {"ref":"CompletionState","required":true},
             "source": {"dataType":"string","required":true},
             "locale": {"dataType":"string","required":true},
+            "defaultLocale": {"dataType":"string","required":true},
+            "availableLocales": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "judgeReady": {"dataType":"boolean","required":true},
@@ -190,6 +192,8 @@ const models: TsoaRoute.Models = {
             "createdAt": {"dataType":"string","required":true},
             "source": {"dataType":"string","required":true},
             "locale": {"dataType":"string","required":true},
+            "defaultLocale": {"dataType":"string","required":true},
+            "availableLocales": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "judgeReady": {"dataType":"boolean","required":true},
@@ -205,6 +209,7 @@ const models: TsoaRoute.Models = {
             "title": {"dataType":"string","required":true,"validators":{"minLength":{"value":5},"maxLength":{"value":100}}},
             "description": {"dataType":"string","required":true,"validators":{"minLength":{"value":10},"maxLength":{"value":200000}}},
             "difficulty": {"ref":"Difficulty","required":true},
+            "locale": {"dataType":"string","validators":{"minLength":{"value":2},"maxLength":{"value":16}}},
         },
         "additionalProperties": false,
     },
@@ -215,6 +220,7 @@ const models: TsoaRoute.Models = {
             "title": {"dataType":"string","validators":{"minLength":{"value":5},"maxLength":{"value":100}}},
             "description": {"dataType":"string","validators":{"minLength":{"value":10},"maxLength":{"value":200000}}},
             "difficulty": {"ref":"Difficulty"},
+            "locale": {"dataType":"string","validators":{"minLength":{"value":2},"maxLength":{"value":16}}},
         },
         "additionalProperties": false,
     },
@@ -539,6 +545,8 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProblemsController_getAllProblems: Record<string, TsoaRoute.ParameterSchema> = {
+                locale: {"in":"query","name":"locale","dataType":"string"},
+                strictLocale: {"in":"query","name":"strictLocale","dataType":"boolean"},
         };
         app.get('/problems',
             ...(fetchMiddlewares<RequestHandler>(ProblemsController)),
@@ -569,6 +577,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProblemsController_getProblem: Record<string, TsoaRoute.ParameterSchema> = {
                 problemId: {"in":"path","name":"problemId","required":true,"dataType":"double"},
+                locale: {"in":"query","name":"locale","dataType":"string"},
+                strictLocale: {"in":"query","name":"strictLocale","dataType":"boolean"},
         };
         app.get('/problems/:problemId',
             ...(fetchMiddlewares<RequestHandler>(ProblemsController)),

@@ -39,8 +39,18 @@ export async function initializeDatabase() {
     await seedFreshDatabase();
   }
 
+  const {
+    backfillProblemTranslationsFromBase,
+    syncAllProblemPrimaryLocalizations,
+  } = await import("../problem-catalog/problem-localization");
+  await backfillProblemTranslationsFromBase((await import("./prisma")).getPrisma());
+
   const { reconcileProblemCatalog } = await import("../problem-catalog/reconcile-problem-catalog");
   const reconciliation = await reconcileProblemCatalog();
+
+  const prisma = (await import("./prisma")).getPrisma();
+  await backfillProblemTranslationsFromBase(prisma);
+  await syncAllProblemPrimaryLocalizations(prisma);
 
   if (reconciliation.mergedProblems > 0) {
     console.log(

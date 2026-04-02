@@ -28,12 +28,18 @@ const blankValues: ProblemMutationPayload = {
   title: "",
   description: "",
   difficulty: "EASY",
+  locale: "en",
 };
 
 const difficultyOptions = [
   { value: "EASY", label: "Easy" },
   { value: "MEDIUM", label: "Medium" },
   { value: "HARD", label: "Hard" },
+];
+
+const localeOptions = [
+  { value: "en", label: "English" },
+  { value: "zh-CN", label: "中文" },
 ];
 
 export default function ProblemFormDialog({
@@ -94,6 +100,7 @@ export default function ProblemFormDialog({
         title: form.title.trim(),
         description: form.description.trim(),
         difficulty: form.difficulty,
+        locale: form.locale ?? "en",
       });
     } catch (error) {
       const message =
@@ -149,6 +156,21 @@ export default function ProblemFormDialog({
           size="small"
         >
           {difficultyOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="Content Locale"
+          value={form.locale ?? "en"}
+          onChange={updateField("locale")}
+          fullWidth
+          size="small"
+        >
+          {localeOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
             </MenuItem>

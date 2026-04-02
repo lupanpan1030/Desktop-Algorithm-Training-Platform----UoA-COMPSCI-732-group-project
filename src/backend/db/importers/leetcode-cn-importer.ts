@@ -11,6 +11,7 @@ const DEFAULT_SIBLING_SOURCE_PATH = path.resolve(
 );
 
 const LEETCODE_SOURCE = "LEETCODE";
+const LEETCODE_EN_LOCALE = "en";
 const LEETCODE_CN_LOCALE = "zh-CN";
 
 type RawTopicTag = {
@@ -57,6 +58,11 @@ export type NormalizedImportedProblem = {
   externalProblemId: string | null;
   locale: string;
   sampleTestcase: string | null;
+  translations: Array<{
+    locale: string;
+    title: string;
+    description: string;
+  }>;
   tags: Array<{
     name: string;
     slug: string | null;
@@ -227,14 +233,47 @@ export function normalizeLeetCodeCnQuestion(
   question: RawLeetCodeCnQuestion,
   sourceFile: string
 ): NormalizedImportedProblem | null {
-  const title = firstNonEmptyText(question.translatedTitle, question.title);
-  const description = firstNonEmptyText(question.translatedContent, question.content);
+  const englishTitle = firstNonEmptyText(question.title);
+  const englishDescription = firstNonEmptyText(question.content);
+  const chineseTitle = firstNonEmptyText(question.translatedTitle);
+  const chineseDescription = firstNonEmptyText(question.translatedContent);
   const sourceSlug = firstNonEmptyText(question.titleSlug);
   const difficulty = normalizeDifficulty(question.difficulty);
 
-  if (!title || !description || !sourceSlug || !difficulty) {
+  if ((!englishTitle && !chineseTitle) || (!englishDescription && !chineseDescription) || !sourceSlug || !difficulty) {
     return null;
   }
+
+  const translations = [
+    englishTitle && englishDescription
+      ? {
+          locale: LEETCODE_EN_LOCALE,
+          title: englishTitle,
+          description: englishDescription,
+        }
+      : null,
+    chineseTitle && chineseDescription
+      ? {
+          locale: LEETCODE_CN_LOCALE,
+          title: chineseTitle,
+          description: chineseDescription,
+        }
+      : null,
+  ].filter(
+    (translation): translation is {
+      locale: string;
+      title: string;
+      description: string;
+    } => Boolean(translation)
+  );
+
+  if (translations.length === 0) {
+    return null;
+  }
+
+  const preferredTranslation =
+    translations.find((translation) => translation.locale === LEETCODE_EN_LOCALE) ??
+    translations[0];
 
   const seenTagNames = new Set<string>();
   const tags = (question.topicTags ?? [])
@@ -261,15 +300,16 @@ export function normalizeLeetCodeCnQuestion(
     });
 
   return {
-    importKey: `${LEETCODE_SOURCE}:${LEETCODE_CN_LOCALE}:${sourceSlug}`,
-    title,
-    description,
+    importKey: `${LEETCODE_SOURCE}:${sourceSlug}`,
+    title: preferredTranslation.title,
+    description: preferredTranslation.description,
     difficulty,
     source: LEETCODE_SOURCE,
     sourceSlug,
     externalProblemId: firstNonEmptyText(question.questionFrontendId),
-    locale: LEETCODE_CN_LOCALE,
+    locale: preferredTranslation.locale,
     sampleTestcase: firstNonEmptyText(question.sampleTestCase),
+    translations,
     tags,
     starterCodes,
     sourceFile,

@@ -1,5 +1,9 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { getPrisma } from "../prisma/prisma";
+import {
+  syncProblemPrimaryLocalization,
+  upsertProblemTranslation,
+} from "./problem-localization";
 import { seedProblemIdentities } from "./seed-problem-identities";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
@@ -7,6 +11,7 @@ type DbClient = PrismaClient | Prisma.TransactionClient;
 type ProblemIdentityRow = {
   problem_id: number;
   title: string;
+  description?: string;
   source: string;
   locale: string;
   source_slug: string | null;
@@ -21,8 +26,11 @@ function chooseCanonicalProblem(problems: ProblemIdentityRow[]) {
     const score = (problem: ProblemIdentityRow) => {
       let total = 0;
 
-      if (problem.locale === "zh-CN") {
+      if (problem.locale === "en") {
         total += 8;
+      }
+      if (problem.locale === "zh-CN") {
+        total += 6;
       }
       if (problem.import_key) {
         total += 4;
@@ -133,7 +141,42 @@ async function mergeDuplicateProblemGroup(
     (problem) => problem.problem_id !== canonical.problem_id
   );
 
+  await upsertProblemTranslation(db, canonical.problem_id, {
+    locale: canonical.locale,
+    title: canonical.title,
+    description:
+      canonical.description ??
+      (await db.problem.findUnique({
+        where: {
+          problem_id: canonical.problem_id,
+        },
+        select: {
+          description: true,
+        },
+      }))?.description ??
+      "",
+  });
+
   for (const duplicate of duplicates) {
+    const duplicateDetails = await db.problem.findUnique({
+      where: {
+        problem_id: duplicate.problem_id,
+      },
+      select: {
+        locale: true,
+        title: true,
+        description: true,
+      },
+    });
+
+    if (duplicateDetails) {
+      await upsertProblemTranslation(db, canonical.problem_id, {
+        locale: duplicateDetails.locale,
+        title: duplicateDetails.title,
+        description: duplicateDetails.description,
+      });
+    }
+
     await moveProblemTags(db, duplicate.problem_id, canonical.problem_id);
     await moveStarterCodes(db, duplicate.problem_id, canonical.problem_id);
 
@@ -202,6 +245,7 @@ export async function reconcileProblemCatalog(
     select: {
       problem_id: true,
       title: true,
+      description: true,
       source: true,
       locale: true,
       source_slug: true,
@@ -250,6 +294,8 @@ export async function reconcileProblemCatalog(
           judge_ready: testcaseCount > 0,
         },
       });
+
+      await syncProblemPrimaryLocalization(prisma, result.canonicalProblemId);
     }
   }
 

@@ -8,6 +8,7 @@ import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
 import LanguageAdmin from "./pages/LanguageAdmin.tsx";
 import ProblemAdmin from "./pages/ProblemAdmin.tsx";
+import { ProblemLocaleProvider } from "./problem-locale";
 import './styles/global.css';
 
 function App() {
@@ -26,34 +27,36 @@ function App() {
     const theme = useAppTheme(darkMode);
 
     return (
-        <HashRouter>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    height: '100vh', 
-                    width: '100vw',
-                    overflow: 'hidden'
-                }}>
-                    <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+        <ProblemLocaleProvider>
+            <HashRouter>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
                     <div style={{ 
-                        flex: 1, 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        width: '100%',
+                        height: '100vh', 
+                        width: '100vw',
                         overflow: 'hidden'
                     }}>
-                        <Routes>
-                            <Route path="/" element={<ListPage />} />
-                            <Route path="/problems/:id" element={<DetailPage />} />
-                            <Route path="/admin/problems" element={<ProblemAdmin />} />
-                            <Route path="/languages" element={<LanguageAdmin />} />
-                        </Routes>
+                        <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+                        <div style={{ 
+                            flex: 1, 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            width: '100%',
+                            overflow: 'hidden'
+                        }}>
+                            <Routes>
+                                <Route path="/" element={<ListPage />} />
+                                <Route path="/problems/:id" element={<DetailPage />} />
+                                <Route path="/admin/problems" element={<ProblemAdmin />} />
+                                <Route path="/languages" element={<LanguageAdmin />} />
+                            </Routes>
+                        </div>
                     </div>
-                </div>
-            </ThemeProvider>
-        </HashRouter>
+                </ThemeProvider>
+            </HashRouter>
+        </ProblemLocaleProvider>
     );
 }
 

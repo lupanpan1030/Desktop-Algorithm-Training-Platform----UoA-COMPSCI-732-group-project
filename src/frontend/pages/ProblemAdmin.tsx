@@ -27,11 +27,13 @@ import {
   TestCaseMutationPayload,
   useApi,
 } from "../hooks/useApi";
+import { useProblemLocale } from "../problem-locale";
 
 const blankProblemForm: ProblemMutationPayload = {
   title: "",
   description: "",
   difficulty: "EASY",
+  locale: "en",
 };
 
 const blankTestCaseForm: TestCaseMutationPayload = {
@@ -72,6 +74,7 @@ export default function ProblemAdmin() {
     updateTestCase,
     deleteTestCase,
   } = useApi();
+  const { locale, setLocale } = useProblemLocale();
 
   const [problems, setProblems] = useState<ProblemSummary[]>([]);
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(null);
@@ -122,7 +125,7 @@ export default function ProblemAdmin() {
       setPageError(null);
 
       try {
-        const list = await getProblems();
+        const list = await getProblems(locale, true);
         setProblems(list);
         setSelectedProblemId((currentProblemId) => {
           const nextProblemId =
@@ -142,7 +145,7 @@ export default function ProblemAdmin() {
         setPageLoading(false);
       }
     },
-    [getProblems]
+    [getProblems, locale]
   );
 
   const loadProblemWorkspace = useCallback(
@@ -152,7 +155,7 @@ export default function ProblemAdmin() {
 
       try {
         const [problem, testcaseList] = await Promise.all([
-          getProblem(problemId),
+          getProblem(problemId, locale, true),
           getTestCases(problemId),
         ]);
 
@@ -166,7 +169,7 @@ export default function ProblemAdmin() {
         setDetailLoading(false);
       }
     },
-    [getProblem, getTestCases]
+    [getProblem, getTestCases, locale]
   );
 
   useEffect(() => {
@@ -214,12 +217,15 @@ export default function ProblemAdmin() {
       open: true,
       mode: "add",
       problemId: null,
-      values: blankProblemForm,
+      values: {
+        ...blankProblemForm,
+        locale,
+      },
     });
   };
 
   const handleOpenEditProblem = async (problem: ProblemSummary) => {
-    const detail = await getProblem(problem.problemId);
+    const detail = await getProblem(problem.problemId, locale, true);
     if (!detail) {
       showSnackbar("Failed to load the selected problem.", "error");
       return;
@@ -234,6 +240,7 @@ export default function ProblemAdmin() {
         title: detail.title,
         description: detail.description,
         difficulty: detail.difficulty,
+        locale: detail.locale,
       },
     });
   };
@@ -370,7 +377,19 @@ export default function ProblemAdmin() {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Button
+              variant={locale === "en" ? "contained" : "outlined"}
+              onClick={() => setLocale("en")}
+            >
+              English
+            </Button>
+            <Button
+              variant={locale === "zh-CN" ? "contained" : "outlined"}
+              onClick={() => setLocale("zh-CN")}
+            >
+              中文
+            </Button>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -465,6 +484,8 @@ export default function ProblemAdmin() {
                               completionState: selectedProblem.completionState,
                               source: selectedProblem.source,
                               locale: selectedProblem.locale,
+                              defaultLocale: selectedProblem.defaultLocale,
+                              availableLocales: selectedProblem.availableLocales,
                               sourceSlug: selectedProblem.sourceSlug,
                               externalProblemId: selectedProblem.externalProblemId,
                               judgeReady: selectedProblem.judgeReady,
@@ -481,11 +502,21 @@ export default function ProblemAdmin() {
                   <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                     <Chip label={selectedProblem.difficulty} color="primary" variant="outlined" />
                     <Chip label={`${selectedProblem.source} / ${selectedProblem.locale}`} variant="outlined" />
+                    <Chip label={`default: ${selectedProblem.defaultLocale}`} variant="outlined" />
                     <Chip
                       label={selectedProblem.judgeReady ? "Judge Ready" : "Needs Tests"}
                       color={selectedProblem.judgeReady ? "success" : "default"}
                     />
                     <Chip label={`${selectedProblem.testcaseCount} testcases`} variant="outlined" />
+                    {selectedProblem.availableLocales?.map((availableLocale) => (
+                      <Chip
+                        key={availableLocale}
+                        label={availableLocale}
+                        size="small"
+                        variant={availableLocale === selectedProblem.locale ? "filled" : "outlined"}
+                        onClick={() => setLocale(availableLocale)}
+                      />
+                    ))}
                     {selectedProblem.sourceSlug && (
                       <Chip label={`slug: ${selectedProblem.sourceSlug}`} variant="outlined" />
                     )}

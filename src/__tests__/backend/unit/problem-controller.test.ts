@@ -49,7 +49,9 @@ describe("ProblemsController", () => {
           title: "A",
           difficulty: "EASY",
           source: "LOCAL",
-          locale: "local",
+          locale: "en",
+          defaultLocale: "en",
+          availableLocales: ["en"],
           sourceSlug: null,
           externalProblemId: null,
           judgeReady: true,
@@ -61,6 +63,8 @@ describe("ProblemsController", () => {
           difficulty: "HARD",
           source: "LEETCODE",
           locale: "zh-CN",
+          defaultLocale: "zh-CN",
+          availableLocales: ["zh-CN"],
           sourceSlug: "b",
           externalProblemId: "2",
           judgeReady: false,
@@ -70,6 +74,7 @@ describe("ProblemsController", () => {
       serviceMock.getAllProblems.mockResolvedValue(fakeSummaries);
 
       const res = await controller.getAllProblems();
+      expect(serviceMock.getAllProblems).toHaveBeenCalledWith(undefined, undefined);
       expect(serviceMock.getAllProblems).toHaveBeenCalledOnce();
       expect(res).toEqual(fakeSummaries);
     });
@@ -84,7 +89,9 @@ describe("ProblemsController", () => {
         difficulty: "MEDIUM",
         createdAt: new Date().toISOString(),
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
         sourceSlug: null as string | null,
         externalProblemId: null as string | null,
         judgeReady: true,
@@ -94,7 +101,7 @@ describe("ProblemsController", () => {
       serviceMock.getProblem.mockResolvedValue(fakeDetail);
 
       const res = await controller.getProblem(2);
-      expect(serviceMock.getProblem).toHaveBeenCalledWith(2);
+      expect(serviceMock.getProblem).toHaveBeenCalledWith(2, undefined, undefined);
       expect(serviceMock.getProblem).toHaveBeenCalledOnce();
       expect(res).toEqual(fakeDetail);
     });
@@ -104,7 +111,7 @@ describe("ProblemsController", () => {
       await expect(controller.getProblem(999)).rejects.toBeInstanceOf(
         NotFoundError
       );
-      expect(serviceMock.getProblem).toHaveBeenCalledWith(999);
+      expect(serviceMock.getProblem).toHaveBeenCalledWith(999, undefined, undefined);
       expect(serviceMock.getProblem).toHaveBeenCalledOnce();
     });
   });
@@ -123,7 +130,9 @@ describe("ProblemsController", () => {
         difficulty: "HARD",
         createdAt: new Date().toISOString(),
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
         sourceSlug: null as string | null,
         externalProblemId: null as string | null,
         judgeReady: false,
@@ -151,6 +160,8 @@ describe("ProblemsController", () => {
         createdAt: new Date().toISOString(),
         source: "LEETCODE",
         locale: "zh-CN",
+        defaultLocale: "zh-CN",
+        availableLocales: ["zh-CN"],
         sourceSlug: "d",
         externalProblemId: "4",
         judgeReady: true,

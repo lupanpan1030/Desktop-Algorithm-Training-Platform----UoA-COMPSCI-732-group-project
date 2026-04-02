@@ -89,14 +89,25 @@ const createWindow = (): void => {
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Open the DevTools in development mode
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
+  // Only open DevTools when explicitly requested so development starts cleanly.
+  if (process.env.NODE_ENV === 'development' && process.env.OPEN_DEVTOOLS === 'true') {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
-  
-  // Listen for page loading completion events and print debugging information
+
+  mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
+    console.error(
+      `Renderer failed to load (${errorCode}) ${errorDescription} at ${validatedURL}`,
+    );
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_, details) => {
+    console.error(
+      `Renderer process exited: reason=${details.reason} exitCode=${details.exitCode}`,
+    );
+  });
+
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('Page loading finished. Monaco Editor began to initialize');
+    console.log('Renderer finished loading.');
   });
 };
 

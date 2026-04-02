@@ -1,10 +1,13 @@
 import React from "react";
-import { AppBar, Toolbar, IconButton, Box } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { Brightness4, Brightness7 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { ResponsiveButton } from "./ResponsiveComponents";
+import { useProblemLocale } from "../../problem-locale";
 
 export default function NavBar({ darkMode, setDarkMode }) {
+  const { locale, setLocale } = useProblemLocale();
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -34,6 +37,21 @@ export default function NavBar({ darkMode, setDarkMode }) {
             Problem Admin
           </ResponsiveButton>
         </Box>
+
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={locale}
+          onChange={(_, nextLocale) => {
+            if (nextLocale) {
+              setLocale(nextLocale);
+            }
+          }}
+          sx={{ mr: 1 }}
+        >
+          <ToggleButton value="en">EN</ToggleButton>
+          <ToggleButton value="zh-CN">中文</ToggleButton>
+        </ToggleButtonGroup>
 
         <IconButton
           onClick={() => setDarkMode(!darkMode)}

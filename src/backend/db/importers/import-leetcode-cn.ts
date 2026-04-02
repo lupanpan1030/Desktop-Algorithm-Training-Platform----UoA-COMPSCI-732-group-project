@@ -3,6 +3,10 @@ import fs from "fs/promises";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { initializeDatabase } from "../prisma/initialize-database";
 import { toSqliteFileUrl } from "../prisma/bootstrap-sqlite";
+import {
+  syncProblemPrimaryLocalization,
+  upsertProblemTranslation,
+} from "../problem-catalog/problem-localization";
 import { reconcileProblemCatalog } from "../problem-catalog/reconcile-problem-catalog";
 import {
   getImportUsage,
@@ -19,9 +23,17 @@ function formatPreview(problem: NormalizedImportedProblem) {
 }
 
 function buildProblemMatchConditions(problem: NormalizedImportedProblem) {
+  const legacyImportKeys = problem.translations.map(
+    (translation) => `${problem.source}:${translation.locale}:${problem.sourceSlug}`
+  );
   const conditions: Prisma.ProblemWhereInput[] = [
     {
       import_key: problem.importKey,
+    },
+    {
+      import_key: {
+        in: legacyImportKeys,
+      },
     },
     {
       source_slug: problem.sourceSlug,
@@ -45,8 +57,13 @@ function isExistingMatch(
     external_problem_id: string | null;
   }
 ) {
+  const legacyImportKeys = problem.translations.map(
+    (translation) => `${problem.source}:${translation.locale}:${problem.sourceSlug}`
+  );
+
   return (
     existingProblem.import_key === problem.importKey ||
+    legacyImportKeys.includes(existingProblem.import_key ?? "") ||
     existingProblem.source_slug === problem.sourceSlug ||
     (problem.externalProblemId != null &&
       existingProblem.external_problem_id === problem.externalProblemId)
@@ -228,6 +245,12 @@ async function main() {
                 sample_testcase: problem.sampleTestcase,
               },
             });
+
+        for (const translation of problem.translations) {
+          await upsertProblemTranslation(tx, savedProblem.problem_id, translation);
+        }
+
+        await syncProblemPrimaryLocalization(tx, savedProblem.problem_id);
 
         for (const snippet of problem.starterCodes) {
           await tx.problemStarterCode.upsert({

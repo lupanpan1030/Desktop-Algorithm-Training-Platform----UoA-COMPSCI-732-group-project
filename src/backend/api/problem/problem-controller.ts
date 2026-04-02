@@ -10,6 +10,7 @@ import {
   Route,
   Body,
   Path,
+  Query,
   Response,
   SuccessResponse,
   Tags,
@@ -34,8 +35,11 @@ export class ProblemsController extends Controller {
    */
   @SuccessResponse("200", "OK")
   @Get()
-  public async getAllProblems(): Promise<ProblemSummary[]> {
-    return this.problemsService.getAllProblems();
+  public async getAllProblems(
+    @Query() locale?: string,
+    @Query() strictLocale?: boolean
+  ): Promise<ProblemSummary[]> {
+    return this.problemsService.getAllProblems(locale, strictLocale);
   }
 
   /**
@@ -45,8 +49,12 @@ export class ProblemsController extends Controller {
   @Response<NotFoundError>(404, "Problem not found")
   @SuccessResponse("200", "OK")
   @Get("{problemId}")
-  public async getProblem(@Path() problemId: number): Promise<ProblemDetails> {
-    return this.problemsService.getProblem(problemId);
+  public async getProblem(
+    @Path() problemId: number,
+    @Query() locale?: string,
+    @Query() strictLocale?: boolean
+  ): Promise<ProblemDetails> {
+    return this.problemsService.getProblem(problemId, locale, strictLocale);
   }
 
   /**

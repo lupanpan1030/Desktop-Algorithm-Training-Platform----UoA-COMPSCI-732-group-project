@@ -11,6 +11,12 @@ import {
 } from "./problem";
 import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError } from "../../utils/errors/not-found-error";
+import {
+  DEFAULT_PROBLEM_LOCALE,
+  listAvailableProblemLocales,
+  normalizeProblemLocale,
+  resolveProblemLocalization,
+} from "../../db/problem-catalog/problem-localization";
 
 const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
   if (statuses.some(s => s === 'ACCEPTED')) return 'Completed';
@@ -19,15 +25,40 @@ const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
 };
 
 export class ProblemsService {
-  private mapProblemDetails(problem: ProblemWithCounts): ProblemDetails {
+  private ensureLocaleAvailable(
+    availableLocales: string[],
+    preferredLocale?: string | null,
+    strictLocale = false
+  ) {
+    if (!strictLocale || !preferredLocale) {
+      return;
+    }
+
+    const normalizedLocale = normalizeProblemLocale(preferredLocale);
+    if (!availableLocales.includes(normalizedLocale)) {
+      throw new NotFoundError("Problem not available in the requested locale");
+    }
+  }
+
+  private mapProblemDetails(
+    problem: ProblemWithCounts,
+    preferredLocale = DEFAULT_PROBLEM_LOCALE,
+    strictLocale = false
+  ): ProblemDetails {
+    const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
+    const availableLocales = listAvailableProblemLocales(problem);
+    this.ensureLocaleAvailable(availableLocales, preferredLocale, strictLocale);
+
     return {
       problemId: problem.problem_id,
-      title: problem.title,
-      description: problem.description,
+      title: selectedLocalization.title,
+      description: selectedLocalization.description,
       difficulty: problem.difficulty,
       createdAt: problem.created_at.toISOString(),
       source: problem.source,
-      locale: problem.locale,
+      locale: selectedLocalization.locale,
+      defaultLocale: normalizeProblemLocale(problem.locale),
+      availableLocales,
       sourceSlug: problem.source_slug,
       externalProblemId: problem.external_problem_id,
       judgeReady: problem.judge_ready,
@@ -39,34 +70,57 @@ export class ProblemsService {
   /**
    * Retrieves a list of all problems with summary information.
    */
-  public async getAllProblems(): Promise<ProblemSummary[]> {
+  public async getAllProblems(
+    preferredLocale = DEFAULT_PROBLEM_LOCALE,
+    strictLocale = false
+  ): Promise<ProblemSummary[]> {
     const problems = await ProblemsDao.getAllProblems();
-    return problems.map((problem) => ({
+    const normalizedLocale = normalizeProblemLocale(preferredLocale);
+
+    return problems
+      .filter((problem) => {
+        if (!strictLocale) {
+          return true;
+        }
+
+        return listAvailableProblemLocales(problem).includes(normalizedLocale);
+      })
+      .map((problem) => {
+      const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
+
+      return {
       problemId: problem.problem_id,
-      title: problem.title,
+      title: selectedLocalization.title,
       difficulty: problem.difficulty,
       completionState: deriveState(
         problem.submissions.map((s) => s.status)
       ),
       source: problem.source,
-      locale: problem.locale,
+      locale: selectedLocalization.locale,
+      defaultLocale: normalizeProblemLocale(problem.locale),
+      availableLocales: listAvailableProblemLocales(problem),
       sourceSlug: problem.source_slug,
       externalProblemId: problem.external_problem_id,
       judgeReady: problem.judge_ready,
       testcaseCount: problem._count.test_cases,
-    }));
+    };
+    });
   }
 
   /**
    * Retrieves the detailed information of a problem by its ID.
    * @param problemId The ID of the problem.
    */
-  public async getProblem(problemId: number): Promise<ProblemDetails> {
+  public async getProblem(
+    problemId: number,
+    preferredLocale = DEFAULT_PROBLEM_LOCALE,
+    strictLocale = false
+  ): Promise<ProblemDetails> {
     const problem = await ProblemsDao.getProblemById(problemId);
     if (!problem) {
       throw new NotFoundError("Problem not found");
     }
-    return this.mapProblemDetails(problem);
+    return this.mapProblemDetails(problem, preferredLocale, strictLocale);
   }
 
   /**
@@ -77,7 +131,7 @@ export class ProblemsService {
     params: CreateProblemParams
   ): Promise<ProblemDetails> {
     const problem = await ProblemsDao.createProblem(params);
-    return this.mapProblemDetails(problem);
+    return this.mapProblemDetails(problem, params.locale);
   }
 
   /**
@@ -93,7 +147,7 @@ export class ProblemsService {
     if (!problem) {
       throw new NotFoundError("Problem not found");
     }
-    return this.mapProblemDetails(problem);
+    return this.mapProblemDetails(problem, params.locale);
   }
 
   /**

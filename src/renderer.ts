@@ -12,7 +12,6 @@
  * https://electronjs.org/docs/tutorial/security
  */
 
-import './index.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import Root from './frontend';
@@ -30,5 +29,3 @@ const root = createRoot(container);
 
 // Render your React component
 root.render(React.createElement(Root));
-
-console.log('👋 This message is being logged by "renderer.js", included via webpack');

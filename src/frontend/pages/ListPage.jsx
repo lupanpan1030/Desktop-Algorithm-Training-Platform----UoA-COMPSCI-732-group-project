@@ -4,24 +4,26 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import FiltersPanel from "../components/FiltersPanel";
 import ProblemList from "../components/ProblemList";
 import { useApi } from "../hooks/useApi";
+import { useProblemLocale } from "../problem-locale";
 
 export default function ListPage() {
   const [problems, setProblems] = useState([]);
   const [difficultyFilter, setDifficultyFilter] = useState([]); // [] = show all
   const [statusFilter, setStatusFilter] = useState([]); // [] = show all
   const { getProblems, loading, error } = useApi();
+  const { locale } = useProblemLocale();
 
   const [filtersOpen, setFiltersOpen] = useState(false); // sidebar collapsed by default
 
   useEffect(() => {
     async function fetchData() {
-      const data = await getProblems();
+      const data = await getProblems(locale, true);
       if (data) {
         setProblems(data);
       }
     }
     fetchData();
-  }, [getProblems]);
+  }, [getProblems, locale]);
 
   const visibleProblems = useMemo(() => {
     return problems.filter((p) => {

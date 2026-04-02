@@ -30,6 +30,7 @@ if (
 
 import React from 'react';
 import App from './App';
+import AppErrorBoundary from './components/common/AppErrorBoundary';
 import './styles/global.css';
 
 // This file serves as the main entry point for the React application
@@ -38,7 +39,9 @@ import './styles/global.css';
 export default function Root() {
   return (
     <React.StrictMode>
-      <App />
+      <AppErrorBoundary>
+        <App />
+      </AppErrorBoundary>
     </React.StrictMode>
   );
 }

@@ -9,6 +9,8 @@ export interface ProblemSummary {
   completionState?: string;
   source: string;
   locale: string;
+  defaultLocale: string;
+  availableLocales: string[];
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
@@ -77,6 +79,7 @@ export interface ProblemMutationPayload {
   title: string;
   description: string;
   difficulty: string;
+  locale?: string;
 }
 
 export interface TestCaseMutationPayload {
@@ -93,13 +96,14 @@ interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: any;
   headers?: Record<string, string>;
+  params?: Record<string, string | number | boolean | undefined>;
 }
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const request = useCallback(async <T>({ url, method = 'GET', body, headers }: ApiOptions): Promise<T> => {
+  const request = useCallback(async <T>({ url, method = 'GET', body, headers, params }: ApiOptions): Promise<T> => {
     setLoading(true);
     setError(null);
     
@@ -108,6 +112,7 @@ export const useApi = () => {
         url,
         method,
         data: body,
+        params,
         headers: {
           'Content-Type': 'application/json',
           ...headers
@@ -123,17 +128,36 @@ export const useApi = () => {
     }
   }, []);
 
-  const getProblems = useCallback(async (): Promise<ProblemSummary[]> => {
+  const getProblems = useCallback(async (
+    locale?: string,
+    strictLocale = false
+  ): Promise<ProblemSummary[]> => {
     try {
-      return await request<ProblemSummary[]>({ url: '/problems' });
+      return await request<ProblemSummary[]>({
+        url: '/problems',
+        params: {
+          locale,
+          strictLocale,
+        },
+      });
     } catch {
       return [];
     }
   }, [request]);
 
-  const getProblem = useCallback(async (id: number): Promise<ProblemDetails | null> => {
+  const getProblem = useCallback(async (
+    id: number,
+    locale?: string,
+    strictLocale = false
+  ): Promise<ProblemDetails | null> => {
     try {
-      return await request<ProblemDetails>({ url: `/problems/${id}` });
+      return await request<ProblemDetails>({
+        url: `/problems/${id}`,
+        params: {
+          locale,
+          strictLocale,
+        },
+      });
     } catch {
       return null;
     }

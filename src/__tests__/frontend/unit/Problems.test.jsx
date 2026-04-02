@@ -3,8 +3,8 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import ListPage from '../../../frontend/pages/ListPage';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import axios from 'axios';
 import { useApi } from '../../../frontend/hooks/useApi';
+import { ProblemLocaleProvider } from '../../../frontend/problem-locale';
 
 // Mock the useApi hook
 vi.mock('../../../frontend/hooks/useApi', () => ({
@@ -19,7 +19,12 @@ const mockProblems = [
 ];
 
 // Utility render function with router
-const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
+const renderWithRouter = (ui) =>
+  render(
+    <ProblemLocaleProvider>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </ProblemLocaleProvider>
+  );
 
 beforeEach(() => {
   // Mock the useApi hook implementation

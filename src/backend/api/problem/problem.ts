@@ -12,6 +12,8 @@ export interface ProblemSummary {
   completionState: CompletionState; // optional field for completed status
   source: string;
   locale: string;
+  defaultLocale: string;
+  availableLocales: string[];
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
@@ -27,6 +29,8 @@ export interface ProblemDetails {
   createdAt: string; // ISO date string
   source: string;
   locale: string;
+  defaultLocale: string;
+  availableLocales: string[];
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
@@ -42,6 +46,13 @@ export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
         status: true;
       };
     };
+    translations: {
+      select: {
+        locale: true;
+        title: true;
+        description: true;
+      };
+    };
     _count: {
       select: {
         test_cases: true;
@@ -52,6 +63,13 @@ export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
 
 export type ProblemWithCounts = Prisma.ProblemGetPayload<{
   include: {
+    translations: {
+      select: {
+        locale: true;
+        title: true;
+        description: true;
+      };
+    };
     _count: {
       select: {
         test_cases: true;
@@ -77,6 +95,12 @@ export class CreateProblemParams {
   public description!: string;
 
   public difficulty!: Difficulty;
+
+  /**
+   * @minLength 2
+   * @maxLength 16
+   */
+  public locale?: string;
 }
 
 
@@ -95,4 +119,10 @@ export class UpdateProblemParams {
   public description?: string;
 
   public difficulty?: Difficulty;
+
+  /**
+   * @minLength 2
+   * @maxLength 16
+   */
+  public locale?: string;
 }

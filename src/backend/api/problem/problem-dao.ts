@@ -3,6 +3,11 @@
 import { Difficulty } from "@prisma/client";
 import { ProblemWithCounts, ProblemWithStatuses } from "./problem";
 import { getPrisma } from "../../db/prisma/prisma";
+import {
+  normalizeProblemLocale,
+  syncProblemPrimaryLocalization,
+  upsertProblemTranslation,
+} from "../../db/problem-catalog/problem-localization";
 
 
 export class ProblemsDao {
@@ -19,6 +24,13 @@ export class ProblemsDao {
       include: {
         submissions: {
           select: { status: true },
+        },
+        translations: {
+          select: {
+            locale: true,
+            title: true,
+            description: true,
+          },
         },
         _count: {
           select: {
@@ -42,6 +54,13 @@ export class ProblemsDao {
         problem_id: problemId,
       },
       include: {
+        translations: {
+          select: {
+            locale: true,
+            title: true,
+            description: true,
+          },
+        },
         _count: {
           select: {
             test_cases: true,
@@ -59,15 +78,33 @@ export class ProblemsDao {
     title: string;
     description: string;
     difficulty: Difficulty;
+    locale?: string;
   }): Promise<ProblemWithCounts> {
-    return this.db.problem.create({
+    const locale = normalizeProblemLocale(params.locale);
+
+    const created = await this.db.problem.create({
       data: {
         title: params.title,
         description: params.description,
         difficulty: params.difficulty,
         judge_ready: false,
+        locale,
+        translations: {
+          create: {
+            locale,
+            title: params.title,
+            description: params.description,
+          },
+        },
       },
       include: {
+        translations: {
+          select: {
+            locale: true,
+            title: true,
+            description: true,
+          },
+        },
         _count: {
           select: {
             test_cases: true,
@@ -75,6 +112,9 @@ export class ProblemsDao {
         },
       },
     });
+
+    await syncProblemPrimaryLocalization(this.db, created.problem_id);
+    return (await this.getProblemById(created.problem_id)) as ProblemWithCounts;
   }
 
   /**
@@ -88,24 +128,67 @@ export class ProblemsDao {
       title?: string;
       description?: string;
       difficulty?: Difficulty;
+      locale?: string;
     }
   ): Promise<ProblemWithCounts | null> {
     try {
-      return await this.db.problem.update({
+      const targetProblem = await this.db.problem.findUnique({
         where: { problem_id: problemId },
-        data: {
-          title: params.title,
-          description: params.description,
-          difficulty: params.difficulty,
-        },
-        include: {
-          _count: {
+        select: {
+          problem_id: true,
+          locale: true,
+          title: true,
+          description: true,
+          translations: {
             select: {
-              test_cases: true,
+              locale: true,
+              title: true,
+              description: true,
             },
           },
         },
       });
+
+      if (!targetProblem) {
+        return null;
+      }
+
+      const locale = normalizeProblemLocale(params.locale ?? targetProblem.locale);
+      const currentTranslation =
+        locale === targetProblem.locale
+          ? {
+              locale: targetProblem.locale,
+              title: targetProblem.title,
+              description: targetProblem.description,
+            }
+          : targetProblem.translations.find(
+              (translation) => translation.locale === locale
+            ) ?? null;
+
+      await this.db.problem.update({
+        where: { problem_id: problemId },
+        data: {
+          difficulty: params.difficulty,
+          ...(locale === targetProblem.locale
+            ? {
+                title: params.title,
+                description: params.description,
+              }
+            : {}),
+        },
+      });
+
+      await upsertProblemTranslation(this.db, problemId, {
+        locale,
+        title: params.title ?? currentTranslation?.title ?? targetProblem.title,
+        description:
+          params.description ??
+          currentTranslation?.description ??
+          targetProblem.description,
+      });
+
+      await syncProblemPrimaryLocalization(this.db, problemId);
+      return await this.getProblemById(problemId);
     } catch (error) {
       return null; // Return null if the problem is not found
     }

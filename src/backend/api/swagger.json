@@ -362,6 +362,15 @@
 					"locale": {
 						"type": "string"
 					},
+					"defaultLocale": {
+						"type": "string"
+					},
+					"availableLocales": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
 					"sourceSlug": {
 						"type": "string",
 						"nullable": true
@@ -385,6 +394,8 @@
 					"completionState",
 					"source",
 					"locale",
+					"defaultLocale",
+					"availableLocales",
 					"judgeReady",
 					"testcaseCount"
 				],
@@ -415,6 +426,15 @@
 					"locale": {
 						"type": "string"
 					},
+					"defaultLocale": {
+						"type": "string"
+					},
+					"availableLocales": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
 					"sourceSlug": {
 						"type": "string",
 						"nullable": true
@@ -443,6 +463,8 @@
 					"createdAt",
 					"source",
 					"locale",
+					"defaultLocale",
+					"availableLocales",
 					"judgeReady",
 					"testcaseCount"
 				],
@@ -463,6 +485,11 @@
 					},
 					"difficulty": {
 						"$ref": "#/components/schemas/Difficulty"
+					},
+					"locale": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 16
 					}
 				},
 				"required": [
@@ -487,6 +514,11 @@
 					},
 					"difficulty": {
 						"$ref": "#/components/schemas/Difficulty"
+					},
+					"locale": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 16
 					}
 				},
 				"type": "object",
@@ -1144,7 +1176,24 @@
 					"Problems"
 				],
 				"security": [],
-				"parameters": []
+				"parameters": [
+					{
+						"in": "query",
+						"name": "locale",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "strictLocale",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
 			},
 			"post": {
 				"operationId": "CreateProblem",
@@ -1229,6 +1278,22 @@
 						"schema": {
 							"format": "double",
 							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "locale",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "strictLocale",
+						"required": false,
+						"schema": {
+							"type": "boolean"
 						}
 					}
 				]

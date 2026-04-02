@@ -1,18 +1,52 @@
 import React from 'react';
-import { Box, Typography, Divider } from '@mui/material';
+import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { marked } from 'marked';
 import DOMPurify from '../utils/dompurifyConfig';
 
-export default function ProblemContent({ problem }) {
+function formatLocaleLabel(locale) {
+    if (locale === 'zh-CN') {
+        return '中文';
+    }
+
+    return 'English';
+}
+
+export default function ProblemContent({ problem, onLocaleChange }) {
     if (!problem) {
         return <Typography>No problem data available</Typography>;
     }
 
     return (
         <Box sx={{ p: 2 }}>
-            <Typography variant="h4" gutterBottom>
-                {problem.title}
-            </Typography>
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                justifyContent="space-between"
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={2}
+            >
+                <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+                    {problem.title}
+                </Typography>
+
+                {problem.availableLocales?.length > 1 && (
+                    <ToggleButtonGroup
+                        exclusive
+                        size="small"
+                        value={problem.locale}
+                        onChange={(_, nextLocale) => {
+                            if (nextLocale && onLocaleChange) {
+                                onLocaleChange(nextLocale);
+                            }
+                        }}
+                    >
+                        {problem.availableLocales.map((locale) => (
+                            <ToggleButton key={locale} value={locale}>
+                                {formatLocaleLabel(locale)}
+                            </ToggleButton>
+                        ))}
+                    </ToggleButtonGroup>
+                )}
+            </Stack>
 
             {problem.difficulty && (
                 <Box

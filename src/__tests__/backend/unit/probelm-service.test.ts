@@ -32,6 +32,7 @@ describe("ProblemsService", () => {
         {
           problem_id: 1,
           title: "A",
+          description: "Desc A",
           difficulty: "EASY",
           source: "LOCAL",
           locale: "local",
@@ -40,10 +41,12 @@ describe("ProblemsService", () => {
           judge_ready: true,
           _count: { test_cases: 2 },
           submissions: [{status:"ACCEPTED"}],
+          translations: [] as Array<{ locale: string; title: string; description: string }>,
         },
         {
           problem_id: 2,
           title: "B",
+          description: "Desc B",
           difficulty: "HARD",
           source: "LEETCODE",
           locale: "zh-CN",
@@ -52,6 +55,7 @@ describe("ProblemsService", () => {
           judge_ready: false,
           _count: { test_cases: 0 },
           submissions: [{status:"RUNTIME_ERROR"}],
+          translations: [] as Array<{ locale: string; title: string; description: string }>,
         },
       ];
       (ProblemsDao.getAllProblems as Mock).mockResolvedValue(raw);
@@ -64,7 +68,9 @@ describe("ProblemsService", () => {
           difficulty: "EASY",
           completionState: "Completed",
           source: "LOCAL",
-          locale: "local",
+          locale: "en",
+          defaultLocale: "en",
+          availableLocales: ["en"],
           sourceSlug: null,
           externalProblemId: null,
           judgeReady: true,
@@ -77,6 +83,8 @@ describe("ProblemsService", () => {
           completionState:"Attempted",
           source: "LEETCODE",
           locale: "zh-CN",
+          defaultLocale: "zh-CN",
+          availableLocales: ["zh-CN"],
           sourceSlug: "problem-b",
           externalProblemId: "2",
           judgeReady: false,
@@ -84,6 +92,54 @@ describe("ProblemsService", () => {
         },
       ]);
       expect(ProblemsDao.getAllProblems).toHaveBeenCalledOnce();
+    });
+
+    it("filters out problems that do not exist in the requested locale when strict mode is enabled", async () => {
+      const raw = [
+        {
+          problem_id: 1,
+          title: "Two Sum",
+          description: "English only",
+          difficulty: "EASY",
+          source: "LOCAL",
+          locale: "en",
+          source_slug: null,
+          external_problem_id: null,
+          judge_ready: true,
+          _count: { test_cases: 2 },
+          submissions: [],
+          translations: [] as Array<{ locale: string; title: string; description: string }>,
+        },
+        {
+          problem_id: 2,
+          title: "Two Sum",
+          description: "English",
+          difficulty: "EASY",
+          source: "LEETCODE",
+          locale: "en",
+          source_slug: "two-sum",
+          external_problem_id: "1",
+          judge_ready: true,
+          _count: { test_cases: 2 },
+          submissions: [],
+          translations: [
+            {
+              locale: "zh-CN",
+              title: "两数之和",
+              description: "中文",
+            },
+          ],
+        },
+      ];
+      (ProblemsDao.getAllProblems as Mock).mockResolvedValue(raw);
+
+      const summaries = await svc.getAllProblems("zh-CN", true);
+      expect(summaries).toHaveLength(1);
+      expect(summaries[0]).toMatchObject({
+        problemId: 2,
+        title: "两数之和",
+        locale: "zh-CN",
+      });
     });
   });
 
@@ -101,6 +157,7 @@ describe("ProblemsService", () => {
         external_problem_id: null as string | null,
         judge_ready: true,
         sample_testcase: null as string | null,
+        translations: [] as Array<{ locale: string; title: string; description: string }>,
         _count: { test_cases: 2 },
         created_at: now,
       };
@@ -115,7 +172,9 @@ describe("ProblemsService", () => {
         difficulty: "MEDIUM",
         createdAt: now.toISOString(),
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
         sourceSlug: null,
         externalProblemId: null,
         judgeReady: true,
@@ -133,6 +192,29 @@ describe("ProblemsService", () => {
       expect(ProblemsDao.getProblemById).toHaveBeenCalledWith(999);
       expect(ProblemsDao.getProblemById).toHaveBeenCalledOnce();
     });
+
+    it("throws NotFoundError when strict locale mode is enabled and the problem has no translation for it", async () => {
+      const now = new Date();
+      (ProblemsDao.getProblemById as Mock).mockResolvedValue({
+        problem_id: 5,
+        title: "English Only",
+        description: "Desc",
+        difficulty: "MEDIUM",
+        source: "LOCAL",
+        locale: "en",
+        source_slug: null,
+        external_problem_id: null,
+        judge_ready: true,
+        sample_testcase: null,
+        translations: [] as Array<{ locale: string; title: string; description: string }>,
+        _count: { test_cases: 2 },
+        created_at: now,
+      });
+
+      await expect(svc.getProblem(5, "zh-CN", true)).rejects.toBeInstanceOf(
+        NotFoundError
+      );
+    });
   });
 
   describe("createProblem()", () => {
@@ -149,6 +231,7 @@ describe("ProblemsService", () => {
         external_problem_id: null as string | null,
         judge_ready: false,
         sample_testcase: null as string | null,
+        translations: [] as Array<{ locale: string; title: string; description: string }>,
         _count: { test_cases: 0 },
         created_at: now,
       };
@@ -168,7 +251,9 @@ describe("ProblemsService", () => {
         difficulty: "EASY",
         createdAt: now.toISOString(),
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
         sourceSlug: null,
         externalProblemId: null,
         judgeReady: false,
@@ -194,6 +279,7 @@ describe("ProblemsService", () => {
         external_problem_id: "7",
         judge_ready: true,
         sample_testcase: "1 2",
+        translations: [] as Array<{ locale: string; title: string; description: string }>,
         _count: { test_cases: 3 },
         created_at: now,
       };
@@ -210,6 +296,8 @@ describe("ProblemsService", () => {
         createdAt: now.toISOString(),
         source: "LEETCODE",
         locale: "zh-CN",
+        defaultLocale: "zh-CN",
+        availableLocales: ["zh-CN"],
         sourceSlug: "upd",
         externalProblemId: "7",
         judgeReady: true,

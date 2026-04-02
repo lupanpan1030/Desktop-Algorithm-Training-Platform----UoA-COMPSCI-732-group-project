@@ -39,9 +39,22 @@ describe("leetcode-cn-importer", () => {
     );
 
     expect(normalized).not.toBeNull();
-    expect(normalized?.importKey).toBe("LEETCODE:zh-CN:contains-duplicate-iii");
-    expect(normalized?.title).toBe("存在重复元素 III");
-    expect(normalized?.description).toBe("<p>中文题面</p>");
+    expect(normalized?.importKey).toBe("LEETCODE:contains-duplicate-iii");
+    expect(normalized?.title).toBe("Contains Duplicate III");
+    expect(normalized?.description).toBe("<p>english</p>");
+    expect(normalized?.locale).toBe("en");
+    expect(normalized?.translations).toEqual([
+      {
+        locale: "en",
+        title: "Contains Duplicate III",
+        description: "<p>english</p>",
+      },
+      {
+        locale: "zh-CN",
+        title: "存在重复元素 III",
+        description: "<p>中文题面</p>",
+      },
+    ]);
     expect(normalized?.difficulty).toBe("HARD");
     expect(normalized?.externalProblemId).toBe("220");
     expect(normalized?.tags.map((tag) => tag.name)).toEqual([

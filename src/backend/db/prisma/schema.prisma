@@ -24,8 +24,21 @@ model Problem {
     submissions  Submission[]
     problem_tags ProblemTag[]
     starter_codes ProblemStarterCode[]
+    translations ProblemTranslation[]
 
     @@index([source, locale])
+}
+
+model ProblemTranslation {
+    problem_translation_id Int     @id @default(autoincrement())
+    problem                Problem @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
+    problem_id             Int
+    locale                 String
+    title                  String
+    description            String
+
+    @@unique([problem_id, locale])
+    @@index([locale])
 }
 
 model TestCase {

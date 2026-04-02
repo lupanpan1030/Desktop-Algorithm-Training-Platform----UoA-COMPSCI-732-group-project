@@ -45,6 +45,52 @@ describe("Problems API (integration)", () => {
         judgeReady: expect.any(Boolean),
         source: expect.any(String),
         locale: expect.any(String),
+        defaultLocale: expect.any(String),
+        availableLocales: expect.any(Array),
+      });
+    });
+
+    it("returns translated summaries when a preferred locale is requested", async () => {
+      await testPrisma.problemTranslation.create({
+        data: {
+          problem_id: 1,
+          locale: "zh-CN",
+          title: "两数之和",
+          description: "给定一个整数数组 nums 和一个整数目标值 target。",
+        },
+      });
+
+      const res = await request(app).get("/problems").query({ locale: "zh-CN" });
+      expect(res.status).toBe(200);
+      expect(res.body[0]).toMatchObject({
+        problemId: 1,
+        title: "两数之和",
+        locale: "zh-CN",
+        defaultLocale: "en",
+        availableLocales: ["en", "zh-CN"],
+      });
+    });
+
+    it("returns only problems available in the requested locale when strictLocale is enabled", async () => {
+      await testPrisma.problemTranslation.create({
+        data: {
+          problem_id: 1,
+          locale: "zh-CN",
+          title: "两数之和",
+          description: "给定一个整数数组 nums 和一个整数目标值 target。",
+        },
+      });
+
+      const res = await request(app)
+        .get("/problems")
+        .query({ locale: "zh-CN", strictLocale: true });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject({
+        problemId: 1,
+        title: "两数之和",
+        locale: "zh-CN",
       });
     });
   });
@@ -62,10 +108,45 @@ describe("Problems API (integration)", () => {
         testcaseCount: 2,
         judgeReady: true,
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
       });
       // ISO check
       expect(() => new Date(res.body.createdAt)).not.toThrow();
+    });
+
+    it("returns the requested locale when a translated title and description exist", async () => {
+      await testPrisma.problemTranslation.create({
+        data: {
+          problem_id: 1,
+          locale: "zh-CN",
+          title: "两数之和",
+          description: "给定一个整数数组 nums 和一个整数目标值 target。",
+        },
+      });
+
+      const res = await request(app).get("/problems/1").query({ locale: "zh-CN" });
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        problemId: 1,
+        title: "两数之和",
+        description: "给定一个整数数组 nums 和一个整数目标值 target。",
+        locale: "zh-CN",
+        defaultLocale: "en",
+        availableLocales: ["en", "zh-CN"],
+      });
+    });
+
+    it("returns 404 when strictLocale is enabled and the requested translation does not exist", async () => {
+      const res = await request(app)
+        .get("/problems/1")
+        .query({ locale: "zh-CN", strictLocale: true });
+
+      expect(res.status).toBe(404);
+      expect(res.body).toMatchObject({
+        message: "Problem not available in the requested locale",
+      });
     });
 
     it("returns 404 when problem id not exists", async () => {
@@ -91,7 +172,9 @@ describe("Problems API (integration)", () => {
         testcaseCount: 0,
         judgeReady: false,
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
       });
     });
 
@@ -171,7 +254,9 @@ describe("Problems API (integration)", () => {
         testcaseCount: 2,
         judgeReady: true,
         source: "LOCAL",
-        locale: "local",
+        locale: "en",
+        defaultLocale: "en",
+        availableLocales: ["en"],
       });
     });
   
