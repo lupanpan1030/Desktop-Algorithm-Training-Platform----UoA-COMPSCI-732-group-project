@@ -54,6 +54,7 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
   - This repository now includes [environment.yml](./environment.yml) for a dedicated conda environment.
   - Create it with `conda env create -f environment.yml`
   - Activate it with `conda activate delightful-dogs-dev`
+  - The recommended Node runtime is currently `22.x` LTS. Node `24.x` can still run the project, but it emits noisy TypeScript-config parsing warnings in Electron Forge development mode.
 
 - To start project for development:
   - Ensure Node.js and npm are properly set up.

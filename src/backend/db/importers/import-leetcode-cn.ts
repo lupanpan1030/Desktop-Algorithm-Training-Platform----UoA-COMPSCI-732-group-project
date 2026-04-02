@@ -1,8 +1,9 @@
 import "dotenv/config";
 import fs from "fs/promises";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { initializeDatabase } from "../prisma/initialize-database";
 import { toSqliteFileUrl } from "../prisma/bootstrap-sqlite";
+import { reconcileProblemCatalog } from "../problem-catalog/reconcile-problem-catalog";
 import {
   getImportUsage,
   loadLeetCodeCnProblems,
@@ -15,6 +16,41 @@ function formatPreview(problem: NormalizedImportedProblem) {
     ? `#${problem.externalProblemId} ${problem.title}`
     : problem.title;
   return `${label} (${problem.difficulty})`;
+}
+
+function buildProblemMatchConditions(problem: NormalizedImportedProblem) {
+  const conditions: Prisma.ProblemWhereInput[] = [
+    {
+      import_key: problem.importKey,
+    },
+    {
+      source_slug: problem.sourceSlug,
+    },
+  ];
+
+  if (problem.externalProblemId) {
+    conditions.push({
+      external_problem_id: problem.externalProblemId,
+    });
+  }
+
+  return conditions;
+}
+
+function isExistingMatch(
+  problem: NormalizedImportedProblem,
+  existingProblem: {
+    import_key: string | null;
+    source_slug: string | null;
+    external_problem_id: string | null;
+  }
+) {
+  return (
+    existingProblem.import_key === problem.importKey ||
+    existingProblem.source_slug === problem.sourceSlug ||
+    (problem.externalProblemId != null &&
+      existingProblem.external_problem_id === problem.externalProblemId)
+  );
 }
 
 async function main() {
@@ -36,6 +72,8 @@ async function main() {
   const prisma = new PrismaClient();
 
   try {
+    await reconcileProblemCatalog(prisma);
+
     const { problems, stats } = await loadLeetCodeCnProblems(options.sourcePath);
     const selectedProblems = options.limit ? problems.slice(0, options.limit) : problems;
 
@@ -45,15 +83,39 @@ async function main() {
     }
 
     const importKeys = selectedProblems.map((problem) => problem.importKey);
+    const sourceSlugs = [...new Set(selectedProblems.map((problem) => problem.sourceSlug))];
+    const externalProblemIds = [
+      ...new Set(
+        selectedProblems
+          .map((problem) => problem.externalProblemId)
+          .filter((value): value is string => Boolean(value))
+      ),
+    ];
     const tagNames = [...new Set(selectedProblems.flatMap((problem) => problem.tags.map((tag) => tag.name)))];
 
     const [existingProblems, existingTags] = await Promise.all([
       prisma.problem.findMany({
         where: {
-          import_key: { in: importKeys },
+          OR: [
+            {
+              import_key: { in: importKeys },
+            },
+            {
+              source_slug: { in: sourceSlugs },
+            },
+            ...(externalProblemIds.length > 0
+              ? [
+                  {
+                    external_problem_id: { in: externalProblemIds },
+                  },
+                ]
+              : []),
+          ],
         },
         select: {
           import_key: true,
+          source_slug: true,
+          external_problem_id: true,
         },
       }),
       tagNames.length > 0
@@ -68,9 +130,11 @@ async function main() {
         : Promise.resolve([]),
     ]);
 
-    const existingProblemKeys = new Set(existingProblems.map((problem) => problem.import_key).filter(Boolean));
+    const matchedExistingProblems = selectedProblems.filter((problem) =>
+      existingProblems.some((existingProblem) => isExistingMatch(problem, existingProblem))
+    );
     const existingTagNames = new Set(existingTags.map((tag) => tag.name));
-    const createCount = selectedProblems.filter((problem) => !existingProblemKeys.has(problem.importKey)).length;
+    const createCount = selectedProblems.length - matchedExistingProblems.length;
     const updateCount = selectedProblems.length - createCount;
     const newTagCount = tagNames.filter((tagName) => !existingTagNames.has(tagName)).length;
     const starterCodeCount = selectedProblems.reduce(
@@ -127,33 +191,43 @@ async function main() {
 
     for (const problem of selectedProblems) {
       await prisma.$transaction(async (tx) => {
-        const savedProblem = await tx.problem.upsert({
+        const matchedProblem = await tx.problem.findFirst({
           where: {
-            import_key: problem.importKey,
-          },
-          create: {
-            title: problem.title,
-            description: problem.description,
-            difficulty: problem.difficulty,
-            source: problem.source,
-            source_slug: problem.sourceSlug,
-            external_problem_id: problem.externalProblemId,
-            import_key: problem.importKey,
-            locale: problem.locale,
-            judge_ready: false,
-            sample_testcase: problem.sampleTestcase,
-          },
-          update: {
-            title: problem.title,
-            description: problem.description,
-            difficulty: problem.difficulty,
-            source: problem.source,
-            source_slug: problem.sourceSlug,
-            external_problem_id: problem.externalProblemId,
-            locale: problem.locale,
-            sample_testcase: problem.sampleTestcase,
+            OR: buildProblemMatchConditions(problem),
           },
         });
+
+        const savedProblem = matchedProblem
+          ? await tx.problem.update({
+              where: {
+                problem_id: matchedProblem.problem_id,
+              },
+              data: {
+                title: problem.title,
+                description: problem.description,
+                difficulty: problem.difficulty,
+                source: problem.source,
+                source_slug: problem.sourceSlug,
+                external_problem_id: problem.externalProblemId,
+                import_key: problem.importKey,
+                locale: problem.locale,
+                sample_testcase: problem.sampleTestcase,
+              },
+            })
+          : await tx.problem.create({
+              data: {
+                title: problem.title,
+                description: problem.description,
+                difficulty: problem.difficulty,
+                source: problem.source,
+                source_slug: problem.sourceSlug,
+                external_problem_id: problem.externalProblemId,
+                import_key: problem.importKey,
+                locale: problem.locale,
+                judge_ready: false,
+                sample_testcase: problem.sampleTestcase,
+              },
+            });
 
         for (const snippet of problem.starterCodes) {
           await tx.problemStarterCode.upsert({
@@ -199,7 +273,16 @@ async function main() {
       });
     }
 
-    console.log(`Import complete. ${selectedProblems.length} problems are now available in the local database.`);
+    const reconciliation = await reconcileProblemCatalog(prisma);
+
+    console.log(
+      `Import complete. ${selectedProblems.length} problems are now available in the local database.`
+    );
+    if (reconciliation.mergedProblems > 0) {
+      console.log(
+        `Merged ${reconciliation.mergedProblems} duplicate localized problem entries after import.`
+      );
+    }
   } finally {
     await prisma.$disconnect();
   }

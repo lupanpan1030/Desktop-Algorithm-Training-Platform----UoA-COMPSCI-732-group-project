@@ -3,14 +3,18 @@
 // 导入 Prisma 客户端实例
 // Import Prisma client instance
 import prisma from "../prismaClient";
+import { seedProblemIdentityById } from "../problem-catalog/seed-problem-identities";
+import type { Difficulty, Prisma } from "@prisma/client";
 
 //向 problem 表中批量插入题目数据
 //Insert multiple problem records into the "problem" table
 export async function seedProblems() {
-  // createMany 一次插入多条
-  // Use createMany to insert multiple entries at once
-  await prisma.problem.createMany({
-    data: [
+  const baseProblems: Array<{
+    problem_id: number;
+    title: string;
+    description: string;
+    difficulty: Difficulty;
+  }> = [
       {
         problem_id: 1,
         title: "Fibonacci Number",
@@ -423,7 +427,22 @@ You can return the answer in any order.
 -   \`-10^4 <= nums[i], target <= 10^4\`.`,
         difficulty: "EASY",
       },
-    ],
+    ];
+
+  // createMany 一次插入多条
+  // Use createMany to insert multiple entries at once
+  await prisma.problem.createMany({
+    data: baseProblems.map((problem) => {
+      const identity = seedProblemIdentityById.get(problem.problem_id);
+
+      return {
+        ...problem,
+        source: "LEETCODE",
+        locale: "en",
+        source_slug: identity?.sourceSlug ?? null,
+        external_problem_id: identity?.externalProblemId ?? null,
+      } satisfies Prisma.ProblemCreateManyInput;
+    }),
   });
   console.log("Seeded problems");
 }

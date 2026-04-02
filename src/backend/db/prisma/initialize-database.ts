@@ -38,4 +38,13 @@ export async function initializeDatabase() {
     const { seedFreshDatabase } = await import("../seeds/init-db_first");
     await seedFreshDatabase();
   }
+
+  const { reconcileProblemCatalog } = await import("../problem-catalog/reconcile-problem-catalog");
+  const reconciliation = await reconcileProblemCatalog();
+
+  if (reconciliation.mergedProblems > 0) {
+    console.log(
+      `Problem catalog reconciled. Merged ${reconciliation.mergedProblems} duplicate localized problem entries.`
+    );
+  }
 }
