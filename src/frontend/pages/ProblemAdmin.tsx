@@ -128,6 +128,17 @@ function MetaFact({
   );
 }
 
+function buildStarterCodePreview(template: string, lineLimit = 14) {
+  const lines = template.split("\n");
+  const visibleLines = lines.slice(0, lineLimit).join("\n");
+
+  return {
+    preview: visibleLines,
+    truncated: lines.length > lineLimit,
+    totalLines: lines.length,
+  };
+}
+
 export default function ProblemAdmin() {
   const theme = useTheme();
   const {
@@ -1154,27 +1165,70 @@ export default function ProblemAdmin() {
                           </Typography>
                         </Box>
                         <Stack spacing={1}>
-                          {selectedProblem.starterCodes.map((starterCode) => (
-                            <Paper
-                              key={starterCode.languageSlug}
-                              variant="outlined"
-                              sx={{
-                                p: 1.2,
-                                borderRadius: 4,
-                                bgcolor: alpha(theme.palette.background.default, 0.34),
-                              }}
-                            >
-                              <Typography variant="subtitle2">{starterCode.languageName}</Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ mt: 0.4, display: "block", whiteSpace: "pre-wrap" }}
+                          {selectedProblem.starterCodes.map((starterCode) => {
+                            const preview = buildStarterCodePreview(starterCode.template);
+
+                            return (
+                              <Paper
+                                key={starterCode.languageSlug}
+                                variant="outlined"
+                                sx={{
+                                  p: 1.2,
+                                  borderRadius: 4,
+                                  bgcolor: alpha(theme.palette.background.default, 0.34),
+                                }}
                               >
-                                {starterCode.template.slice(0, 200)}
-                                {starterCode.template.length > 200 ? "..." : ""}
-                              </Typography>
-                            </Paper>
-                          ))}
+                                <Stack spacing={0.7}>
+                                  <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    useFlexGap
+                                    flexWrap="wrap"
+                                    alignItems="center"
+                                  >
+                                    <Typography variant="subtitle2">{starterCode.languageName}</Typography>
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
+                                      label={`${preview.totalLines} lines`}
+                                    />
+                                    {preview.truncated && (
+                                      <Chip
+                                        size="small"
+                                        variant="outlined"
+                                        label={`Previewing first 14`}
+                                      />
+                                    )}
+                                  </Stack>
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      p: 1.2,
+                                      borderRadius: 3,
+                                      maxHeight: 220,
+                                      overflow: "auto",
+                                      bgcolor: alpha(theme.palette.background.default, 0.52),
+                                      borderColor: alpha(theme.palette.divider, 0.34),
+                                    }}
+                                  >
+                                    <Typography
+                                      component="pre"
+                                      variant="body2"
+                                      sx={{
+                                        m: 0,
+                                        whiteSpace: "pre-wrap",
+                                        wordBreak: "break-word",
+                                        fontFamily:
+                                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                                      }}
+                                    >
+                                      {preview.preview}
+                                    </Typography>
+                                  </Paper>
+                                </Stack>
+                              </Paper>
+                            );
+                          })}
                         </Stack>
                       </Stack>
                     </Paper>
