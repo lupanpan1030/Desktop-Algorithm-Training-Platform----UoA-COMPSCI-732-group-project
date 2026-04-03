@@ -49,6 +49,11 @@ interface Language {
 export interface TestResult {
   status: string;
   output?: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number | null;
+  phase?: string;
+  timedOut?: boolean;
   expectedOutput?: string;
   runtimeMs: number;
   memoryKb: number;

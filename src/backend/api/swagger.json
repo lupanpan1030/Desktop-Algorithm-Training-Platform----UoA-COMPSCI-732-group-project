@@ -160,6 +160,23 @@
 					"output": {
 						"type": "string"
 					},
+					"stdout": {
+						"type": "string"
+					},
+					"stderr": {
+						"type": "string"
+					},
+					"exitCode": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"phase": {
+						"type": "string"
+					},
+					"timedOut": {
+						"type": "boolean"
+					},
 					"expectedOutput": {
 						"type": "string"
 					},
@@ -750,7 +767,7 @@
 	"info": {
 		"title": "algo-platform",
 		"version": "1.0.0",
-		"description": "My Electron application description",
+		"description": "A local Electron-based algorithm practice platform with problem curation and judge tooling",
 		"license": {
 			"name": "MIT"
 		},

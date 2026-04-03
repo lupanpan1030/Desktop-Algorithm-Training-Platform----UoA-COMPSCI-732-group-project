@@ -42,7 +42,12 @@ export class SubmissionDao {
       submittedAt: submission.submitted_at.toISOString(),
       results: submission.results.map(r => ({
         status: r.status,
-        output: r.output || null,
+        output: r.output ?? undefined,
+        stdout: r.stdout ?? undefined,
+        stderr: r.stderr ?? undefined,
+        exitCode: r.exit_code ?? undefined,
+        phase: r.phase ?? undefined,
+        timedOut: r.timed_out,
         runtimeMs: r.runtime_ms,
         memoryKb: r.memory_kb
       }))
@@ -76,6 +81,11 @@ export class SubmissionDao {
     results: { 
       status: SubmissionStatus, 
       output?: string, 
+      stdout?: string,
+      stderr?: string,
+      exitCode?: number | null,
+      phase?: string,
+      timedOut?: boolean,
       runtimeMs: number, 
       memoryKb: number 
     }[]
@@ -87,6 +97,11 @@ export class SubmissionDao {
             submission_id: submissionId,
             status: result.status,
             output: result.output,
+            stdout: result.stdout,
+            stderr: result.stderr,
+            exit_code: result.exitCode ?? null,
+            phase: result.phase,
+            timed_out: result.timedOut ?? false,
             runtime_ms: result.runtimeMs,
             memory_kb: result.memoryKb
           }

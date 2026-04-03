@@ -1,7 +1,6 @@
+import { SubmissionStatus } from '@prisma/client';
 import { describe, it, expect } from 'vitest';
 import { judgeSolution, ExecutionMode, EXECUTABLE_NAME } from '../../../backend/services/judge/executor';
-import * as os from 'os';
-import * as path from 'path';
 
 describe('judgeSolution', () => {
 
@@ -30,6 +29,10 @@ if __name__ == '__main__':
 		const result = results[0];
 		expect(result.succeeded).toBe(true);
 		expect(result.output).toBe("5");
+		expect(result.stdout).toBe("5");
+		expect(result.stderr).toBe("");
+		expect(result.phase).toBe("run");
+		expect(result.timedOut).toBe(false);
 	});
 
 	// Test for compiled mode using gcc.
@@ -66,5 +69,82 @@ int main() {
 		}
 		expect(result.succeeded).toBe(true);
 		expect(result.output).toBe("9");
+		expect(result.stdout).toBe("9");
+		expect(result.stderr).toBe("");
+		expect(result.phase).toBe("run");
+		expect(result.exitCode).toBe(0);
 	}, 20000);
+
+	it('captures compile diagnostics for invalid C code', async () => {
+		const invalidCCode = `
+#include <stdio.h>
+
+int main() {
+	printf("oops")
+	return 0;
+}
+		`.trim();
+		const options = {
+			code: invalidCCode,
+			fileSuffix: 'c',
+			compileCmd: 'gcc -o main',
+			executable: EXECUTABLE_NAME,
+			testCases: [''],
+		};
+
+		const results = await judgeSolution(ExecutionMode.Compiled, options);
+		expect(results).toHaveLength(1);
+		const result = results[0];
+		expect(result.succeeded).toBe(false);
+		expect(result.status).toBe(SubmissionStatus.COMPILE_ERROR);
+		expect(result.phase).toBe('compile');
+		expect(result.stderr.length).toBeGreaterThan(0);
+		expect(result.output).toContain('error');
+		expect(result.timedOut).toBe(false);
+	});
+
+	it('captures runtime diagnostics for interpreter errors', async () => {
+		const pythonCode = `
+print(10 / int(input().strip()))
+		`.trim();
+		const options = {
+			code: pythonCode,
+			fileSuffix: 'py',
+			interpretCmd: 'python3',
+			testCases: ['0'],
+		};
+
+		const results = await judgeSolution(ExecutionMode.Interprete, options);
+		expect(results).toHaveLength(1);
+		const result = results[0];
+		expect(result.succeeded).toBe(false);
+		expect(result.status).toBe(SubmissionStatus.RUNTIME_ERROR);
+		expect(result.phase).toBe('run');
+		expect(result.stderr).toContain('ZeroDivisionError');
+		expect(result.exitCode).not.toBe(0);
+		expect(result.timedOut).toBe(false);
+	});
+
+	it('marks timeouts with phase and timeout metadata', async () => {
+		const pythonCode = `
+import time
+time.sleep(0.2)
+print("done")
+		`.trim();
+		const options = {
+			code: pythonCode,
+			fileSuffix: 'py',
+			interpretCmd: 'python3',
+			testCases: [{ input: '', timeLimitMs: 50 }],
+		};
+
+		const results = await judgeSolution(ExecutionMode.Interprete, options);
+		expect(results).toHaveLength(1);
+		const result = results[0];
+		expect(result.succeeded).toBe(false);
+		expect(result.status).toBe(SubmissionStatus.TIME_LIMIT_EXCEEDED);
+		expect(result.phase).toBe('run');
+		expect(result.timedOut).toBe(true);
+		expect(result.stderr).toBe('time limit exceeded');
+	});
 });

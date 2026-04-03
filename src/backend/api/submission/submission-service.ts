@@ -11,7 +11,7 @@ import {
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
-import { ExecutionMode, judgeSolution, EXECUTABLE_NAME } from '../../services/judge/executor';
+import { ExecutionMode, judgeSolution, EXECUTABLE_NAME, ExecutionResult } from '../../services/judge/executor';
 import { NotFoundError } from "../../utils/errors/not-found-error";
 
 export class SubmissionService {
@@ -78,25 +78,9 @@ export class SubmissionService {
       })),
     });
 
-    const results: SubmissionResultDto[] = executionResults.map((result, index) => {
-      let status = result.status;
-      if (result.succeeded) {
-        const trimmedOutput = result.output.trim();
-        const trimmedExpected = limitedTestCases[index].expectedOutput.trim();
-        
-        if (trimmedOutput !== trimmedExpected) {
-          status = SubmissionStatus.REJECTED;
-        }
-      }
-      
-      return {
-        status,
-        output: result.output,
-        expectedOutput: limitedTestCases[index].expectedOutput.trim(),
-        runtimeMs: result.executionTime,
-        memoryKb: result.executionMemoryKb
-      };
-    });
+    const results = executionResults.map((result, index) =>
+      this.toSubmissionResultDto(result, limitedTestCases[index]?.expectedOutput)
+    );
 
     const overallStatus = this.determineOverallStatus(results);
     
@@ -138,25 +122,9 @@ export class SubmissionService {
       })),
     });
 
-    const results: SubmissionResultDto[] = executionResults.map((result, index) => {
-      let status = result.status;
-      if (result.succeeded) {
-        const trimmedOutput = result.output.trim();
-        const trimmedExpected = testCases[index].expectedOutput.trim();
-        
-        if (trimmedOutput !== trimmedExpected) {
-          status = SubmissionStatus.REJECTED;
-        }
-      }
-      
-      return {
-        status,
-        output: result.output,
-        expectedOutput: testCases[index].expectedOutput.trim(),
-        runtimeMs: result.executionTime,
-        memoryKb: result.executionMemoryKb
-      };
-    });
+    const results = executionResults.map((result, index) =>
+      this.toSubmissionResultDto(result, testCases[index]?.expectedOutput)
+    );
 
     const overallStatus = this.determineOverallStatus(results);
 
@@ -166,6 +134,11 @@ export class SubmissionService {
       results.map(r => ({
         status: r.status as SubmissionStatus,
         output: r.output,
+        stdout: r.stdout,
+        stderr: r.stderr,
+        exitCode: r.exitCode,
+        phase: r.phase,
+        timedOut: r.timedOut,
         runtimeMs: r.runtimeMs,
         memoryKb: r.memoryKb
       }))
@@ -197,5 +170,33 @@ export class SubmissionService {
       return SubmissionStatus.REJECTED;
     }
     return SubmissionStatus.ACCEPTED;
+  }
+
+  private toSubmissionResultDto(
+    result: ExecutionResult,
+    expectedOutput?: string
+  ): SubmissionResultDto {
+    let status = result.status;
+    const normalizedExpectedOutput = expectedOutput?.trim();
+
+    if (result.succeeded && normalizedExpectedOutput !== undefined) {
+      const trimmedOutput = result.output.trim();
+      if (trimmedOutput !== normalizedExpectedOutput) {
+        status = SubmissionStatus.REJECTED;
+      }
+    }
+
+    return {
+      status,
+      output: result.output,
+      stdout: result.stdout || undefined,
+      stderr: result.stderr || undefined,
+      exitCode: result.exitCode,
+      phase: result.phase,
+      timedOut: result.timedOut,
+      expectedOutput: normalizedExpectedOutput,
+      runtimeMs: result.executionTime,
+      memoryKb: result.executionMemoryKb
+    };
   }
 }

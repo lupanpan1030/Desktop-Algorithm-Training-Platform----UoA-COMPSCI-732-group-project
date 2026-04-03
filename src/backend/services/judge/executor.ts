@@ -15,6 +15,8 @@ export enum ExecutionMode {
     Compiled = 'compiled'
 }
 
+export type ExecutionPhase = "compile" | "run";
+
 // Define ExecutionResult interface for named tuple
 export interface ExecutionResult {
     succeeded: boolean;
@@ -22,6 +24,11 @@ export interface ExecutionResult {
     // Cross-platform child-process memory tracking is not implemented yet.
     executionMemoryKb: number;
     output: string;
+    stdout: string;
+    stderr: string;
+    exitCode: number | null;
+    timedOut: boolean;
+    phase: ExecutionPhase;
     status: SubmissionStatus;
 }
 
@@ -91,9 +98,14 @@ function normalizeTestCase(testCase: string | JudgeTestCase): JudgeTestCase {
     return testCase;
 }
 
+function normalizeStreamOutput(stream: string) {
+    return stream.replace(/\r\n/g, "\n").trimEnd();
+}
+
 function formatOutput(stdout: string, stderr: string) {
-    const output = stdout.length > 0 ? stdout : stderr;
-    return output.replace(/\r\n/g, "\n").trimEnd();
+    const normalizedStdout = normalizeStreamOutput(stdout);
+    const normalizedStderr = normalizeStreamOutput(stderr);
+    return normalizedStdout.length > 0 ? normalizedStdout : normalizedStderr;
 }
 
 async function runProcess(
@@ -104,6 +116,7 @@ async function runProcess(
         input?: string;
         timeoutMs?: number;
         failureStatus: SubmissionStatus;
+        phase: ExecutionPhase;
     }
 ): Promise<ExecutionResult> {
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIME_LIMIT;
@@ -130,11 +143,17 @@ async function runProcess(
 
         const timer = setTimeout(() => {
             child.kill("SIGKILL");
+            const timeoutMessage = "time limit exceeded";
             finish({
                 succeeded: false,
                 executionTime: timeoutMs,
                 executionMemoryKb: 0,
-                output: "time limit exceeded",
+                output: formatOutput(stdout, timeoutMessage),
+                stdout: normalizeStreamOutput(stdout),
+                stderr: timeoutMessage,
+                exitCode: null,
+                timedOut: true,
+                phase: options.phase,
                 status: SubmissionStatus.TIME_LIMIT_EXCEEDED
             });
         }, timeoutMs);
@@ -148,27 +167,41 @@ async function runProcess(
         });
 
         child.on("error", (error) => {
+            const errorMessage = normalizeStreamOutput(error.message);
             finish({
                 succeeded: false,
                 executionTime: Date.now() - startTime,
                 executionMemoryKb: 0,
-                output: error.message,
+                output: errorMessage,
+                stdout: normalizeStreamOutput(stdout),
+                stderr: errorMessage,
+                exitCode: null,
+                timedOut: false,
+                phase: options.phase,
                 status: options.failureStatus,
             });
         });
 
         child.on("close", (code, signal) => {
             if (signal === "SIGKILL") {
+                const timeoutMessage = "time limit exceeded";
                 finish({
                     succeeded: false,
                     executionTime: timeoutMs,
                     executionMemoryKb: 0,
-                    output: "time limit exceeded",
+                    output: formatOutput(stdout, timeoutMessage),
+                    stdout: normalizeStreamOutput(stdout),
+                    stderr: timeoutMessage,
+                    exitCode: code ?? null,
+                    timedOut: true,
+                    phase: options.phase,
                     status: SubmissionStatus.TIME_LIMIT_EXCEEDED,
                 });
                 return;
             }
 
+            const normalizedStdout = normalizeStreamOutput(stdout);
+            const normalizedStderr = normalizeStreamOutput(stderr);
             const output = formatOutput(stdout, stderr);
             if (code === 0) {
                 finish({
@@ -176,6 +209,11 @@ async function runProcess(
                     executionTime: Date.now() - startTime,
                     executionMemoryKb: 0,
                     output,
+                    stdout: normalizedStdout,
+                    stderr: normalizedStderr,
+                    exitCode: code,
+                    timedOut: false,
+                    phase: options.phase,
                     status: SubmissionStatus.ACCEPTED,
                 });
                 return;
@@ -186,6 +224,11 @@ async function runProcess(
                 executionTime: Date.now() - startTime,
                 executionMemoryKb: 0,
                 output: output || `Process exited with code ${code ?? "unknown"}`,
+                stdout: normalizedStdout,
+                stderr: normalizedStderr,
+                exitCode: code ?? null,
+                timedOut: false,
+                phase: options.phase,
                 status: options.failureStatus,
             });
         });
@@ -214,6 +257,7 @@ async function interprete(
         input: testCase.input,
         timeoutMs: testCase.timeLimitMs,
         failureStatus: SubmissionStatus.RUNTIME_ERROR,
+        phase: "run",
     });
 }
 
@@ -231,6 +275,7 @@ async function compile(
     return runProcess(spec.command, spec.args, {
         cwd,
         failureStatus: SubmissionStatus.COMPILE_ERROR,
+        phase: "compile",
     });
 }
 
@@ -247,6 +292,7 @@ async function runExecutable(
             input: testCase.input,
             timeoutMs: testCase.timeLimitMs,
             failureStatus: SubmissionStatus.RUNTIME_ERROR,
+            phase: "run",
         });
     }
 
@@ -256,6 +302,7 @@ async function runExecutable(
         input: testCase.input,
         timeoutMs: testCase.timeLimitMs,
         failureStatus: SubmissionStatus.RUNTIME_ERROR,
+        phase: "run",
     });
 }
 

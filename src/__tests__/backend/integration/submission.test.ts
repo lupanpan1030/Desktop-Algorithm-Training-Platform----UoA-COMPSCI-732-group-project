@@ -4,7 +4,6 @@ import {
   setupTestDB,
   teardownTestDB,
   dropAndSeedProblems,
-  testPrisma,
   dropAndSeedSubmission,
   dropAndSeedSubmissionResults,
 } from "../utils/setupTestDB";
@@ -69,10 +68,14 @@ describe("Submissions API (integration)", () => {
         expect(r).toMatchObject({
           status: expect.any(String),
           output: expect.any(String),
+          phase: expect.any(String),
+          timedOut: expect.any(Boolean),
           runtimeMs: expect.any(Number),
           memoryKb: expect.any(Number),
         });
       }
+      expect(res.body.results[0].stderr).toBe("ReferenceError: boom");
+      expect(res.body.results[0].exitCode).toBe(1);
       expect(() => new Date(res.body.submittedAt)).not.toThrow();
     });
 

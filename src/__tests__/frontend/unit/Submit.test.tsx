@@ -36,7 +36,8 @@ describe("Run Button", () => {
         // show result
         await waitFor(() => {
           expect(screen.getByText((content) => content.includes('Status: Passed'))).exist;
-          expect(screen.getByText(/Output: Hello World!/i)).exist;
+          expect(screen.getByText('Primary Output')).toBeTruthy();
+          expect(screen.getByText(/Hello World!/i)).toBeTruthy();
           expect(screen.getByText(/Runtime: 100 ms/)).exist;
           expect(screen.getByText(/Memory: 200 KB/)).exist
         });
@@ -67,7 +68,8 @@ describe("Submit Button", () => {
 
     await waitFor(() => {
       expect(screen.getByText((content) => content.includes('Status: Passed'))).exist;
-      expect(screen.getByText(/Output: 20/)).exist;
+      expect(screen.getByText('Primary Output')).toBeTruthy();
+      expect(screen.getByText('20', { selector: 'pre' })).toBeTruthy();
       expect(screen.getByText(/Runtime: 100 ms/)).exist;
       expect(screen.getByText(/Memory: 200 KB/)).exist
     });
@@ -140,7 +142,8 @@ describe("Submission history", () => {
       expect(screen.getByText("Submission History")).toBeTruthy();
       expect(screen.getAllByText("Submission #2")).toHaveLength(2);
       expect(screen.getByText(/Language: Python/)).toBeTruthy();
-      expect(screen.getByText(/Output: ok/)).toBeTruthy();
+      expect(screen.getByText('Primary Output')).toBeTruthy();
+      expect(screen.getByText(/^ok$/)).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Load Into Editor" }));
@@ -152,5 +155,47 @@ describe("Submission history", () => {
         languageId: 1,
       })
     );
+  });
+});
+
+describe("Result diagnostics", () => {
+  test("renders phase, exit code, timeout and stderr when provided", async () => {
+    mock.onGet("/problems/1/submissions").reply(200, []);
+    mock.onPost('/problems/1/run')
+      .reply(200, {
+        status: 'RUNTIME_ERROR',
+        results: [
+          {
+            status: 'RUNTIME_ERROR',
+            output: 'Traceback',
+            stderr: 'Traceback',
+            phase: 'run',
+            exitCode: 1,
+            timedOut: false,
+            runtimeMs: 42,
+            memoryKb: 256
+          },
+          {
+            status: 'TIME_LIMIT_EXCEEDED',
+            output: 'time limit exceeded',
+            stderr: 'time limit exceeded',
+            phase: 'run',
+            timedOut: true,
+            runtimeMs: 50,
+            memoryKb: 0
+          }
+        ]
+    });
+
+    render(<CodeSubmission code="print('x')" problemId={1} languageId={1}/>);
+
+    fireEvent.click(screen.getByText('Run'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Phase: run/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Exit Code: 1/i)).toBeTruthy();
+      expect(screen.getByText(/Timed Out/i)).toBeTruthy();
+      expect(screen.getAllByText(/Stderr/i).length).toBeGreaterThan(0);
+    });
   });
 });

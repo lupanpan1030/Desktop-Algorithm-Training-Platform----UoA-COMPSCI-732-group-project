@@ -80,6 +80,11 @@ const models: TsoaRoute.Models = {
         "properties": {
             "status": {"dataType":"string","required":true},
             "output": {"dataType":"string"},
+            "stdout": {"dataType":"string"},
+            "stderr": {"dataType":"string"},
+            "exitCode": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}]},
+            "phase": {"dataType":"string"},
+            "timedOut": {"dataType":"boolean"},
             "expectedOutput": {"dataType":"string"},
             "runtimeMs": {"dataType":"double","required":true},
             "memoryKb": {"dataType":"double","required":true},

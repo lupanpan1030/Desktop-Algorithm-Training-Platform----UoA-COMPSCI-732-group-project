@@ -82,6 +82,11 @@ model SubmissionResult {
     submission_id        Int
     status               SubmissionStatus @default(PENDING)
     output               String?
+    stdout               String?
+    stderr               String?
+    exit_code            Int?
+    phase                String?
+    timed_out            Boolean     @default(false)
     runtime_ms           Int
     memory_kb            Int
     submitted_at         DateTime    @default(now())
