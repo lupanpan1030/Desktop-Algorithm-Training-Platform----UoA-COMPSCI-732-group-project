@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, afterAll, describe, it, expect } from "vitest";
+import { beforeAll, beforeEach, afterAll, afterEach, describe, it, expect, vi } from "vitest";
 import {
   setupTestDB,
   dropAndSeedProblems,
@@ -26,6 +26,10 @@ beforeEach(async () => {
 afterAll(async () => {
   // disconnect from the test database and remove the temporary file
   await teardownTestDB();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("ProblemsDao", () => {
@@ -103,6 +107,15 @@ describe("ProblemsDao", () => {
     it("returns null when trying to update a non-existent problem", async () => {
       const result = await ProblemsDao.updateProblem(999, { title: "Nope" });
       expect(result).toBeNull();
+    });
+
+    it("rethrows unexpected persistence errors instead of returning null", async () => {
+      const persistenceError = new Error("write failed");
+      vi.spyOn(testPrisma.problem, "update").mockRejectedValueOnce(persistenceError);
+
+      await expect(
+        ProblemsDao.updateProblem(1, { title: "Two Sum (broken)" })
+      ).rejects.toBe(persistenceError);
     });
   });
 

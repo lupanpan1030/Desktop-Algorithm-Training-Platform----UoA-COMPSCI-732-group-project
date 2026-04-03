@@ -393,6 +393,19 @@ describe("ProblemsService", () => {
       expect(ProblemsDao.updateProblem).toHaveBeenCalledWith(999, {});
       expect(ProblemsDao.updateProblem).toHaveBeenCalledOnce();
     });
+
+    it("rethrows DAO errors instead of translating them into NotFoundError", async () => {
+      const daoError = new Error("database unavailable");
+      (ProblemsDao.updateProblem as Mock).mockRejectedValue(daoError);
+
+      await expect(svc.updateProblem(7, { title: "Broken" })).rejects.toBe(
+        daoError
+      );
+      expect(ProblemsDao.updateProblem).toHaveBeenCalledWith(7, {
+        title: "Broken",
+      });
+      expect(ProblemsDao.updateProblem).toHaveBeenCalledOnce();
+    });
   });
 
   describe("deleteProblem()", () => {

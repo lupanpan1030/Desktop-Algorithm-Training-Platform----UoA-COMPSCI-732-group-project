@@ -155,67 +155,63 @@ export class ProblemsDao {
       locale?: string;
     }
   ): Promise<ProblemWithCounts | null> {
-    try {
-      const targetProblem = await this.db.problem.findUnique({
-        where: { problem_id: problemId },
-        select: {
-          problem_id: true,
-          locale: true,
-          title: true,
-          description: true,
-          translations: {
-            select: {
-              locale: true,
-              title: true,
-              description: true,
-            },
+    const targetProblem = await this.db.problem.findUnique({
+      where: { problem_id: problemId },
+      select: {
+        problem_id: true,
+        locale: true,
+        title: true,
+        description: true,
+        translations: {
+          select: {
+            locale: true,
+            title: true,
+            description: true,
           },
         },
-      });
+      },
+    });
 
-      if (!targetProblem) {
-        return null;
-      }
-
-      const locale = normalizeProblemLocale(params.locale ?? targetProblem.locale);
-      const currentTranslation =
-        locale === targetProblem.locale
-          ? {
-              locale: targetProblem.locale,
-              title: targetProblem.title,
-              description: targetProblem.description,
-            }
-          : targetProblem.translations.find(
-              (translation) => translation.locale === locale
-            ) ?? null;
-
-      await this.db.problem.update({
-        where: { problem_id: problemId },
-        data: {
-          difficulty: params.difficulty,
-          ...(locale === targetProblem.locale
-            ? {
-                title: params.title,
-                description: params.description,
-              }
-            : {}),
-        },
-      });
-
-      await upsertProblemTranslation(this.db, problemId, {
-        locale,
-        title: params.title ?? currentTranslation?.title ?? targetProblem.title,
-        description:
-          params.description ??
-          currentTranslation?.description ??
-          targetProblem.description,
-      });
-
-      await syncProblemPrimaryLocalization(this.db, problemId);
-      return await this.getProblemById(problemId);
-    } catch (error) {
-      return null; // Return null if the problem is not found
+    if (!targetProblem) {
+      return null;
     }
+
+    const locale = normalizeProblemLocale(params.locale ?? targetProblem.locale);
+    const currentTranslation =
+      locale === targetProblem.locale
+        ? {
+            locale: targetProblem.locale,
+            title: targetProblem.title,
+            description: targetProblem.description,
+          }
+        : targetProblem.translations.find(
+            (translation) => translation.locale === locale
+          ) ?? null;
+
+    await this.db.problem.update({
+      where: { problem_id: problemId },
+      data: {
+        difficulty: params.difficulty,
+        ...(locale === targetProblem.locale
+          ? {
+              title: params.title,
+              description: params.description,
+            }
+          : {}),
+      },
+    });
+
+    await upsertProblemTranslation(this.db, problemId, {
+      locale,
+      title: params.title ?? currentTranslation?.title ?? targetProblem.title,
+      description:
+        params.description ??
+        currentTranslation?.description ??
+        targetProblem.description,
+    });
+
+    await syncProblemPrimaryLocalization(this.db, problemId);
+    return await this.getProblemById(problemId);
   }
 
   /**
