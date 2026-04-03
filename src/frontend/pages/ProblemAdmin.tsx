@@ -99,6 +99,33 @@ function MetricCard({
   );
 }
 
+function MetaFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={(theme) => ({
+        p: 1.1,
+        borderRadius: 3,
+        bgcolor: alpha(theme.palette.background.paper, 0.42),
+        borderColor: alpha(theme.palette.divider, 0.3),
+      })}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 600 }}>
+        {value}
+      </Typography>
+    </Paper>
+  );
+}
+
 export default function ProblemAdmin() {
   const theme = useTheme();
   const {
@@ -892,8 +919,6 @@ export default function ProblemAdmin() {
 
                   <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
                     <Chip label={selectedProblem.difficulty} color="primary" variant="outlined" />
-                    <Chip label={`${selectedProblem.source} / ${selectedProblem.locale}`} variant="outlined" />
-                    <Chip label={`default: ${selectedProblem.defaultLocale}`} variant="outlined" />
                     <Chip
                       label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
                       color={selectedProblem.judgeReady ? "success" : "default"}
@@ -904,26 +929,50 @@ export default function ProblemAdmin() {
                       label={`${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden`}
                       variant="outlined"
                     />
-                    <Chip
-                      label={
+                  </Stack>
+
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gap: 1,
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "repeat(2, minmax(0, 1fr))",
+                        xl: "repeat(4, minmax(0, 1fr))",
+                      },
+                    }}
+                  >
+                    <MetaFact label="Source" value={`${selectedProblem.source} / ${selectedProblem.locale}`} />
+                    <MetaFact label="Default locale" value={selectedProblem.defaultLocale} />
+                    <MetaFact
+                      label="Sample reference"
+                      value={
                         selectedProblem.sampleReferenceAvailable
-                          ? "Imported sample reference"
-                          : "No sample reference"
+                          ? "Imported reference available"
+                          : "No imported reference"
                       }
-                      variant="outlined"
                     />
-                    {selectedProblem.sourceSlug && (
-                      <Chip label={`slug: ${selectedProblem.sourceSlug}`} variant="outlined" />
-                    )}
-                    {selectedProblem.availableLocales?.map((availableLocale) => (
-                      <Chip
-                        key={availableLocale}
-                        label={availableLocale}
-                        size="small"
-                        variant={availableLocale === selectedProblem.locale ? "filled" : "outlined"}
-                        onClick={() => setLocale(availableLocale)}
-                      />
-                    ))}
+                    <MetaFact
+                      label="Slug"
+                      value={selectedProblem.sourceSlug ?? "No source slug"}
+                    />
+                  </Box>
+
+                  <Stack spacing={0.7}>
+                    <Typography variant="caption" color="text.secondary">
+                      Available locales
+                    </Typography>
+                    <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                      {selectedProblem.availableLocales?.map((availableLocale) => (
+                        <Chip
+                          key={availableLocale}
+                          label={availableLocale}
+                          size="small"
+                          variant={availableLocale === selectedProblem.locale ? "filled" : "outlined"}
+                          onClick={() => setLocale(availableLocale)}
+                        />
+                      ))}
+                    </Stack>
                   </Stack>
 
                   {selectedProblem.tags.length > 0 && (
