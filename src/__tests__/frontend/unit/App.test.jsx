@@ -42,6 +42,9 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: "List" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Languages" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Problem Admin" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /open ai assistant/i })
+    ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("Problem List")).toBeInTheDocument();

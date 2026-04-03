@@ -9,6 +9,8 @@ import { useAppTheme } from './theme';
 import LanguageAdmin from "./pages/LanguageAdmin.tsx";
 import ProblemAdmin from "./pages/ProblemAdmin.tsx";
 import { ProblemLocaleProvider } from "./problem-locale";
+import { GlobalAiAssistantProvider } from "./ai/GlobalAiAssistantProvider";
+import GlobalAiAssistantShell from "./components/ai/GlobalAiAssistantShell";
 import './styles/global.css';
 
 function App() {
@@ -31,29 +33,32 @@ function App() {
             <HashRouter>
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        height: '100vh', 
-                        width: '100vw',
-                        overflow: 'hidden'
-                    }}>
-                        <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+                    <GlobalAiAssistantProvider>
                         <div style={{ 
-                            flex: 1, 
                             display: 'flex', 
                             flexDirection: 'column', 
-                            width: '100%',
+                            height: '100vh', 
+                            width: '100vw',
                             overflow: 'hidden'
                         }}>
-                            <Routes>
-                                <Route path="/" element={<ListPage />} />
-                                <Route path="/problems/:id" element={<DetailPage />} />
-                                <Route path="/admin/problems" element={<ProblemAdmin />} />
-                                <Route path="/languages" element={<LanguageAdmin />} />
-                            </Routes>
+                            <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
+                            <div style={{ 
+                                flex: 1, 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                width: '100%',
+                                overflow: 'hidden'
+                            }}>
+                                <Routes>
+                                    <Route path="/" element={<ListPage />} />
+                                    <Route path="/problems/:id" element={<DetailPage />} />
+                                    <Route path="/admin/problems" element={<ProblemAdmin />} />
+                                    <Route path="/languages" element={<LanguageAdmin />} />
+                                </Routes>
+                            </div>
                         </div>
-                    </div>
+                        <GlobalAiAssistantShell />
+                    </GlobalAiAssistantProvider>
                 </ThemeProvider>
             </HashRouter>
         </ProblemLocaleProvider>

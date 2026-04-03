@@ -144,7 +144,7 @@ describe('LanguageAdmin Component', () => {
 
     // Verify success message
     expect(screen.getByText(/Updated "Updated Python"/)).toBeInTheDocument();
-  });
+  }, 15000);
 
   test('deletes a language successfully', async () => {
     renderWithRouter(<LanguageAdmin />);

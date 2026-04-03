@@ -760,6 +760,178 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"AiSuggestionDto": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"label": {
+						"type": "string"
+					},
+					"prompt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"label",
+					"prompt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiRespondResponseDto": {
+				"properties": {
+					"answer": {
+						"type": "string"
+					},
+					"suggestions": {
+						"items": {
+							"$ref": "#/components/schemas/AiSuggestionDto"
+						},
+						"type": "array"
+					},
+					"inferredIntent": {
+						"type": "string"
+					},
+					"sourcesUsed": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"provider": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"answer",
+					"suggestions",
+					"inferredIntent",
+					"sourcesUsed",
+					"provider"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiContextFactDto": {
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"label": {
+						"type": "string"
+					},
+					"value": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"key",
+					"label",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiPageContextDto": {
+				"properties": {
+					"pageKind": {
+						"type": "string",
+						"minLength": 1
+					},
+					"route": {
+						"type": "string",
+						"minLength": 1
+					},
+					"pageTitle": {
+						"type": "string",
+						"minLength": 1
+					},
+					"summary": {
+						"type": "string",
+						"minLength": 1
+					},
+					"locale": {
+						"type": "string"
+					},
+					"facts": {
+						"items": {
+							"$ref": "#/components/schemas/AiContextFactDto"
+						},
+						"type": "array"
+					},
+					"contextText": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"suggestedPrompts": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pageKind",
+					"route",
+					"pageTitle",
+					"summary"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiConversationTurnDto": {
+				"properties": {
+					"role": {
+						"type": "string",
+						"enum": [
+							"user",
+							"assistant"
+						]
+					},
+					"content": {
+						"type": "string",
+						"minLength": 1
+					}
+				},
+				"required": [
+					"role",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiRespondRequestDto": {
+				"properties": {
+					"action": {
+						"type": "string",
+						"enum": [
+							"suggest",
+							"answer"
+						]
+					},
+					"userMessage": {
+						"type": "string"
+					},
+					"pageContext": {
+						"$ref": "#/components/schemas/AiPageContextDto"
+					},
+					"conversation": {
+						"items": {
+							"$ref": "#/components/schemas/AiConversationTurnDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"pageContext"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -1694,6 +1866,49 @@
 						}
 					}
 				]
+			}
+		},
+		"/ai/respond": {
+			"post": {
+				"operationId": "Respond",
+				"responses": {
+					"200": {
+						"description": "AI response generated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AiRespondResponseDto"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Respond to a global assistant request using the current page context.",
+				"tags": [
+					"AI"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AiRespondRequestDto"
+							}
+						}
+					}
+				}
 			}
 		}
 	},

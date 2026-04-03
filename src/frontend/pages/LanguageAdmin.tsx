@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Box,
   Snackbar,
@@ -13,6 +13,8 @@ import LanguageFormDialog from "../components/languages/LanguageFormDialog";
 import DeleteConfirmDialog from "../components/languages/DeleteConfirmDialog";
 import { useLanguages, Language } from "../hooks/useLanguages";
 import { strings } from "../i18n/messages";
+import { useAiPageContext } from "../ai/useAiPageContext";
+import type { AiPageContextPayload } from "../ai/types";
 
 /**
  * Language Management Page
@@ -76,6 +78,67 @@ export default function LanguageAdmin() {
   ) => {
     setSnack({ open: true, msg, sev });
   };
+
+  const assistantPageContext = useMemo<AiPageContextPayload>(() => {
+    const defaultLanguages = languages.filter((language) => language.isDefault);
+
+    return {
+      pageKind: "language-admin",
+      route: "/languages",
+      pageTitle: "Language Management",
+      summary: `Managing ${languages.length} configured languages. ${
+        showEdit || showDelete
+          ? "Inline management modes are active."
+          : "Use this page to edit runtime and compile settings."
+      }`,
+      facts: [
+        {
+          key: "languageCount",
+          label: "Language count",
+          value: String(languages.length),
+        },
+        {
+          key: "defaultLanguageCount",
+          label: "Default languages",
+          value: String(defaultLanguages.length),
+        },
+        {
+          key: "editMode",
+          label: "Edit mode",
+          value: showEdit ? "enabled" : "disabled",
+        },
+        {
+          key: "deleteMode",
+          label: "Delete mode",
+          value: showDelete ? "enabled" : "disabled",
+        },
+        {
+          key: "openDialog",
+          label: "Open dialog",
+          value: addOpen
+            ? "add"
+            : edit.open
+              ? "edit"
+              : del.open
+                ? "delete"
+                : "none",
+        },
+      ],
+      contextText: languages.slice(0, 6).map((language) => {
+        const compile = language.compilerCmd ?? "none";
+        const run = language.runtimeCmd ?? "none";
+        return `${language.name}: suffix=${language.suffix}, compile=${compile}, run=${run}`;
+      }),
+      suggestedPrompts: [
+        "Explain these language settings",
+        "What do compile and run commands do?",
+        "Which language configuration should I check first if execution fails?",
+        "How should Java be configured here?",
+      ],
+    };
+  }, [addOpen, del.open, edit.open, languages, showDelete, showEdit]);
+
+  useAiPageContext(assistantPageContext);
 
   // CRUD handlers
   const handleAdd = useCallback(

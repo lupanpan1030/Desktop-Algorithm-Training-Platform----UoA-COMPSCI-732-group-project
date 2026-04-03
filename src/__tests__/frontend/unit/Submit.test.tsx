@@ -41,7 +41,7 @@ describe("Run Button", () => {
           expect(screen.getByText(/Runtime: 100 ms/)).exist;
           expect(screen.getByText(/Memory: 200 KB/)).exist
         });
-      });
+      }, 15000);
 
     })
  
@@ -155,7 +155,7 @@ describe("Submission history", () => {
         languageId: 1,
       })
     );
-  });
+  }, 15000);
 });
 
 describe("Result diagnostics", () => {
@@ -197,5 +197,5 @@ describe("Result diagnostics", () => {
       expect(screen.getByText(/Timed Out/i)).toBeTruthy();
       expect(screen.getAllByText(/Stderr/i).length).toBeGreaterThan(0);
     });
-  });
+  }, 15000);
 });

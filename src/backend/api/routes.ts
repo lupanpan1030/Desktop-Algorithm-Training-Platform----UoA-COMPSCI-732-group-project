@@ -11,6 +11,8 @@ import { ProblemSubmissionController } from './submission/submission-controller'
 import { ProblemsController } from './problem/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { AiController } from './ai/ai-controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -300,6 +302,73 @@ const models: TsoaRoute.Models = {
             "message": {"dataType":"string","required":true},
             "stack": {"dataType":"string"},
             "statusCode": {"dataType":"double","default":403},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiSuggestionDto": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "label": {"dataType":"string","required":true},
+            "prompt": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiRespondResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "answer": {"dataType":"string","required":true},
+            "suggestions": {"dataType":"array","array":{"dataType":"refObject","ref":"AiSuggestionDto"},"required":true},
+            "inferredIntent": {"dataType":"string","required":true},
+            "sourcesUsed": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "provider": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiContextFactDto": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "label": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiPageContextDto": {
+        "dataType": "refObject",
+        "properties": {
+            "pageKind": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "route": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "pageTitle": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "summary": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+            "locale": {"dataType":"string"},
+            "facts": {"dataType":"array","array":{"dataType":"refObject","ref":"AiContextFactDto"}},
+            "contextText": {"dataType":"array","array":{"dataType":"string"}},
+            "suggestedPrompts": {"dataType":"array","array":{"dataType":"string"}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiConversationTurnDto": {
+        "dataType": "refObject",
+        "properties": {
+            "role": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["assistant"]}],"required":true},
+            "content": {"dataType":"string","required":true,"validators":{"minLength":{"value":1}}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiRespondRequestDto": {
+        "dataType": "refObject",
+        "properties": {
+            "action": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["suggest"]},{"dataType":"enum","enums":["answer"]}]},
+            "userMessage": {"dataType":"string"},
+            "pageContext": {"ref":"AiPageContextDto","required":true},
+            "conversation": {"dataType":"array","array":{"dataType":"refObject","ref":"AiConversationTurnDto"}},
         },
         "additionalProperties": false,
     },
@@ -866,6 +935,36 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAiController_respond: Record<string, TsoaRoute.ParameterSchema> = {
+                dto: {"in":"body","name":"dto","required":true,"ref":"AiRespondRequestDto"},
+        };
+        app.post('/ai/respond',
+            ...(fetchMiddlewares<RequestHandler>(AiController)),
+            ...(fetchMiddlewares<RequestHandler>(AiController.prototype.respond)),
+
+            async function AiController_respond(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAiController_respond, request, response });
+
+                const controller = new AiController();
+
+              await templateService.apiHandler({
+                methodName: 'respond',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

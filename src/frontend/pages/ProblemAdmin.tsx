@@ -29,6 +29,8 @@ import {
   useApi,
 } from "../hooks/useApi";
 import { useProblemLocale } from "../problem-locale";
+import { useAiPageContext } from "../ai/useAiPageContext";
+import type { AiPageContextPayload } from "../ai/types";
 
 const blankProblemForm: ProblemMutationPayload = {
   title: "",
@@ -245,6 +247,113 @@ export default function ProblemAdmin() {
       problems.find((problem) => problem.problemId === selectedProblemId) ?? null,
     [problems, selectedProblemId]
   );
+
+  const assistantPageContext = useMemo<AiPageContextPayload>(() => {
+    const activeFilters = [
+      sourceFilter !== "all" ? `source=${sourceFilter}` : null,
+      readinessFilter !== "all" ? `judge=${readinessFilter}` : null,
+      tagFilter !== "all" ? `tag=${tagFilter}` : null,
+      sampleReferenceFilter !== "all"
+        ? `sampleRef=${sampleReferenceFilter}`
+        : null,
+      search.trim() ? `search=${search.trim()}` : null,
+    ].filter(Boolean);
+
+    return {
+      pageKind: "problem-admin",
+      route: "/admin/problems",
+      pageTitle: "Problem Administration",
+      summary: `Managing ${visibleProblems.length} visible problems out of ${problems.length} in ${locale}. ${
+        selectedProblem
+          ? `Current selection is ${selectedProblem.title}.`
+          : `No problem is currently selected.`
+      }`,
+      locale,
+      facts: [
+        {
+          key: "visibleProblems",
+          label: "Visible problems",
+          value: String(visibleProblems.length),
+        },
+        {
+          key: "totalProblems",
+          label: "Total problems",
+          value: String(problems.length),
+        },
+        {
+          key: "selectedProblem",
+          label: "Selected problem",
+          value: selectedProblem?.title ?? "none",
+        },
+        {
+          key: "judgeReady",
+          label: "Judge readiness",
+          value: selectedProblem
+            ? selectedProblem.judgeReady
+              ? "ready"
+              : "needs tests"
+            : "n/a",
+        },
+        {
+          key: "testcaseCounts",
+          label: "Testcase coverage",
+          value: selectedProblem
+            ? `${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden`
+            : "n/a",
+        },
+        {
+          key: "activeFilters",
+          label: "Active filters",
+          value: activeFilters.length ? activeFilters.join(", ") : "none",
+        },
+        {
+          key: "sampleReference",
+          label: "Sample reference",
+          value: selectedProblem?.sampleReferenceAvailable ? "available" : "missing",
+        },
+      ],
+      contextText: [
+        selectedProblem
+          ? `Selected problem description: ${selectedProblem.description.slice(0, 900)}`
+          : null,
+        selectedProblem?.sampleTestcase
+          ? `Imported sample reference: ${selectedProblem.sampleTestcase.slice(
+              0,
+              400
+            )}`
+          : null,
+        selectedProblem?.starterCodes?.length
+          ? `Starter code languages: ${selectedProblem.starterCodes
+              .map((starterCode) => starterCode.languageName)
+              .join(", ")}`
+          : null,
+        testcases.length
+          ? `Visible testcase kinds: ${testcases
+              .map((testcase) => (testcase.isSample ? "sample" : "hidden"))
+              .join(", ")}`
+          : null,
+      ].filter((value): value is string => Boolean(value)),
+      suggestedPrompts: [
+        "What is missing before this problem is judge-ready?",
+        "Explain this imported metadata",
+        "What testcase should I add next?",
+        "Help me use the current filters to find curation candidates",
+      ],
+    };
+  }, [
+    locale,
+    problems.length,
+    readinessFilter,
+    sampleReferenceFilter,
+    search,
+    selectedProblem,
+    sourceFilter,
+    tagFilter,
+    testcases,
+    visibleProblems.length,
+  ]);
+
+  useAiPageContext(assistantPageContext);
 
   const handleOpenAddProblem = () => {
     setProblemDialog({

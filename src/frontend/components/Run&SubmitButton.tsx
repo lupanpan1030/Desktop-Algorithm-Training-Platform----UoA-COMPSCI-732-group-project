@@ -29,6 +29,7 @@ interface CodeSubmissionProps {
   languageId: number;
   languageLabels?: Record<number, string>;
   onRestoreSubmission?: (submission: SubmissionDetail) => void;
+  onAssistantSnapshotChange?: (snapshot: AssistantResultSnapshot) => void;
 }
 
 type ResultView = "history" | "run" | "submit";
@@ -38,6 +39,60 @@ const ALL_SUBMISSION_STATUSES = "ALL";
 
 const buildFailureMessage = (fallback: string, error: unknown) =>
   error instanceof Error && error.message ? error.message : fallback;
+
+type DiagnosticResult = {
+  status: string;
+  output?: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number | null;
+  phase?: string;
+  timedOut?: boolean;
+  expectedOutput?: string;
+  runtimeMs: number;
+  memoryKb: number;
+};
+
+export interface AssistantResultSnapshot {
+  activeView: ResultView;
+  latestRunStatus: string | null;
+  latestSubmitStatus: string | null;
+  latestHistoryStatus: string | null;
+  latestError: string | null;
+  latestPhase: string | null;
+  latestTrace: string | null;
+  submissionCount: number;
+}
+
+function getMostRelevantResult(results?: DiagnosticResult[]) {
+  if (!results?.length) {
+    return null;
+  }
+
+  return (
+    results.find((result) => result.status !== "ACCEPTED") ??
+    results.find((result) => result.stderr || result.output || result.stdout) ??
+    results[0]
+  );
+}
+
+function buildTrace(result: DiagnosticResult | null) {
+  if (!result) {
+    return null;
+  }
+
+  const segments = [
+    result.phase ? `phase=${result.phase}` : null,
+    `status=${result.status}`,
+    result.timedOut ? "timedOut=true" : null,
+    result.exitCode != null ? `exitCode=${result.exitCode}` : null,
+    result.stderr ? `stderr=${result.stderr}` : null,
+    result.output ? `output=${result.output}` : null,
+    result.stdout ? `stdout=${result.stdout}` : null,
+  ].filter(Boolean);
+
+  return segments.length > 0 ? segments.join(" | ") : null;
+}
 
 const ResultList = ({
   title,
@@ -96,6 +151,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   languageId,
   languageLabels = EMPTY_LANGUAGE_LABELS,
   onRestoreSubmission,
+  onAssistantSnapshotChange,
 }) => {
   const { runCode, submitCode, getSubmissions, getSubmission } = useApi();
   const [runResults, setRunResults] = useState<RunResponse | null>(null);
@@ -137,6 +193,46 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       (submission) => submission.status === historyStatusFilter
     );
   }, [historyStatusFilter, submissions]);
+
+  const assistantSnapshot = useMemo<AssistantResultSnapshot>(() => {
+    const runResult = getMostRelevantResult(runResults?.results);
+    const submitResult = getMostRelevantResult(submitResults?.results);
+    const historyResult = getMostRelevantResult(selectedSubmission?.results);
+
+    return {
+      activeView,
+      latestRunStatus: runResults?.status ?? null,
+      latestSubmitStatus: submitResults?.overallStatus ?? null,
+      latestHistoryStatus: selectedSubmission?.status ?? null,
+      latestError:
+        panelError ??
+        runResult?.stderr ??
+        runResult?.output ??
+        submitResult?.stderr ??
+        submitResult?.output ??
+        historyResult?.stderr ??
+        historyResult?.output ??
+        null,
+      latestPhase:
+        runResult?.phase ?? submitResult?.phase ?? historyResult?.phase ?? null,
+      latestTrace:
+        buildTrace(runResult) ??
+        buildTrace(submitResult) ??
+        buildTrace(historyResult),
+      submissionCount: submissions.length,
+    };
+  }, [
+    activeView,
+    panelError,
+    runResults,
+    selectedSubmission,
+    submissions.length,
+    submitResults,
+  ]);
+
+  useEffect(() => {
+    onAssistantSnapshotChange?.(assistantSnapshot);
+  }, [assistantSnapshot, onAssistantSnapshotChange]);
 
   const fetchSubmissionDetail = useCallback(
     async (submissionId: number) => {

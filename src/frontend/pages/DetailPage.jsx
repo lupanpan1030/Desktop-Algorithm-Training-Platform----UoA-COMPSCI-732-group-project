@@ -1,16 +1,42 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useRef,
+} from "react";
 import ProblemContent from "../components/ProblemContent";
 import CodeEditor from "../components/Editor/Editor";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Paper, Box, Typography, CircularProgress } from "@mui/material";
 import "../styles/DetailPage.css";
 import CodeSubmission from "../components/Run&SubmitButton";
 import { useApi } from "../hooks/useApi";
 import { useTheme } from "@mui/material/styles";
 import { useProblemLocale } from "../problem-locale";
+import { useAiPageContext } from "../ai/useAiPageContext";
+
+function truncateText(value, limit = 900) {
+  if (!value) {
+    return "";
+  }
+
+  return value.length > limit ? `${value.slice(0, limit)}...` : value;
+}
+
+function countCodeLines(value) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 0;
+  }
+
+  return trimmed.split("\n").length;
+}
 
 export default function DetailPage() {
   const { id } = useParams();
+  const location = useLocation();
   const problemId = Number(id);
   const [problem, setProblem] = useState(null);
   const [editorState, setEditorState] = useState({
@@ -18,12 +44,14 @@ export default function DetailPage() {
     language: "python",
   });
   const [editorDraft, setEditorDraft] = useState(null);
+  const [assistantResultSnapshot, setAssistantResultSnapshot] = useState(null);
   const [languageMaps, setLanguageMaps] = useState({
     byName: {},
     byId: {},
   });
   const { getProblem, getLanguages, loading, error } = useApi();
   const { locale, setLocale } = useProblemLocale();
+  const deferredCode = useDeferredValue(editorState.code);
 
   // Reference for resizable elements
   const leftPaneRef = useRef(null);
@@ -147,6 +175,132 @@ export default function DetailPage() {
     [editorState.language, languageMaps.byId]
   );
 
+  const detailPageContext = useMemo(() => {
+    if (!problem) {
+      return null;
+    }
+
+    const starterLanguages = (problem.starterCodes ?? []).map(
+      (starterCode) => starterCode.languageName
+    );
+    const facts = [
+      {
+        key: "difficulty",
+        label: "Difficulty",
+        value: problem.difficulty,
+      },
+      {
+        key: "currentLanguage",
+        label: "Current language",
+        value: editorState.language,
+      },
+      {
+        key: "judgeReady",
+        label: "Judge readiness",
+        value: problem.judgeReady ? "ready" : "needs tests",
+      },
+      {
+        key: "tags",
+        label: "Tags",
+        value: problem.tags?.length ? problem.tags.join(", ") : "none",
+      },
+      {
+        key: "codeLines",
+        label: "Code lines",
+        value: String(countCodeLines(deferredCode)),
+      },
+      {
+        key: "testcaseCount",
+        label: "Testcases",
+        value: `${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`,
+      },
+      {
+        key: "starterLanguages",
+        label: "Starter code",
+        value: starterLanguages.length ? starterLanguages.join(", ") : "none",
+      },
+    ];
+
+    if (assistantResultSnapshot?.latestRunStatus) {
+      facts.push({
+        key: "lastRunStatus",
+        label: "Last run status",
+        value: assistantResultSnapshot.latestRunStatus,
+      });
+    }
+
+    if (assistantResultSnapshot?.latestSubmitStatus) {
+      facts.push({
+        key: "lastSubmitStatus",
+        label: "Last submit status",
+        value: assistantResultSnapshot.latestSubmitStatus,
+      });
+    }
+
+    if (assistantResultSnapshot?.latestHistoryStatus) {
+      facts.push({
+        key: "historyStatus",
+        label: "History selection",
+        value: assistantResultSnapshot.latestHistoryStatus,
+      });
+    }
+
+    if (assistantResultSnapshot?.latestError) {
+      facts.push({
+        key: "lastError",
+        label: "Last error",
+        value: truncateText(assistantResultSnapshot.latestError, 180),
+      });
+    }
+
+    return {
+      pageKind: "problem-detail",
+      route: location.pathname,
+      pageTitle: problem.title,
+      summary: `Viewing ${problem.title} in ${locale}. Current language is ${editorState.language}. ${
+        assistantResultSnapshot?.latestRunStatus || assistantResultSnapshot?.latestSubmitStatus
+          ? "Recent execution signals are available."
+          : "No recent execution result has been recorded yet."
+      }`,
+      locale,
+      facts,
+      contextText: [
+        `Problem description: ${truncateText(problem.description)}`,
+        problem.sampleTestcase
+          ? `Imported sample reference: ${truncateText(problem.sampleTestcase, 400)}`
+          : null,
+        deferredCode.trim()
+          ? `Current editor code (${editorState.language}): ${truncateText(
+              deferredCode,
+              900
+            )}`
+          : `Current editor code (${editorState.language}): empty`,
+        assistantResultSnapshot?.latestTrace
+          ? `Latest result trace: ${truncateText(
+              assistantResultSnapshot.latestTrace,
+              400
+            )}`
+          : null,
+      ].filter(Boolean),
+      suggestedPrompts: [
+        "Explain this problem",
+        "Give me a hint without revealing the full answer",
+        "Review my current code",
+        "Explain my latest result",
+        "Explain the imported sample testcase reference",
+      ],
+    };
+  }, [
+    assistantResultSnapshot,
+    deferredCode,
+    editorState.language,
+    locale,
+    location.pathname,
+    problem,
+  ]);
+
+  useAiPageContext(detailPageContext);
+
   const getLanguageId = () => {
     return languageMaps.byName[editorState.language.toLowerCase()] || 1;
   };
@@ -238,6 +392,7 @@ export default function DetailPage() {
                   languageId={getLanguageId()}
                   languageLabels={languageMaps.byId}
                   onRestoreSubmission={handleRestoreSubmission}
+                  onAssistantSnapshotChange={setAssistantResultSnapshot}
                 />
               )}
             </Paper>

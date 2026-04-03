@@ -5,6 +5,7 @@ import FiltersPanel from "../components/FiltersPanel";
 import ProblemList from "../components/ProblemList";
 import { useApi } from "../hooks/useApi";
 import { useProblemLocale } from "../problem-locale";
+import { useAiPageContext } from "../ai/useAiPageContext";
 
 export default function ListPage() {
   const [problems, setProblems] = useState([]);
@@ -35,6 +36,59 @@ export default function ListPage() {
       return diffOK && statusOK;
     });
   }, [problems, difficultyFilter, statusFilter]);
+
+  const pageContext = useMemo(
+    () => ({
+      pageKind: "problem-list",
+      route: "/",
+      pageTitle: "Problem List",
+      summary: `Browsing ${visibleProblems.length} visible problems out of ${problems.length} in ${locale}.`,
+      locale,
+      facts: [
+        {
+          key: "visibleCount",
+          label: "Visible problems",
+          value: String(visibleProblems.length),
+        },
+        {
+          key: "totalCount",
+          label: "Total problems",
+          value: String(problems.length),
+        },
+        {
+          key: "difficultyFilter",
+          label: "Difficulty filters",
+          value: difficultyFilter.length ? difficultyFilter.join(", ") : "all",
+        },
+        {
+          key: "statusFilter",
+          label: "Status filters",
+          value: statusFilter.length ? statusFilter.join(", ") : "all",
+        },
+      ],
+      contextText: visibleProblems
+        .slice(0, 8)
+        .map(
+          (problem, index) =>
+            `${index + 1}. ${problem.title} [${problem.difficulty}] ${problem.completionState ?? "Unattempted"}`
+        ),
+      suggestedPrompts: [
+        "Help me choose the next problem",
+        "Explain these filters",
+        "Recommend a good warm-up problem",
+        "What should I solve next based on the visible list?",
+      ],
+    }),
+    [
+      difficultyFilter,
+      locale,
+      problems.length,
+      statusFilter,
+      visibleProblems,
+    ]
+  );
+
+  useAiPageContext(pageContext);
 
   if (error) {
     return <Typography>Error loading problems</Typography>;
