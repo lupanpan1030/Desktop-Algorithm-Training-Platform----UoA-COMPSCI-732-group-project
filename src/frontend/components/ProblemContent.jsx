@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Typography, Divider, Stack, ToggleButton, ToggleButtonGroup, Chip, Paper } from '@mui/material';
 import { marked } from 'marked';
 import DOMPurify from '../utils/dompurifyConfig';
 
@@ -15,6 +15,10 @@ export default function ProblemContent({ problem, onLocaleChange }) {
     if (!problem) {
         return <Typography>No problem data available</Typography>;
     }
+
+    const starterCodeLanguages = [...new Set(
+        (problem.starterCodes || []).map((starterCode) => starterCode.languageName)
+    )];
 
     return (
         <Box sx={{ p: 2 }}>
@@ -81,6 +85,40 @@ export default function ProblemContent({ problem, onLocaleChange }) {
                 </Box>
             )}
 
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1 }}>
+                <Chip label={`${problem.source} / ${problem.locale}`} size="small" variant="outlined" />
+                <Chip
+                    label={problem.judgeReady ? 'Judge Ready' : 'Needs More Tests'}
+                    size="small"
+                    color={problem.judgeReady ? 'success' : 'default'}
+                />
+                <Chip label={`${problem.testcaseCount} testcases`} size="small" variant="outlined" />
+                <Chip
+                    label={`${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`}
+                    size="small"
+                    variant="outlined"
+                />
+                {problem.externalProblemId && (
+                    <Chip label={`External ${problem.externalProblemId}`} size="small" variant="outlined" />
+                )}
+                {problem.sourceSlug && (
+                    <Chip label={problem.sourceSlug} size="small" variant="outlined" />
+                )}
+            </Stack>
+
+            {problem.tags?.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                        Tags
+                    </Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {problem.tags.map((tag) => (
+                            <Chip key={tag} label={tag} size="small" />
+                        ))}
+                    </Stack>
+                </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
             
             <Typography
@@ -91,6 +129,41 @@ export default function ProblemContent({ problem, onLocaleChange }) {
                 __html: DOMPurify.sanitize(marked(problem.description))
               }}
             />
+
+            {problem.sampleTestcase && (
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Imported Sample Testcase Reference
+                    </Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                        <Typography
+                            variant="body2"
+                            component="pre"
+                            sx={{
+                                m: 0,
+                                fontFamily: 'monospace',
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                            }}
+                        >
+                            {problem.sampleTestcase}
+                        </Typography>
+                    </Paper>
+                </Box>
+            )}
+
+            {starterCodeLanguages.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Starter Code Available
+                    </Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {starterCodeLanguages.map((languageName) => (
+                            <Chip key={languageName} label={languageName} size="small" variant="outlined" />
+                        ))}
+                    </Stack>
+                </Box>
+            )}
 
             {problem.examples && problem.examples.length > 0 && (
                 <Box sx={{ mb: 3 }}>

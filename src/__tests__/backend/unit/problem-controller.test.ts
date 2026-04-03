@@ -52,10 +52,14 @@ describe("ProblemsController", () => {
           locale: "en",
           defaultLocale: "en",
           availableLocales: ["en"],
-          sourceSlug: null,
-          externalProblemId: null,
+          sourceSlug: null as string | null,
+          externalProblemId: null as string | null,
           judgeReady: true,
           testcaseCount: 2,
+          sampleCaseCount: 1,
+          hiddenCaseCount: 1,
+          sampleReferenceAvailable: false,
+          tags: ["Array"],
         },
         {
           problemId: 2,
@@ -69,6 +73,10 @@ describe("ProblemsController", () => {
           externalProblemId: "2",
           judgeReady: false,
           testcaseCount: 0,
+          sampleCaseCount: 0,
+          hiddenCaseCount: 0,
+          sampleReferenceAvailable: true,
+          tags: [],
         },
       ];
       serviceMock.getAllProblems.mockResolvedValue(fakeSummaries);
@@ -96,7 +104,16 @@ describe("ProblemsController", () => {
         externalProblemId: null as string | null,
         judgeReady: true,
         testcaseCount: 2,
+        sampleReferenceAvailable: false,
         sampleTestcase: null as string | null,
+        sampleCaseCount: 1,
+        hiddenCaseCount: 1,
+        tags: ["Math"],
+        starterCodes: [] as Array<{
+          languageSlug: string;
+          languageName: string;
+          template: string;
+        }>,
       };
       serviceMock.getProblem.mockResolvedValue(fakeDetail);
 
@@ -137,7 +154,16 @@ describe("ProblemsController", () => {
         externalProblemId: null as string | null,
         judgeReady: false,
         testcaseCount: 0,
+        sampleReferenceAvailable: false,
         sampleTestcase: null as string | null,
+        sampleCaseCount: 0,
+        hiddenCaseCount: 0,
+        tags: [] as string[],
+        starterCodes: [] as Array<{
+          languageSlug: string;
+          languageName: string;
+          template: string;
+        }>,
       };
       serviceMock.createProblem.mockResolvedValue(fakeDetail);
 
@@ -166,7 +192,16 @@ describe("ProblemsController", () => {
         externalProblemId: "4",
         judgeReady: true,
         testcaseCount: 3,
+        sampleReferenceAvailable: true,
         sampleTestcase: "1 2",
+        sampleCaseCount: 1,
+        hiddenCaseCount: 2,
+        tags: ["String"],
+        starterCodes: [] as Array<{
+          languageSlug: string;
+          languageName: string;
+          template: string;
+        }>,
       };
       serviceMock.updateProblem.mockResolvedValue(fakeDetail);
 

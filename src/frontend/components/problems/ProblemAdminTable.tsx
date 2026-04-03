@@ -87,9 +87,28 @@ export default function ProblemAdminTable({
                       size="small"
                       color={problem.judgeReady ? "success" : "default"}
                     />
+                    {problem.sampleReferenceAvailable && (
+                      <Chip
+                        label="Sample Ref"
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                    {problem.tags.length > 0 && (
+                      <Chip
+                        label={`${problem.tags.length} tags`}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
                   </Stack>
                 </TableCell>
-                <TableCell>{problem.testcaseCount}</TableCell>
+                <TableCell>
+                  <Typography variant="body2">{problem.testcaseCount}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {problem.sampleCaseCount} sample / {problem.hiddenCaseCount} hidden
+                  </Typography>
+                </TableCell>
                 <TableCell align="right">
                   <Tooltip title="Edit problem" arrow>
                     <IconButton

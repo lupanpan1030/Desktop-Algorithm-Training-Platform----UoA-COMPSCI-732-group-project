@@ -4,6 +4,12 @@ import { Difficulty, Prisma } from "@prisma/client";
 
 export type CompletionState = 'Completed' | 'Attempted' | 'Unattempted';
 
+export interface StarterCodeSnippet {
+  languageSlug: string;
+  languageName: string;
+  template: string;
+}
+
 // Summary view of a problem (for listing purposes)
 export interface ProblemSummary {
   problemId: number;
@@ -18,6 +24,10 @@ export interface ProblemSummary {
   externalProblemId?: string | null;
   judgeReady: boolean;
   testcaseCount: number;
+  sampleCaseCount: number;
+  hiddenCaseCount: number;
+  sampleReferenceAvailable: boolean;
+  tags: string[];
 }
 
 // Detailed view of a problem (for getting a single problem's details)
@@ -35,7 +45,12 @@ export interface ProblemDetails {
   externalProblemId?: string | null;
   judgeReady: boolean;
   testcaseCount: number;
+  sampleReferenceAvailable: boolean;
   sampleTestcase?: string | null;
+  sampleCaseCount: number;
+  hiddenCaseCount: number;
+  tags: string[];
+  starterCodes: StarterCodeSnippet[];
 }
 
 // Used for intermediary data transfer between the database and the API
@@ -53,6 +68,20 @@ export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
         description: true;
       };
     };
+    test_cases: {
+      select: {
+        is_sample: true;
+      };
+    };
+    problem_tags: {
+      select: {
+        tag: {
+          select: {
+            name: true;
+          };
+        };
+      };
+    };
     _count: {
       select: {
         test_cases: true;
@@ -68,6 +97,27 @@ export type ProblemWithCounts = Prisma.ProblemGetPayload<{
         locale: true;
         title: true;
         description: true;
+      };
+    };
+    test_cases: {
+      select: {
+        is_sample: true;
+      };
+    };
+    problem_tags: {
+      select: {
+        tag: {
+          select: {
+            name: true;
+          };
+        };
+      };
+    };
+    starter_codes: {
+      select: {
+        language_slug: true;
+        language_name: true;
+        template: true;
       };
     };
     _count: {

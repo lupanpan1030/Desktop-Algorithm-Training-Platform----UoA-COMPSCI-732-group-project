@@ -15,12 +15,23 @@ export interface ProblemSummary {
   externalProblemId?: string | null;
   judgeReady: boolean;
   testcaseCount: number;
+  sampleCaseCount: number;
+  hiddenCaseCount: number;
+  sampleReferenceAvailable: boolean;
+  tags: string[];
+}
+
+export interface StarterCodeSnippet {
+  languageSlug: string;
+  languageName: string;
+  template: string;
 }
 
 export interface ProblemDetails extends ProblemSummary {
   description: string;
   createdAt: string;
   sampleTestcase?: string | null;
+  starterCodes: StarterCodeSnippet[];
 }
 
 interface Language {

@@ -32,6 +32,20 @@ export class ProblemsDao {
             description: true,
           },
         },
+        test_cases: {
+          select: {
+            is_sample: true,
+          },
+        },
+        problem_tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             test_cases: true,
@@ -59,6 +73,27 @@ export class ProblemsDao {
             locale: true,
             title: true,
             description: true,
+          },
+        },
+        test_cases: {
+          select: {
+            is_sample: true,
+          },
+        },
+        problem_tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        starter_codes: {
+          select: {
+            language_slug: true,
+            language_name: true,
+            template: true,
           },
         },
         _count: {
@@ -97,19 +132,8 @@ export class ProblemsDao {
           },
         },
       },
-      include: {
-        translations: {
-          select: {
-            locale: true,
-            title: true,
-            description: true,
-          },
-        },
-        _count: {
-          select: {
-            test_cases: true,
-          },
-        },
+      select: {
+        problem_id: true,
       },
     });
 

@@ -21,6 +21,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Reset just the problems table
+  await testPrisma.tag.deleteMany({});
   await dropAndSeedProblems();
   await dropAndSeedTestCases();
 });
@@ -42,11 +43,15 @@ describe("Problems API (integration)", () => {
         title: expect.any(String),
         difficulty: expect.any(String),
         testcaseCount: expect.any(Number),
+        sampleCaseCount: expect.any(Number),
+        hiddenCaseCount: expect.any(Number),
+        sampleReferenceAvailable: expect.any(Boolean),
         judgeReady: expect.any(Boolean),
         source: expect.any(String),
         locale: expect.any(String),
         defaultLocale: expect.any(String),
         availableLocales: expect.any(Array),
+        tags: expect.any(Array),
       });
     });
 
@@ -59,6 +64,21 @@ describe("Problems API (integration)", () => {
           description: "给定一个整数数组 nums 和一个整数目标值 target。",
         },
       });
+      const tag = await testPrisma.tag.create({
+        data: {
+          name: "Array",
+        },
+      });
+      await testPrisma.problemTag.create({
+        data: {
+          problem_id: 1,
+          tag_id: tag.tag_id,
+        },
+      });
+      await testPrisma.problem.update({
+        where: { problem_id: 1 },
+        data: { sample_testcase: "2 7 11 15\n9" },
+      });
 
       const res = await request(app).get("/problems").query({ locale: "zh-CN" });
       expect(res.status).toBe(200);
@@ -68,6 +88,10 @@ describe("Problems API (integration)", () => {
         locale: "zh-CN",
         defaultLocale: "en",
         availableLocales: ["en", "zh-CN"],
+        sampleCaseCount: 1,
+        hiddenCaseCount: 1,
+        sampleReferenceAvailable: true,
+        tags: ["Array"],
       });
     });
 
@@ -111,6 +135,11 @@ describe("Problems API (integration)", () => {
         locale: "en",
         defaultLocale: "en",
         availableLocales: ["en"],
+        sampleReferenceAvailable: false,
+        sampleCaseCount: 1,
+        hiddenCaseCount: 1,
+        tags: [],
+        starterCodes: [],
       });
       // ISO check
       expect(() => new Date(res.body.createdAt)).not.toThrow();
@@ -125,6 +154,29 @@ describe("Problems API (integration)", () => {
           description: "给定一个整数数组 nums 和一个整数目标值 target。",
         },
       });
+      const tag = await testPrisma.tag.create({
+        data: {
+          name: "Array",
+        },
+      });
+      await testPrisma.problemTag.create({
+        data: {
+          problem_id: 1,
+          tag_id: tag.tag_id,
+        },
+      });
+      await testPrisma.problemStarterCode.create({
+        data: {
+          problem_id: 1,
+          language_slug: "python3",
+          language_name: "Python3",
+          template: "class Solution:\n    pass",
+        },
+      });
+      await testPrisma.problem.update({
+        where: { problem_id: 1 },
+        data: { sample_testcase: "2 7 11 15\n9" },
+      });
 
       const res = await request(app).get("/problems/1").query({ locale: "zh-CN" });
       expect(res.status).toBe(200);
@@ -135,6 +187,18 @@ describe("Problems API (integration)", () => {
         locale: "zh-CN",
         defaultLocale: "en",
         availableLocales: ["en", "zh-CN"],
+        sampleReferenceAvailable: true,
+        sampleTestcase: "2 7 11 15\n9",
+        sampleCaseCount: 1,
+        hiddenCaseCount: 1,
+        tags: ["Array"],
+        starterCodes: [
+          {
+            languageSlug: "python3",
+            languageName: "Python3",
+            template: "class Solution:\n    pass",
+          },
+        ],
       });
     });
 
@@ -175,6 +239,11 @@ describe("Problems API (integration)", () => {
         locale: "en",
         defaultLocale: "en",
         availableLocales: ["en"],
+        sampleReferenceAvailable: false,
+        sampleCaseCount: 0,
+        hiddenCaseCount: 0,
+        tags: [],
+        starterCodes: [],
       });
     });
 
@@ -257,6 +326,11 @@ describe("Problems API (integration)", () => {
         locale: "en",
         defaultLocale: "en",
         availableLocales: ["en"],
+        sampleReferenceAvailable: false,
+        sampleCaseCount: 1,
+        hiddenCaseCount: 1,
+        tags: [],
+        starterCodes: [],
       });
     });
   

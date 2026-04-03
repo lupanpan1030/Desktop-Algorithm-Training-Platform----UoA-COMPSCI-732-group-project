@@ -8,6 +8,7 @@ import {
   CreateProblemParams,
   UpdateProblemParams,
   ProblemWithCounts,
+  ProblemWithStatuses,
 } from "./problem";
 import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError } from "../../utils/errors/not-found-error";
@@ -23,6 +24,24 @@ const deriveState = (statuses: SubmissionStatus[]): CompletionState => {
   if (statuses.length > 0) return 'Attempted';
   return 'Unattempted';
 };
+
+const summarizeTestcases = (
+  problem: Pick<ProblemWithCounts, "test_cases"> | Pick<ProblemWithStatuses, "test_cases">
+) => {
+  const sampleCaseCount = problem.test_cases.filter(
+    (testCase: { is_sample: boolean }) => testCase.is_sample
+  ).length;
+  return {
+    sampleCaseCount,
+    hiddenCaseCount: problem.test_cases.length - sampleCaseCount,
+  };
+};
+
+const listProblemTags = (
+  problem: Pick<ProblemWithCounts, "problem_tags"> | Pick<ProblemWithStatuses, "problem_tags">
+) : string[] =>
+  [...new Set(problem.problem_tags.map((problemTag) => problemTag.tag.name))]
+    .sort((left: string, right: string) => left.localeCompare(right));
 
 export class ProblemsService {
   private ensureLocaleAvailable(
@@ -47,6 +66,7 @@ export class ProblemsService {
   ): ProblemDetails {
     const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
     const availableLocales = listAvailableProblemLocales(problem);
+    const { sampleCaseCount, hiddenCaseCount } = summarizeTestcases(problem);
     this.ensureLocaleAvailable(availableLocales, preferredLocale, strictLocale);
 
     return {
@@ -63,7 +83,18 @@ export class ProblemsService {
       externalProblemId: problem.external_problem_id,
       judgeReady: problem.judge_ready,
       testcaseCount: problem._count.test_cases,
+      sampleReferenceAvailable: Boolean(problem.sample_testcase),
       sampleTestcase: problem.sample_testcase,
+      sampleCaseCount,
+      hiddenCaseCount,
+      tags: listProblemTags(problem),
+      starterCodes: problem.starter_codes
+        .map((starterCode) => ({
+          languageSlug: starterCode.language_slug,
+          languageName: starterCode.language_name,
+          template: starterCode.template,
+        }))
+        .sort((left, right) => left.languageName.localeCompare(right.languageName)),
     };
   }
 
@@ -87,6 +118,7 @@ export class ProblemsService {
       })
       .map((problem) => {
       const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
+      const { sampleCaseCount, hiddenCaseCount } = summarizeTestcases(problem);
 
       return {
       problemId: problem.problem_id,
@@ -103,6 +135,10 @@ export class ProblemsService {
       externalProblemId: problem.external_problem_id,
       judgeReady: problem.judge_ready,
       testcaseCount: problem._count.test_cases,
+      sampleCaseCount,
+      hiddenCaseCount,
+      sampleReferenceAvailable: Boolean(problem.sample_testcase),
+      tags: listProblemTags(problem),
     };
     });
   }

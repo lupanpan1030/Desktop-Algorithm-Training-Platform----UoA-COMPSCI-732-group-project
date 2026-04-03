@@ -211,6 +211,7 @@ export default function DetailPage() {
                 onCodeChange={handleCodeChange}
                 problemId={problemId}
                 loadedDraft={editorDraft}
+                starterCodes={problem?.starterCodes ?? []}
               />
             </Paper>
           </Box>

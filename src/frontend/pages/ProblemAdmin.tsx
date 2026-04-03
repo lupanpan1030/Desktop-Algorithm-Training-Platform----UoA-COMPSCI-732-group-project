@@ -6,6 +6,7 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
@@ -81,6 +82,10 @@ export default function ProblemAdmin() {
   const [selectedProblem, setSelectedProblem] = useState<ProblemDetails | null>(null);
   const [testcases, setTestcases] = useState<TestCase[]>([]);
   const [search, setSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [readinessFilter, setReadinessFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState("all");
+  const [sampleReferenceFilter, setSampleReferenceFilter] = useState("all");
   const [pageLoading, setPageLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -188,23 +193,52 @@ export default function ProblemAdmin() {
 
   const visibleProblems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    if (!normalizedSearch) {
-      return problems;
-    }
-
     return problems.filter((problem) =>
-      [
-        problem.title,
-        problem.source,
-        problem.locale,
-        problem.sourceSlug ?? "",
-        problem.externalProblemId ?? "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedSearch)
+      (normalizedSearch
+        ? [
+            problem.title,
+            problem.source,
+            problem.locale,
+            problem.sourceSlug ?? "",
+            problem.externalProblemId ?? "",
+            ...problem.tags,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedSearch)
+        : true) &&
+      (sourceFilter === "all" ? true : problem.source === sourceFilter) &&
+      (readinessFilter === "all"
+        ? true
+        : readinessFilter === "ready"
+          ? problem.judgeReady
+          : !problem.judgeReady) &&
+      (tagFilter === "all" ? true : problem.tags.includes(tagFilter)) &&
+      (sampleReferenceFilter === "all"
+        ? true
+        : sampleReferenceFilter === "with-reference"
+          ? problem.sampleReferenceAvailable
+          : !problem.sampleReferenceAvailable)
     );
-  }, [problems, search]);
+  }, [problems, readinessFilter, sampleReferenceFilter, search, sourceFilter, tagFilter]);
+
+  const availableSources = useMemo(
+    () => [...new Set(problems.map((problem) => problem.source))].sort(),
+    [problems]
+  );
+
+  const availableTags = useMemo(
+    () =>
+      [...new Set(problems.flatMap((problem) => problem.tags))]
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right)),
+    [problems]
+  );
+
+  const nextProblemNeedingTests = useMemo(
+    () => visibleProblems.find((problem) => !problem.judgeReady) ?? null,
+    [visibleProblems]
+  );
 
   const selectedProblemSummary = useMemo(
     () =>
@@ -398,6 +432,17 @@ export default function ProblemAdmin() {
               Refresh
             </Button>
             <Button
+              variant="outlined"
+              disabled={!nextProblemNeedingTests}
+              onClick={() => {
+                if (nextProblemNeedingTests) {
+                  setSelectedProblemId(nextProblemNeedingTests.problemId);
+                }
+              }}
+            >
+              Next Needs Tests
+            </Button>
+            <Button
               variant="contained"
               color="secondary"
               startIcon={<AddIcon />}
@@ -420,6 +465,66 @@ export default function ProblemAdmin() {
                 size="small"
                 fullWidth
               />
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={1} useFlexGap flexWrap="wrap">
+                <TextField
+                  select
+                  label="Source"
+                  value={sourceFilter}
+                  onChange={(event) => setSourceFilter(event.target.value)}
+                  size="small"
+                  sx={{ minWidth: 140 }}
+                >
+                  <MenuItem value="all">All sources</MenuItem>
+                  {availableSources.map((source) => (
+                    <MenuItem key={source} value={source}>
+                      {source}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Judge State"
+                  value={readinessFilter}
+                  onChange={(event) => setReadinessFilter(event.target.value)}
+                  size="small"
+                  sx={{ minWidth: 160 }}
+                >
+                  <MenuItem value="all">All problems</MenuItem>
+                  <MenuItem value="needs-tests">Needs tests</MenuItem>
+                  <MenuItem value="ready">Judge ready</MenuItem>
+                </TextField>
+
+                <TextField
+                  select
+                  label="Tag"
+                  value={tagFilter}
+                  onChange={(event) => setTagFilter(event.target.value)}
+                  size="small"
+                  sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="all">All tags</MenuItem>
+                  {availableTags.map((tag) => (
+                    <MenuItem key={tag} value={tag}>
+                      {tag}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Sample Ref"
+                  value={sampleReferenceFilter}
+                  onChange={(event) => setSampleReferenceFilter(event.target.value)}
+                  size="small"
+                  sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="all">All problems</MenuItem>
+                  <MenuItem value="with-reference">With reference</MenuItem>
+                  <MenuItem value="without-reference">Without reference</MenuItem>
+                </TextField>
+              </Stack>
 
               {pageLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
@@ -490,6 +595,11 @@ export default function ProblemAdmin() {
                               externalProblemId: selectedProblem.externalProblemId,
                               judgeReady: selectedProblem.judgeReady,
                               testcaseCount: selectedProblem.testcaseCount,
+                              sampleCaseCount: selectedProblem.sampleCaseCount,
+                              hiddenCaseCount: selectedProblem.hiddenCaseCount,
+                              sampleReferenceAvailable:
+                                selectedProblem.sampleReferenceAvailable,
+                              tags: selectedProblem.tags,
                             }
                           )
                         }
@@ -508,6 +618,18 @@ export default function ProblemAdmin() {
                       color={selectedProblem.judgeReady ? "success" : "default"}
                     />
                     <Chip label={`${selectedProblem.testcaseCount} testcases`} variant="outlined" />
+                    <Chip
+                      label={`${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden`}
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={
+                        selectedProblem.sampleReferenceAvailable
+                          ? "Has imported sample reference"
+                          : "No imported sample reference"
+                      }
+                      variant="outlined"
+                    />
                     {selectedProblem.availableLocales?.map((availableLocale) => (
                       <Chip
                         key={availableLocale}
@@ -521,6 +643,19 @@ export default function ProblemAdmin() {
                       <Chip label={`slug: ${selectedProblem.sourceSlug}`} variant="outlined" />
                     )}
                   </Stack>
+
+                  {selectedProblem.tags.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Tags
+                      </Typography>
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {selectedProblem.tags.map((tag) => (
+                          <Chip key={tag} label={tag} size="small" />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
                   <Divider />
 
@@ -551,6 +686,39 @@ export default function ProblemAdmin() {
                           {selectedProblem.sampleTestcase}
                         </Typography>
                       </Paper>
+                    </Box>
+                  )}
+
+                  {selectedProblem.starterCodes.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Imported Starter Code
+                      </Typography>
+                      <Stack spacing={2}>
+                        {selectedProblem.starterCodes.map((starterCode) => (
+                          <Paper
+                            key={starterCode.languageSlug}
+                            variant="outlined"
+                            sx={{ p: 2 }}
+                          >
+                            <Typography variant="subtitle2" gutterBottom>
+                              {starterCode.languageName}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              component="pre"
+                              sx={{
+                                m: 0,
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                                fontFamily: "monospace",
+                              }}
+                            >
+                              {starterCode.template}
+                            </Typography>
+                          </Paper>
+                        ))}
+                      </Stack>
                     </Box>
                   )}
                 </Stack>

@@ -6,6 +6,7 @@ import EditorHeader from './EditorHeader';
 import MonacoConfig from './MonacoConfig';
 import useApi from '../../hooks/useApi';
 import { saveCodeToLocalStorage, getCodeFromLocalStorage } from '../../utils/localStorageHelper';
+import { getStarterCodeForLanguage } from '../../utils/starterCode';
 
 
 const isPackaged = window.location.protocol === 'file:';
@@ -28,7 +29,12 @@ const monacoLanguageMap = {
   swift: 'swift',
 };
 
-export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
+export default function CodeEditor({
+    onCodeChange,
+    problemId,
+    loadedDraft,
+    starterCodes = [],
+}) {
     const editorRef = useRef(null);
     const lastAppliedDraftRef = useRef(null);
     const { getLanguages, loading: languagesLoading, error: languagesError } = useApi();
@@ -49,6 +55,15 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
         { language_id: 3, name: 'Java' },
         { language_id: 4, name: 'C++' }
     ]);
+    const resolveStarterCode = useCallback((nextLanguage) => {
+        return getStarterCodeForLanguage(nextLanguage, starterCodes);
+    }, [starterCodes]);
+
+    const persistCode = useCallback((nextLanguage, nextCode) => {
+        if (Object.keys(languageMap).length > 0) {
+            saveCodeToLocalStorage(problemId, nextLanguage, nextCode, languageMap);
+        }
+    }, [languageMap, problemId]);
 
     // Fetch language list from backend using useApi
     useEffect(() => {
@@ -76,12 +91,17 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
         // Only try to load code once we have the language map
         if (Object.keys(languageMap).length > 0) {
             const savedLanguage = localStorage.getItem(`editorLanguage_${problemId}`) || 'python';
-            setLanguage(savedLanguage);
-            
             const savedCode = getCodeFromLocalStorage(problemId, savedLanguage, languageMap);
-            setCode(savedCode);
+            const starterCode = savedCode ? '' : resolveStarterCode(savedLanguage);
+            const nextCode = savedCode || starterCode || '';
+            setLanguage(savedLanguage);
+
+            setCode(nextCode);
+            if (!savedCode && starterCode) {
+                persistCode(savedLanguage, starterCode);
+            }
         }
-    }, [problemId, languageMap]);
+    }, [problemId, languageMap, persistCode, resolveStarterCode]);
 
     useEffect(() => {
         if (!loadedDraft?.revision) {
@@ -97,13 +117,13 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
 
         setLanguage(nextLanguage);
         setCode(nextCode);
-        saveCodeToLocalStorage(problemId, nextLanguage, nextCode, languageMap);
+        persistCode(nextLanguage, nextCode);
         lastAppliedDraftRef.current = loadedDraft.revision;
 
         if (editorRef.current) {
             editorRef.current.focus();
         }
-    }, [languageMap, loadedDraft, problemId]);
+    }, [loadedDraft, persistCode]);
 
     // Additional loading timeout detection
     useEffect(() => {      
@@ -153,12 +173,31 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
         let savedCode = '';
         if (Object.keys(languageMap).length > 0) {
             savedCode = getCodeFromLocalStorage(problemId, newLanguage, languageMap);
-            setCode(savedCode);
+        }
+        const starterCode = savedCode ? '' : resolveStarterCode(newLanguage);
+        const nextCode = savedCode || starterCode || '';
+        setCode(nextCode);
+        if (!savedCode && starterCode) {
+            persistCode(newLanguage, starterCode);
         }
         if (onCodeChange) {
-            onCodeChange({ code: savedCode, language: newLanguage });
+            onCodeChange({ code: nextCode, language: newLanguage });
         }
-    }, [onCodeChange, problemId, languageMap]);
+    }, [languageMap, onCodeChange, persistCode, problemId, resolveStarterCode]);
+
+    const handleResetToStarter = useCallback(() => {
+        const starterCode = resolveStarterCode(language);
+        if (!starterCode) {
+            return;
+        }
+
+        setCode(starterCode);
+        persistCode(language, starterCode);
+
+        if (editorRef.current) {
+            editorRef.current.focus();
+        }
+    }, [language, persistCode, resolveStarterCode]);
 
     const handleEditorDidMount = useCallback((editor, _monaco) => {
         editorRef.current = editor;
@@ -209,6 +248,8 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
                 languages={languages}
                 handleEditorChange={handleEditorChange}
                 handleLanguageChange={handleLanguageChange}
+                onResetToStarter={handleResetToStarter}
+                canResetToStarter={Boolean(resolveStarterCode(language))}
                 monacoError={monacoError}
             />
         );
@@ -220,6 +261,8 @@ export default function CodeEditor({ onCodeChange, problemId, loadedDraft }) {
                 language={language}
                 languages={languages}
                 handleLanguageChange={handleLanguageChange}
+                onResetToStarter={handleResetToStarter}
+                canResetToStarter={Boolean(resolveStarterCode(language))}
                 loading={languagesLoading}
                 error={languagesError}
             />

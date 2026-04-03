@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +9,8 @@ export default function FallbackEditor({
     languages, 
     handleEditorChange, 
     handleLanguageChange, 
+    onResetToStarter,
+    canResetToStarter,
     monacoError 
 }) {
     const navigate = useNavigate();
@@ -21,6 +23,14 @@ export default function FallbackEditor({
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Code Editor</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={onResetToStarter}
+                        disabled={!canResetToStarter}
+                    >
+                        Reset to Starter
+                    </Button>
                     <FormControl size="small">
                         <InputLabel>Language</InputLabel>
                         <Select

@@ -385,6 +385,23 @@
 					"testcaseCount": {
 						"type": "number",
 						"format": "double"
+					},
+					"sampleCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"hiddenCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"sampleReferenceAvailable": {
+						"type": "boolean"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
@@ -397,7 +414,31 @@
 					"defaultLocale",
 					"availableLocales",
 					"judgeReady",
-					"testcaseCount"
+					"testcaseCount",
+					"sampleCaseCount",
+					"hiddenCaseCount",
+					"sampleReferenceAvailable",
+					"tags"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"StarterCodeSnippet": {
+				"properties": {
+					"languageSlug": {
+						"type": "string"
+					},
+					"languageName": {
+						"type": "string"
+					},
+					"template": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"languageSlug",
+					"languageName",
+					"template"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -450,9 +491,32 @@
 						"type": "number",
 						"format": "double"
 					},
+					"sampleReferenceAvailable": {
+						"type": "boolean"
+					},
 					"sampleTestcase": {
 						"type": "string",
 						"nullable": true
+					},
+					"sampleCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"hiddenCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"starterCodes": {
+						"items": {
+							"$ref": "#/components/schemas/StarterCodeSnippet"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
@@ -466,7 +530,12 @@
 					"defaultLocale",
 					"availableLocales",
 					"judgeReady",
-					"testcaseCount"
+					"testcaseCount",
+					"sampleReferenceAvailable",
+					"sampleCaseCount",
+					"hiddenCaseCount",
+					"tags",
+					"starterCodes"
 				],
 				"type": "object",
 				"additionalProperties": false
