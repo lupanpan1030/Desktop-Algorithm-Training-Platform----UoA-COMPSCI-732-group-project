@@ -72,10 +72,21 @@ export default function ProblemAdminTable({
                 : alpha(theme.palette.background.paper, 0.44),
               transition:
                 "transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease",
+              "& .problem-row-actions": {
+                opacity: selected ? 1 : 0,
+                visibility: selected ? "visible" : "hidden",
+                transform: selected ? "translateY(0)" : "translateY(-2px)",
+                transition: "opacity 160ms ease, visibility 160ms ease, transform 160ms ease",
+              },
               "&:hover": {
                 transform: "translateY(-1px)",
                 borderColor: alpha(theme.palette.primary.main, 0.3),
                 boxShadow: `0 12px 26px ${alpha(theme.palette.primary.main, 0.08)}`,
+              },
+              "&:hover .problem-row-actions, &:focus-within .problem-row-actions": {
+                opacity: 1,
+                visibility: "visible",
+                transform: "translateY(0)",
               },
             }}
           >
@@ -96,7 +107,7 @@ export default function ProblemAdminTable({
                   </Typography>
                 </Box>
 
-                <Stack direction="row" spacing={0.3} sx={{ flexShrink: 0 }}>
+                <Stack direction="row" spacing={0.3} className="problem-row-actions" sx={{ flexShrink: 0 }}>
                   <Tooltip title="Edit problem" arrow>
                     <IconButton
                       size="small"

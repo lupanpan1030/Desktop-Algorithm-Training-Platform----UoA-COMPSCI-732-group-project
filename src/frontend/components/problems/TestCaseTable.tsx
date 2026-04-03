@@ -41,6 +41,17 @@ export default function TestCaseTable({ testcases, onEdit, onDelete }: Props) {
             borderRadius: 4,
             bgcolor: alpha(theme.palette.background.paper, 0.44),
             borderColor: alpha(theme.palette.divider, 0.34),
+            "& .testcase-row-actions": {
+              opacity: 0,
+              visibility: "hidden",
+              transform: "translateY(-2px)",
+              transition: "opacity 160ms ease, visibility 160ms ease, transform 160ms ease",
+            },
+            "&:hover .testcase-row-actions, &:focus-within .testcase-row-actions": {
+              opacity: 1,
+              visibility: "visible",
+              transform: "translateY(0)",
+            },
           }}
         >
           <Stack spacing={1}>
@@ -63,7 +74,7 @@ export default function TestCaseTable({ testcases, onEdit, onDelete }: Props) {
                 />
               </Stack>
 
-              <Stack direction="row" spacing={0.3}>
+              <Stack direction="row" spacing={0.3} className="testcase-row-actions">
                 <Tooltip title="Edit test case" arrow>
                   <IconButton size="small" onClick={() => onEdit(testcase)}>
                     <EditIcon fontSize="small" />
