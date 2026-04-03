@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { marked } from "marked";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteConfirmDialog from "../components/languages/DeleteConfirmDialog";
@@ -22,6 +23,7 @@ import ProblemAdminTable from "../components/problems/ProblemAdminTable";
 import ProblemFormDialog from "../components/problems/ProblemFormDialog";
 import TestCaseFormDialog from "../components/problems/TestCaseFormDialog";
 import TestCaseTable from "../components/problems/TestCaseTable";
+import DOMPurify from "../utils/dompurifyConfig";
 import {
   ProblemDetails,
   ProblemMutationPayload,
@@ -1032,12 +1034,57 @@ export default function ProblemAdmin() {
                         bgcolor: alpha(theme.palette.background.default, 0.4),
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-                      >
-                        {selectedProblem.description}
-                      </Typography>
+                      <Box
+                        className="problem-admin-description-preview"
+                        sx={{
+                          color: "text.primary",
+                          fontSize: "0.95rem",
+                          lineHeight: 1.7,
+                          "& > *:first-of-type": {
+                            mt: 0,
+                          },
+                          "& > *:last-child": {
+                            mb: 0,
+                          },
+                          "& p": {
+                            margin: "0 0 1rem",
+                          },
+                          "& strong": {
+                            fontWeight: 700,
+                          },
+                          "& code": {
+                            fontFamily:
+                              '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                            fontSize: "0.92em",
+                            px: 0.6,
+                            py: 0.15,
+                            borderRadius: 1,
+                            bgcolor: alpha(theme.palette.background.default, 0.72),
+                          },
+                          "& pre": {
+                            overflowX: "auto",
+                            p: 1.5,
+                            borderRadius: 2,
+                            border: "1px solid",
+                            borderColor: "divider",
+                            bgcolor: alpha(theme.palette.background.default, 0.72),
+                          },
+                          "& ul, & ol": {
+                            paddingLeft: 3,
+                            margin: 0,
+                          },
+                          "& li": {
+                            marginBottom: 0.8,
+                          },
+                          "& img": {
+                            maxWidth: "100%",
+                            borderRadius: 2,
+                          },
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(marked(selectedProblem.description)),
+                        }}
+                      />
                     </Paper>
                   </Stack>
                 </Paper>
