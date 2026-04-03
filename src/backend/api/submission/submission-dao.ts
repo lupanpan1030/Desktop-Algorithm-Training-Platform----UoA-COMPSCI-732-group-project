@@ -31,7 +31,11 @@ export class SubmissionDao {
         submission_id: submissionId,
         problem_id: problemId
       },
-      include: { results: true }
+      include: {
+        results: {
+          orderBy: { submission_result_id: 'asc' }
+        }
+      }
     });
     if (!submission) return null;
     return {
