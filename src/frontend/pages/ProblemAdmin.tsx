@@ -568,13 +568,13 @@ export default function ProblemAdmin() {
                   variant="overline"
                   sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
                 >
-                  Curation Workspace
+                  Workspace Summary
                 </Typography>
-                <Typography variant="h5" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                  Problem administration
+                <Typography variant="subtitle1" sx={{ mt: 0.25, fontWeight: 700, lineHeight: 1.2 }}>
+                  Review imported content and move problems toward judge-ready quality.
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.55, maxWidth: 760 }}>
-                  Review imported content, refine metadata, and close the gap between raw problems and judge-ready problems.
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block", maxWidth: 760 }}>
+                  Use the catalog on the left to pick the next target, then refine metadata, starter code, and testcase coverage on the right.
                 </Typography>
               </Box>
 
