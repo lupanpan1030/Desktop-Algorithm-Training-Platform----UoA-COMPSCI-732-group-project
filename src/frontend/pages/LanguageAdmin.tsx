@@ -238,13 +238,13 @@ export default function LanguageAdmin() {
                   variant="overline"
                   sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
                 >
-                  Runtime Configuration
+                  Workspace Summary
                 </Typography>
-                <Typography variant="h5" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                  Language management
+                <Typography variant="subtitle1" sx={{ mt: 0.25, fontWeight: 700, lineHeight: 1.2 }}>
+                  Review runtime definitions and keep the local judge configuration coherent.
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.55, maxWidth: 760 }}>
-                  Configure the compile and runtime environments that power the local judge and editor experience.
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block", maxWidth: 760 }}>
+                  Use the catalog below to inspect command templates, default entries, and mode controls without repeating the global page framing.
                 </Typography>
               </Box>
 
