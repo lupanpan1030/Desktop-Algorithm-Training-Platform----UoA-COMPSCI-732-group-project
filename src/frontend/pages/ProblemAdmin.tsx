@@ -123,6 +123,7 @@ export default function ProblemAdmin() {
   const [readinessFilter, setReadinessFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
   const [sampleReferenceFilter, setSampleReferenceFilter] = useState("all");
+  const [showAdvancedCatalogFilters, setShowAdvancedCatalogFilters] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -650,7 +651,7 @@ export default function ProblemAdmin() {
             gap: 2.2,
             gridTemplateColumns: {
               xs: "1fr",
-              xl: "minmax(320px, 380px) minmax(0, 1fr)",
+              xl: "minmax(300px, 340px) minmax(0, 1fr)",
             },
           }}
         >
@@ -675,6 +676,9 @@ export default function ProblemAdmin() {
                 <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
                   Find the next curation target
                 </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                  Search first, narrow with the core filters, then open advanced filters only when needed.
+                </Typography>
               </Box>
 
               <TextField
@@ -685,30 +689,29 @@ export default function ProblemAdmin() {
                 fullWidth
               />
 
-              <Stack direction={{ xs: "column", md: "row" }} spacing={1} useFlexGap flexWrap="wrap">
-                <TextField
-                  select
-                  label="Source"
-                  value={sourceFilter}
-                  onChange={(event) => setSourceFilter(event.target.value)}
+              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                <Chip size="small" label={`${visibleProblems.length} visible`} variant="outlined" />
+                <Chip
                   size="small"
-                  sx={{ minWidth: 140 }}
-                >
-                  <MenuItem value="all">All sources</MenuItem>
-                  {availableSources.map((source) => (
-                    <MenuItem key={source} value={source}>
-                      {source}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  label={nextProblemNeedingTests ? "Next test target ready" : "No pending test target"}
+                  variant={nextProblemNeedingTests ? "filled" : "outlined"}
+                />
+              </Stack>
 
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 1,
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "1fr" },
+                }}
+              >
                 <TextField
                   select
-                  label="Judge State"
+                  label="Judge state"
                   value={readinessFilter}
                   onChange={(event) => setReadinessFilter(event.target.value)}
                   size="small"
-                  sx={{ minWidth: 160 }}
+                  fullWidth
                 >
                   <MenuItem value="all">All problems</MenuItem>
                   <MenuItem value="needs-tests">Needs tests</MenuItem>
@@ -717,47 +720,73 @@ export default function ProblemAdmin() {
 
                 <TextField
                   select
-                  label="Tag"
-                  value={tagFilter}
-                  onChange={(event) => setTagFilter(event.target.value)}
-                  size="small"
-                  sx={{ minWidth: 160 }}
-                >
-                  <MenuItem value="all">All tags</MenuItem>
-                  {availableTags.map((tag) => (
-                    <MenuItem key={tag} value={tag}>
-                      {tag}
-                    </MenuItem>
-                  ))}
-                </TextField>
-
-                <TextField
-                  select
-                  label="Sample Ref"
+                  label="Sample reference"
                   value={sampleReferenceFilter}
                   onChange={(event) => setSampleReferenceFilter(event.target.value)}
                   size="small"
-                  sx={{ minWidth: 160 }}
+                  fullWidth
                 >
                   <MenuItem value="all">All problems</MenuItem>
                   <MenuItem value="with-reference">With reference</MenuItem>
                   <MenuItem value="without-reference">Without reference</MenuItem>
                 </TextField>
+              </Box>
+
+              <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => setShowAdvancedCatalogFilters((current) => !current)}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  {showAdvancedCatalogFilters ? "Hide advanced filters" : "Show advanced filters"}
+                </Button>
+                {(sourceFilter !== "all" || tagFilter !== "all") && (
+                  <Chip size="small" label="Advanced filters active" color="primary" variant="outlined" />
+                )}
               </Stack>
 
-              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
-                <Chip size="small" label={`${visibleProblems.length} visible`} variant="outlined" />
-                <Chip
-                  size="small"
-                  label={search.trim() ? "Search active" : "No search"}
-                  variant="outlined"
-                />
-                <Chip
-                  size="small"
-                  label={nextProblemNeedingTests ? "Next test target available" : "No pending target"}
-                  variant={nextProblemNeedingTests ? "filled" : "outlined"}
-                />
-              </Stack>
+              {showAdvancedCatalogFilters && (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 1,
+                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "1fr" },
+                  }}
+                >
+                  <TextField
+                    select
+                    label="Source"
+                    value={sourceFilter}
+                    onChange={(event) => setSourceFilter(event.target.value)}
+                    size="small"
+                    fullWidth
+                  >
+                    <MenuItem value="all">All sources</MenuItem>
+                    {availableSources.map((source) => (
+                      <MenuItem key={source} value={source}>
+                        {source}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <TextField
+                    select
+                    label="Tag"
+                    value={tagFilter}
+                    onChange={(event) => setTagFilter(event.target.value)}
+                    size="small"
+                    fullWidth
+                  >
+                    <MenuItem value="all">All tags</MenuItem>
+                    {availableTags.map((tag) => (
+                      <MenuItem key={tag} value={tag}>
+                        {tag}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              )}
 
               <Divider />
 
