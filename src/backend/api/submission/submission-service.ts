@@ -177,7 +177,8 @@ export class SubmissionService {
     expectedOutput?: string
   ): SubmissionResultDto {
     let status = result.status;
-    const normalizedExpectedOutput = expectedOutput?.trim();
+    const normalizedExpectedOutput =
+      result.phase === "run" ? expectedOutput?.trim() : undefined;
 
     if (result.succeeded && normalizedExpectedOutput !== undefined) {
       const trimmedOutput = result.output.trim();
