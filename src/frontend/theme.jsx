@@ -1,99 +1,232 @@
-import { createTheme, alpha, responsiveFontSizes } from "@mui/material";
+import { alpha, createTheme, responsiveFontSizes } from "@mui/material";
 import { useMemo } from "react";
 
 export function useAppTheme(darkMode) {
   return useMemo(() => {
-    const stripeAlpha = darkMode ? 0.3 : 0.02;
-    const hoverAlpha = darkMode ? 0.15 : 0.06;
+    const palette = darkMode
+      ? {
+          mode: "dark",
+          background: {
+            default: "#0B1220",
+            paper: "#111827",
+            memo: "#0F2A21",
+            memoError: "#32151C",
+          },
+          primary: {
+            main: "#3B82F6",
+            light: "#60A5FA",
+            dark: "#1D4ED8",
+          },
+          secondary: {
+            main: "#38BDF8",
+            light: "#7DD3FC",
+            dark: "#0284C7",
+          },
+          success: {
+            main: "#34D399",
+          },
+          warning: {
+            main: "#F97316",
+          },
+          text: {
+            primary: "#E5EEF8",
+            secondary: "#94A3B8",
+          },
+          divider: "#334155",
+          action: {
+            rowStripe: alpha("#FFFFFF", 0.02),
+            rowHover: alpha("#60A5FA", 0.08),
+          },
+        }
+      : {
+          mode: "light",
+          background: {
+            default: "#F3F7FC",
+            paper: "#FFFFFF",
+            memo: "#EEFDF6",
+            memoError: "#FFF1F2",
+          },
+          primary: {
+            main: "#2563EB",
+            light: "#60A5FA",
+            dark: "#1D4ED8",
+          },
+          secondary: {
+            main: "#0EA5E9",
+            light: "#7DD3FC",
+            dark: "#0284C7",
+          },
+          success: {
+            main: "#059669",
+          },
+          warning: {
+            main: "#EA580C",
+          },
+          text: {
+            primary: "#0F172A",
+            secondary: "#475569",
+          },
+          divider: "#D6E0EB",
+          action: {
+            rowStripe: alpha("#0F172A", 0.02),
+            rowHover: alpha("#2563EB", 0.06),
+          },
+        };
 
     let theme = createTheme({
       breakpoints: {
         values: {
           xs: 0,
-          ssm:400,
-          sm: 700,
-          md:900,
+          ssm: 400,
+          sm: 720,
+          md: 960,
+          lg: 1280,
+          xl: 1600,
         },
       },
-      palette: {
-        mode: darkMode ? "dark" : "light",
-        background: {
-          default: darkMode ? "#121212" : "#f2efdc", // dark black : very light green
-          paper: darkMode ? "#1e1e1e" : "#fffae8", //      black : very light yellow
-          memo: darkMode ? "#303030" : "#edf7ed", // light black: light mint green
-          memoError: darkMode ? "#7d3333" : "#ffeff1", // dark red : light pink
+      palette,
+      shape: {
+        borderRadius: 4,
+      },
+      typography: {
+        fontFamily: '"DM Sans", "Avenir Next", "Segoe UI", sans-serif',
+        h1: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
         },
-        primary: {
-          main: darkMode ? "#454545" : "#eae5cf", //  gray : mint green
+        h2: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
         },
-        secondary: {
-          main: darkMode ? "#4c8164" : "#cfd082", // green : grass
+        h3: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
         },
-        action: {
-          rowStripe: alpha("#000", stripeAlpha),
-          rowHover: alpha("#000", hoverAlpha),
+        h4: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontSize: "1.95rem",
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
+        },
+        h5: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontWeight: 700,
+          letterSpacing: "-0.03em",
+        },
+        h6: {
+          fontFamily: '"Space Grotesk", "Avenir Next", sans-serif',
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
+        },
+        overline: {
+          fontSize: "0.72rem",
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          lineHeight: 1.35,
+        },
+        subtitle1: {
+          fontWeight: 600,
+        },
+        subtitle2: {
+          fontWeight: 700,
+        },
+        button: {
+          fontWeight: 700,
+          textTransform: "none",
+          letterSpacing: 0,
         },
       },
       components: {
-        // written in alphabetical order
-        MuiAppBar: {
-          defaultProps: {
-            elevation: darkMode ? 1 : 4,
-          },
-          styleOverrides: {
-            root: ({ theme }) => ({
-              backgroundColor: theme.palette.background.paper, // default is primary.main
-              color: theme.palette.text.primary, //default is primary.contrastText
-            }),
-          },
+        MuiCssBaseline: {
+          styleOverrides: (theme) => ({
+            body: {
+              margin: 0,
+              minHeight: "100vh",
+              width: "100vw",
+              overflow: "hidden",
+              backgroundColor: theme.palette.background.default,
+              color: theme.palette.text.primary,
+              fontFamily: theme.typography.fontFamily,
+              fontFeatureSettings: '"cv11", "ss01"',
+            },
+            "#root": {
+              height: "100%",
+              width: "100%",
+            },
+            "::selection": {
+              backgroundColor: alpha(theme.palette.primary.main, 0.28),
+            },
+          }),
         },
         MuiButton: {
           styleOverrides: {
-            // when hover, add opacity and make it lighter (default is darker)
-            containedPrimary: ({ theme }) => ({
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.9),
-              },
-            }),
-            containedSecondary: ({ theme }) => ({
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.secondary.main, 0.9),
-              },
+            root: ({ theme }) => ({
+              borderRadius: 999,
+              paddingInline: theme.spacing(2),
+              boxShadow: "none",
             }),
           },
         },
-        MuiInputLabel: {
+        MuiChip: {
           styleOverrides: {
-            root: ({ theme }) => ({
-              "&.Mui-focused": {
-                color: theme.palette.text.primary, //default is primary.main
-              },
+            root: () => ({
+              borderRadius: 999,
+              fontWeight: 600,
             }),
           },
         },
         MuiOutlinedInput: {
           styleOverrides: {
             root: ({ theme }) => ({
+              borderRadius: 20,
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderWidth: "1.5px", // make it slightly thinner than default
-                borderColor: theme.palette.text.secondary, //default is primary.main
+                borderWidth: 1.5,
+                borderColor: theme.palette.primary.main,
               },
             }),
           },
         },
         MuiPaper: {
           defaultProps: {
-            elevation: darkMode ? 1 : 0,
+            elevation: 0,
+          },
+          styleOverrides: {
+            root: () => ({
+              backgroundImage: "none",
+            }),
           },
         },
         MuiSvgIcon: {
           styleOverrides: {
             root: ({ theme }) => ({
-              fontSize: theme.typography.pxToRem(20), // ≈1.25rem
+              fontSize: theme.typography.pxToRem(20),
               [theme.breakpoints.up("md")]: {
-                fontSize: theme.typography.pxToRem(24), // ≈1.5rem
+                fontSize: theme.typography.pxToRem(22),
               },
             }),
+          },
+        },
+        MuiTab: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              minHeight: 40,
+              paddingInline: theme.spacing(1.5),
+              borderRadius: 999,
+              fontWeight: 700,
+            }),
+          },
+        },
+        MuiTabs: {
+          styleOverrides: {
+            indicator: {
+              display: "none",
+            },
+            flexContainer: {
+              gap: 8,
+            },
           },
         },
         MuiTable: {
@@ -125,25 +258,22 @@ export function useAppTheme(darkMode) {
         MuiToggleButton: {
           styleOverrides: {
             root: ({ theme }) => ({
+              borderRadius: 999,
               fontSize: theme.typography.pxToRem(12),
               [theme.breakpoints.up("md")]: {
-                fontSize: theme.typography.pxToRem(15),
+                fontSize: theme.typography.pxToRem(14),
               },
             }),
           },
         },
       },
-      typography: {
-        h4: {
-          fontSize: "1.9rem", // default 2.125rem
-        },
-        h5: {},
-      },
     });
+
     theme = responsiveFontSizes(theme, {
-      breakpoints: ["md"],
+      breakpoints: ["sm", "md", "lg"],
       factor: 2,
     });
+
     return theme;
   }, [darkMode]);
 }

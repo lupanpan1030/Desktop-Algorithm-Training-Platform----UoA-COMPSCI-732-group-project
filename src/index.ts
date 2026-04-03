@@ -45,8 +45,11 @@ const createWindow = (): void => {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    width: 1440,
+    height: 920,
+    minWidth: 1040,
+    minHeight: 720,
+    center: true,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true, // Keep web security enabled, but we will configure CSP

@@ -4,6 +4,7 @@ import {
   Box,
   CircularProgress,
   Snackbar,
+  Stack,
   Tab,
   Tabs,
   Typography,
@@ -449,17 +450,38 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
         display: "flex",
         height: "100%",
         flexDirection: "column",
+        minHeight: 0,
+        p: 2.2,
       }}
     >
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={1.2}
+        justifyContent="space-between"
+        alignItems={{ md: "center" }}
+        sx={{ mb: 1.8 }}
+      >
+        <Box>
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", letterSpacing: 0.8, display: "block", lineHeight: 1.35 }}
+          >
+            Execution Console
+          </Typography>
+          <Typography variant="h6" sx={{ lineHeight: 1.14 }}>
+            Run, submit, compare attempts
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap" }}>
         <ResponsiveButton
           variant="contained"
           sx={{
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? theme.palette.primary.main
-                : "#96d9d7",
-            "&:hover": { backgroundColor: alpha("#96d9d7", 0.9) },
+            minWidth: 118,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            "&:hover": {
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+            },
           }}
           startIcon={<PlayArrowIcon />}
           onClick={handleRunCode}
@@ -474,10 +496,17 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
 
         <ResponsiveButton
           variant="contained"
-          color="secondary"
           startIcon={<SendIcon />}
           onClick={handleSubmitCode}
           disabled={actionLoading}
+          sx={{
+            minWidth: 118,
+            backgroundColor: alpha(theme.palette.warning.main, 0.92),
+            color: theme.palette.common.white,
+            "&:hover": {
+              backgroundColor: theme.palette.warning.main,
+            },
+          }}
         >
           {actionLoading && activeView === "submit" ? (
             <CircularProgress size={24} />
@@ -485,12 +514,25 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
             "Submit"
           )}
         </ResponsiveButton>
-      </Box>
+        </Box>
+      </Stack>
 
       <Tabs
         value={activeView}
         onChange={(_, value: ResultView) => setActiveView(value)}
-        sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+        sx={{
+          mb: 1.8,
+          "& .MuiTab-root": {
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: alpha(theme.palette.background.default, 0.44),
+          },
+          "& .Mui-selected": {
+            bgcolor: alpha(theme.palette.primary.main, 0.16),
+            borderColor: alpha(theme.palette.primary.main, 0.28),
+            color: theme.palette.text.primary,
+          },
+        }}
       >
         <Tab value="history" label="History" />
         <Tab value="run" label="Run Output" />
@@ -503,7 +545,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
           overflow: "hidden",
           position: "relative",
           height: "calc(100% - 30px)",
-          p: 2,
+          p: 0.5,
         }}
       >
         <Box

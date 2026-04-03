@@ -2,7 +2,6 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import NavBar from './components/common/NavBar';
 import ListPage from './pages/ListPage';
 import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
@@ -11,6 +10,7 @@ import ProblemAdmin from "./pages/ProblemAdmin.tsx";
 import { ProblemLocaleProvider } from "./problem-locale";
 import { GlobalAiAssistantProvider } from "./ai/GlobalAiAssistantProvider";
 import GlobalAiAssistantShell from "./components/ai/GlobalAiAssistantShell";
+import AppShell from "./components/common/AppShell";
 import './styles/global.css';
 
 function App() {
@@ -34,29 +34,14 @@ function App() {
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
                     <GlobalAiAssistantProvider>
-                        <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            height: '100vh', 
-                            width: '100vw',
-                            overflow: 'hidden'
-                        }}>
-                            <NavBar darkMode={darkMode} setDarkMode={setDarkMode}/>
-                            <div style={{ 
-                                flex: 1, 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                width: '100%',
-                                overflow: 'hidden'
-                            }}>
-                                <Routes>
-                                    <Route path="/" element={<ListPage />} />
-                                    <Route path="/problems/:id" element={<DetailPage />} />
-                                    <Route path="/admin/problems" element={<ProblemAdmin />} />
-                                    <Route path="/languages" element={<LanguageAdmin />} />
-                                </Routes>
-                            </div>
-                        </div>
+                        <AppShell darkMode={darkMode} setDarkMode={setDarkMode}>
+                            <Routes>
+                                <Route path="/" element={<ListPage />} />
+                                <Route path="/problems/:id" element={<DetailPage />} />
+                                <Route path="/admin/problems" element={<ProblemAdmin />} />
+                                <Route path="/languages" element={<LanguageAdmin />} />
+                            </Routes>
+                        </AppShell>
                         <GlobalAiAssistantShell />
                     </GlobalAiAssistantProvider>
                 </ThemeProvider>

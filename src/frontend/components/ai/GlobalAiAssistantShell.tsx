@@ -76,6 +76,7 @@ export default function GlobalAiAssistantShell() {
     [error, pending, suggestions.length]
   );
   const visibleFacts = useMemo(() => (pageContext?.facts ?? []).slice(0, 2), [pageContext?.facts]);
+  const isProblemListPage = pageContext?.pageKind === "problem-list";
 
   const handleSend = async () => {
     if (!input.trim()) {
@@ -375,9 +376,9 @@ export default function GlobalAiAssistantShell() {
             display: "flex",
             alignItems: "center",
             gap: 1.25,
-            width: compact ? 64 : open ? 74 : "100%",
-            minWidth: compact ? 64 : open ? 74 : 260,
-            maxWidth: compact ? 64 : open ? 74 : 360,
+            width: compact ? 64 : open ? 74 : isProblemListPage ? 192 : 280,
+            minWidth: compact ? 64 : open ? 74 : isProblemListPage ? 152 : 220,
+            maxWidth: compact ? 64 : open ? 74 : isProblemListPage ? 192 : 280,
             px: compact ? 0 : 1.1,
             py: compact ? 0 : 1,
             height: 64,
@@ -389,7 +390,7 @@ export default function GlobalAiAssistantShell() {
             boxShadow: `0 18px 46px ${alpha(theme.palette.common.black, 0.18)}`,
             cursor: "pointer",
             overflow: "hidden",
-            opacity: compact ? 1 : open ? 0.4 : 1,
+            opacity: compact ? 1 : open ? 0.22 : isProblemListPage ? 0.78 : 0.9,
             transition:
               "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, width 180ms ease, opacity 180ms ease",
             "&:hover": {
@@ -430,12 +431,14 @@ export default function GlobalAiAssistantShell() {
             <>
               {!open && (
                 <Box sx={{ minWidth: 0, flex: 1, textAlign: "left" }}>
-                  <Typography
-                    variant="caption"
-                    sx={{ display: "block", color: "text.secondary", lineHeight: 1.1 }}
-                  >
-                    AI Companion
-                  </Typography>
+                  {!isProblemListPage && (
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "text.secondary", lineHeight: 1.1 }}
+                    >
+                      AI Companion
+                    </Typography>
+                  )}
                   <Typography
                     variant="body2"
                     sx={{
@@ -446,12 +449,14 @@ export default function GlobalAiAssistantShell() {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {launcherLabel}
+                    {pageContext?.pageKind === "problem-list"
+                      ? "Quick help"
+                      : launcherLabel}
                   </Typography>
                 </Box>
               )}
 
-              {!open && (
+              {!open && !isProblemListPage && (
                 <Chip
                   size="small"
                   label={assistantStateLabel}

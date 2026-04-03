@@ -1,13 +1,35 @@
 import React from "react";
 import {
+  alpha,
   Box,
+  Chip,
+  IconButton,
   Stack,
   ToggleButton,
   Typography,
-  IconButton,
 } from "@mui/material";
 import ReplayIcon from "@mui/icons-material/Replay";
-import {ResponsiveToggleGroup} from "./common/ResponsiveComponents";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import { useTheme } from "@mui/material/styles";
+import { ResponsiveToggleGroup } from "./common/ResponsiveComponents";
+
+function countActiveFilters(difficultyFilter, statusFilter) {
+  return difficultyFilter.length + statusFilter.length;
+}
+
+function FilterSection({ title, children }) {
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        sx={{ color: "text.secondary", letterSpacing: 0.7, display: "block", mb: 0.9 }}
+      >
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
 
 export default function FiltersPanel({
   difficultyFilter,
@@ -15,95 +37,111 @@ export default function FiltersPanel({
   statusFilter,
   onStatusChange,
 }) {
+  const theme = useTheme();
+  const activeFilterCount = countActiveFilters(difficultyFilter, statusFilter);
+
   return (
     <Stack
       sx={{
-        px: 2,
-        py: { xs: 0, sm: 1 },
-        useFlexGap: true,
-        flexDirection: "row",
-        flexWrap: { xs: "wrap", sm: "nowrap" },
-        alignItems: "center",
-        columnGap: 3,
-        rowGap: 1,
+        height: "100%",
+        minHeight: 0,
+        p: 1.35,
+        borderRadius: 4.5,
+        border: "1px solid",
+        borderColor: alpha(theme.palette.divider, 0.34),
+        bgcolor: alpha(theme.palette.background.paper, 0.34),
+        backdropFilter: "blur(14px)",
       }}
+      spacing={1.35}
     >
-      {/* Difficulty toggle */}
-      <Box
-        sx={{
-          order: { xs: 1, sm: 1 },
-        }}
-      >
-        <Typography variant="body1" gutterBottom>
-          Difficulty
-        </Typography>
-        <ResponsiveToggleGroup
-          value={difficultyFilter}
-          onChange={(_, v) => onDifficultyChange(v)} // keep array
-          aria-label="difficulty filter"
-        >
-          {["EASY", "MEDIUM", "HARD"].map((level) => (
-            <ToggleButton
-              key={level}
-              value={level}
-            >
-              {level}
-            </ToggleButton>
-          ))}
-        </ResponsiveToggleGroup>
-      </Box>
-
-      {/* Completion status filter */}
-      <Box
-        sx={{
-          order: { xs: 3, sm: 2 },
-          flexBasis: { xs: "100%", sm: "auto" },
-          alignSelf: "flex-start",
-        }}
-      >
-        <Typography variant="body1" gutterBottom>
-          Status
-        </Typography>
-        <ResponsiveToggleGroup
-          value={statusFilter}
-          onChange={(_, v) => onStatusChange(v)}
-          aria-label="status filter"
-          exclusive={false}
-        >
-          {["Completed", "Attempted", "Unattempted"].map((s) => (
-            <ToggleButton
-              key={s}
-              value={s}
-            >
-              {s}
-            </ToggleButton>
-          ))}
-        </ResponsiveToggleGroup>
-      </Box>
-
-      {/* Clear filters */}
-      <Stack
-        spacing={0.5}
-        alignItems="center"
-        justifyContent="center"
-        sx={{
-          order: { xs: 2, sm: 3 },
-          display: { xs: "none", ssm: "flex" },   // hide on < ssm, show ≥ ssm
-        }}
-      >
-        <Typography variant="body1" gutterBottom>
-          Clear
-        </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+        <Box>
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", letterSpacing: 0.8, display: "block", lineHeight: 1.35 }}
+          >
+            Filters
+          </Typography>
+          <Typography variant="subtitle2" sx={{ lineHeight: 1.1, mt: 0.25, fontWeight: 700 }}>
+            Narrow the list
+          </Typography>
+        </Box>
         <IconButton
           onClick={() => {
             onDifficultyChange([]);
             onStatusChange([]);
           }}
           aria-label="clear filters"
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: alpha(theme.palette.background.default, 0.48),
+            width: 34,
+            height: 34,
+          }}
         >
-          <ReplayIcon />
+          <ReplayIcon fontSize="small" />
         </IconButton>
       </Stack>
+
+      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+        <Chip
+          size="small"
+          icon={<TuneRoundedIcon fontSize="small" />}
+          label={`${activeFilterCount} active`}
+          variant="outlined"
+        />
+        {difficultyFilter.length > 0 && (
+          <Chip size="small" label={`Difficulty: ${difficultyFilter.join(", ")}`} />
+        )}
+        {statusFilter.length > 0 && (
+          <Chip size="small" label={`Status: ${statusFilter.join(", ")}`} />
+        )}
+      </Stack>
+
+      <FilterSection title="Difficulty">
+        <ResponsiveToggleGroup
+          value={difficultyFilter}
+          onChange={(_, value) => onDifficultyChange(value)}
+          aria-label="difficulty filter"
+          sx={{ flexWrap: "wrap", gap: 0.5 }}
+        >
+          {["EASY", "MEDIUM", "HARD"].map((level) => (
+            <ToggleButton key={level} value={level}>
+              {level}
+            </ToggleButton>
+          ))}
+        </ResponsiveToggleGroup>
+      </FilterSection>
+
+      <FilterSection title="Status">
+        <ResponsiveToggleGroup
+          value={statusFilter}
+          onChange={(_, value) => onStatusChange(value)}
+          aria-label="status filter"
+          exclusive={false}
+          sx={{ flexWrap: "wrap", gap: 0.5 }}
+        >
+          {["Completed", "Attempted", "Unattempted"].map((status) => (
+            <ToggleButton key={status} value={status}>
+              {status}
+            </ToggleButton>
+          ))}
+        </ResponsiveToggleGroup>
+      </FilterSection>
+
+      <Box
+        sx={{
+          mt: "auto",
+          pt: 0.9,
+          borderTop: "1px solid",
+          borderColor: alpha(theme.palette.divider, 0.42),
+        }}
+      >
+        <Typography variant="caption" color="text.secondary">
+          Filter by difficulty or progress.
+        </Typography>
+      </Box>
     </Stack>
   );
 }

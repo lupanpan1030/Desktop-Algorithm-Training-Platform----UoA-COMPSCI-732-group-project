@@ -4,16 +4,22 @@ import React, {
   useCallback,
   useDeferredValue,
   useMemo,
-  useRef,
 } from "react";
+import {
+  Alert,
+  Box,
+  Chip,
+  CircularProgress,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ProblemContent from "../components/ProblemContent";
 import CodeEditor from "../components/Editor/Editor";
 import { useLocation, useParams } from "react-router-dom";
-import { Paper, Box, Typography, CircularProgress } from "@mui/material";
-import "../styles/DetailPage.css";
 import CodeSubmission from "../components/Run&SubmitButton";
 import { useApi } from "../hooks/useApi";
-import { useTheme } from "@mui/material/styles";
 import { useProblemLocale } from "../problem-locale";
 import { useAiPageContext } from "../ai/useAiPageContext";
 
@@ -32,6 +38,18 @@ function countCodeLines(value) {
   }
 
   return trimmed.split("\n").length;
+}
+
+function buildWorkspaceStatusLabel(snapshot) {
+  if (snapshot?.latestSubmitStatus) {
+    return `Last submit: ${snapshot.latestSubmitStatus}`;
+  }
+
+  if (snapshot?.latestRunStatus) {
+    return `Last run: ${snapshot.latestRunStatus}`;
+  }
+
+  return "No execution yet";
 }
 
 export default function DetailPage() {
@@ -53,15 +71,6 @@ export default function DetailPage() {
   const { locale, setLocale } = useProblemLocale();
   const deferredCode = useDeferredValue(editorState.code);
 
-  // Reference for resizable elements
-  const leftPaneRef = useRef(null);
-  const editorPaneRef = useRef(null);
-  const containerRef = useRef(null);
-
-  // Monitor whether the current state is being resized
-  const [resizingHorizontal, setResizingHorizontal] = useState(false);
-  const [resizingVertical, setResizingVertical] = useState(false);
-
   useEffect(() => {
     async function fetchProblem() {
       const data = await getProblem(Number(id), locale, true);
@@ -74,7 +83,6 @@ export default function DetailPage() {
     fetchProblem();
   }, [id, getProblem, locale]);
 
-  // Get a list of supported programming languages and create a mapping
   useEffect(() => {
     async function fetchLanguages() {
       const data = await getLanguages();
@@ -94,62 +102,6 @@ export default function DetailPage() {
     }
     fetchLanguages();
   }, [getLanguages]);
-
-  // Resize event handler
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (resizingHorizontal && containerRef.current) {
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const newLeftWidth = e.clientX - containerRect.left;
-
-        // Set minimum and maximum width
-        const minWidth = 200;
-        const maxWidth = containerRect.width - 300;
-
-        if (newLeftWidth >= minWidth && newLeftWidth <= maxWidth) {
-          leftPaneRef.current.style.width = `${newLeftWidth}px`;
-        }
-      }
-
-      if (resizingVertical && editorPaneRef.current) {
-        const containerRect =
-          editorPaneRef.current.parentElement.getBoundingClientRect();
-        const newTopHeight = e.clientY - containerRect.top;
-
-        // Set minimum and maximum height
-        const minHeight = 100;
-        const maxHeight = containerRect.height - 100;
-
-        if (newTopHeight >= minHeight && newTopHeight <= maxHeight) {
-          editorPaneRef.current.style.height = `${newTopHeight}px`;
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      setResizingHorizontal(false);
-      setResizingVertical(false);
-      document.body.style.cursor = "default";
-      document.body.style.userSelect = "auto";
-    };
-
-    if (resizingHorizontal || resizingVertical) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.userSelect = "none";
-
-      if (resizingHorizontal) {
-        document.body.style.cursor = "col-resize";
-      } else if (resizingVertical) {
-        document.body.style.cursor = "row-resize";
-      }
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [resizingHorizontal, resizingVertical]);
 
   const handleCodeChange = useCallback((newState) => {
     setEditorState(newState);
@@ -304,101 +256,191 @@ export default function DetailPage() {
   const getLanguageId = () => {
     return languageMaps.byName[editorState.language.toLowerCase()] || 1;
   };
-  const theme = useTheme();
-  const bgcolor = theme.palette.mode ==='dark'? theme.palette.primary.main : theme.palette.divider;
+
+  const workspaceFacts = useMemo(
+    () =>
+      [
+        {
+          key: "language",
+          label: `Language ${editorState.language}`,
+        },
+        {
+          key: "lines",
+          label: `${countCodeLines(deferredCode)} code lines`,
+        },
+        {
+          key: "coverage",
+          label: problem
+            ? `${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`
+            : "No testcase info",
+        },
+      ].concat(
+        problem?.judgeReady
+          ? [{ key: "judge", label: "Judge ready" }]
+          : [{ key: "judge", label: "Needs tests" }]
+      ),
+    [deferredCode, editorState.language, problem]
+  );
 
   return (
-    <div className="detail-page-container">
-      <Box ref={containerRef} className="detail-content">
-        {/* Left half: Problem content */}
-        <Box ref={leftPaneRef} className="left-pane">
-          <Paper className="problem-content">
-            {loading ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100%",
-                }}
+    <Box
+      sx={{
+        height: "100%",
+        minHeight: 0,
+        display: "grid",
+        gap: 2.5,
+        gridTemplateColumns: { xs: "1fr", lg: "minmax(340px, 430px) minmax(0, 1fr)" },
+      }}
+    >
+      <Paper
+        elevation={0}
+        sx={(theme) => ({
+          height: "100%",
+          minHeight: 0,
+          overflow: "hidden",
+          borderRadius: 7,
+          border: "1px solid",
+          borderColor: alpha(theme.palette.divider, 0.46),
+          bgcolor: alpha(theme.palette.background.paper, 0.72),
+          backdropFilter: "blur(18px)",
+        })}
+      >
+        <Box sx={{ height: "100%", overflowY: "auto" }}>
+          {loading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Box sx={{ p: 3 }}>
+              <Alert severity="error">Error loading problem: {error.message}</Alert>
+            </Box>
+          ) : problem ? (
+            <ProblemContent problem={problem} onLocaleChange={setLocale} />
+          ) : (
+            <Box sx={{ p: 3 }}>
+              <Typography>Problem not found or server connection error.</Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+
+      <Stack spacing={2.5} sx={{ minWidth: 0, minHeight: 0 }}>
+        <Paper
+          elevation={0}
+          sx={(theme) => ({
+            p: { xs: 2, md: 2.4 },
+            borderRadius: 7,
+            border: "1px solid",
+            borderColor: alpha(theme.palette.divider, 0.46),
+            bgcolor: alpha(theme.palette.background.paper, 0.72),
+            backdropFilter: "blur(18px)",
+          })}
+        >
+          <Stack
+            direction={{ xs: "column", lg: "row" }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ lg: "center" }}
+          >
+            <Box>
+              <Typography
+                variant="overline"
+                sx={{ color: "text.secondary", letterSpacing: 0.7, display: "block", lineHeight: 1.35 }}
               >
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 3 }}>
-                <Typography color="error">
-                  Error loading problem: {error.message}
-                </Typography>
-              </Box>
-            ) : problem ? (
-              <ProblemContent
-                problem={problem}
-                onLocaleChange={setLocale}
+                Active Workspace
+              </Typography>
+              <Typography variant="h5" sx={{ mt: 0.3 }}>
+                Solve, inspect, iterate
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.9, maxWidth: 640 }}>
+                Keep the prompt, editor, run output, and submission history in one focused flow.
+              </Typography>
+            </Box>
+
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Chip
+                label={buildWorkspaceStatusLabel(assistantResultSnapshot)}
+                color={
+                  assistantResultSnapshot?.latestError
+                    ? "warning"
+                    : assistantResultSnapshot?.latestSubmitStatus === "ACCEPTED"
+                      ? "success"
+                      : "default"
+                }
+                variant="outlined"
               />
-            ) : (
-              <Box sx={{ p: 3 }}>
-                <Typography>
-                  Problem not found or server connection error.
-                </Typography>
-              </Box>
+              {workspaceFacts.map((fact) => (
+                <Chip key={fact.key} label={fact.label} variant="outlined" />
+              ))}
+            </Stack>
+          </Stack>
+        </Paper>
+
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gap: 2.5,
+            gridTemplateRows: {
+              xs: "minmax(380px, auto) minmax(320px, auto)",
+              lg: "minmax(360px, 1.15fr) minmax(300px, 1fr)",
+            },
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={(theme) => ({
+              minHeight: 0,
+              overflow: "hidden",
+              borderRadius: 7,
+              border: "1px solid",
+              borderColor: alpha(theme.palette.divider, 0.46),
+              bgcolor: alpha(theme.palette.background.paper, 0.72),
+              backdropFilter: "blur(18px)",
+              p: 1.5,
+            })}
+          >
+            <CodeEditor
+              onCodeChange={handleCodeChange}
+              problemId={problemId}
+              loadedDraft={editorDraft}
+              starterCodes={problem?.starterCodes ?? []}
+            />
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={(theme) => ({
+              minHeight: 0,
+              overflow: "hidden",
+              borderRadius: 7,
+              border: "1px solid",
+              borderColor: alpha(theme.palette.divider, 0.46),
+              bgcolor: alpha(theme.palette.background.paper, 0.72),
+              backdropFilter: "blur(18px)",
+            })}
+          >
+            {problem && (
+              <CodeSubmission
+                problemId={problemId}
+                code={editorState.code}
+                languageId={getLanguageId()}
+                languageLabels={languageMaps.byId}
+                onRestoreSubmission={handleRestoreSubmission}
+                onAssistantSnapshotChange={setAssistantResultSnapshot}
+              />
             )}
           </Paper>
         </Box>
-
-        {/* Level adjustment handle */}
-        <Box
-          className="resize-handle horizontal-handle"
-          sx={{":hover":{backgroundColor: bgcolor}}}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setResizingHorizontal(true);
-          }}
-        >
-          <Box className="handle-bar" />
-        </Box>
-
-        {/* Right half: Code Editor and Running Result */}
-        <Box className="editor-result-container">
-          <Box ref={editorPaneRef} className="editor-pane">
-            <Paper className="editor-section">
-              <CodeEditor
-                onCodeChange={handleCodeChange}
-                problemId={problemId}
-                loadedDraft={editorDraft}
-                starterCodes={problem?.starterCodes ?? []}
-              />
-            </Paper>
-          </Box>
-
-          {/* Vertical adjustment handle */}
-          <Box
-            className="resize-handle vertical-handle"
-            sx={{ ":hover": { backgroundColor: bgcolor } }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setResizingVertical(true);
-            }}
-          >
-            <Box className="handle-bar horizontal-bar" />
-          </Box>
-
-          {/* Result */}
-          <Box className="result-pane">
-            <Paper className="result-section">
-              {problem && (
-                <CodeSubmission
-                  problemId={problemId}
-                  code={editorState.code}
-                  languageId={getLanguageId()}
-                  languageLabels={languageMaps.byId}
-                  onRestoreSubmission={handleRestoreSubmission}
-                  onAssistantSnapshotChange={setAssistantResultSnapshot}
-                />
-              )}
-            </Paper>
-          </Box>
-        </Box>
-      </Box>
-    </div>
+      </Stack>
+    </Box>
   );
 }
