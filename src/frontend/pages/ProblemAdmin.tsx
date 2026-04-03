@@ -69,38 +69,6 @@ function buildErrorMessage(fallback: string, error: unknown) {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
-function MetricCard({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: string | number;
-  helper: string;
-}) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={(theme) => ({
-        p: 1.35,
-        borderRadius: 4,
-        bgcolor: alpha(theme.palette.background.paper, 0.5),
-        borderColor: alpha(theme.palette.divider, 0.34),
-      })}
-    >
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.08 }}>
-        {value}
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
-        {helper}
-      </Typography>
-    </Paper>
-  );
-}
-
 function MetaFact({
   label,
   value,
@@ -599,7 +567,7 @@ export default function ProblemAdmin() {
         <Paper
           variant="outlined"
           sx={{
-            p: { xs: 1.8, md: 2.2 },
+            p: { xs: 1.55, md: 1.8 },
             borderRadius: 6,
             bgcolor: alpha(theme.palette.background.paper, 0.72),
             borderColor: alpha(theme.palette.divider, 0.42),
@@ -657,37 +625,12 @@ export default function ProblemAdmin() {
               </Stack>
             </Stack>
 
-            <Box
-              sx={{
-                display: "grid",
-                gap: 1,
-                gridTemplateColumns: {
-                  xs: "1fr 1fr",
-                  xl: "repeat(4, minmax(0, 1fr))",
-                },
-              }}
-            >
-              <MetricCard
-                label="Visible"
-                value={curationMetrics.visible}
-                helper="Problems in the current curation scope"
-              />
-              <MetricCard
-                label="Judge ready"
-                value={curationMetrics.ready}
-                helper="Problems ready for submit-time evaluation"
-              />
-              <MetricCard
-                label="Needs tests"
-                value={curationMetrics.needsTests}
-                helper="Problems that still need testcase work"
-              />
-              <MetricCard
-                label="Sample ref"
-                value={curationMetrics.withSampleReference}
-                helper="Problems with imported sample references"
-              />
-            </Box>
+            <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+              <Chip label={`Visible ${curationMetrics.visible}`} variant="outlined" />
+              <Chip label={`Judge ready ${curationMetrics.ready}`} variant="outlined" />
+              <Chip label={`Needs tests ${curationMetrics.needsTests}`} variant="outlined" />
+              <Chip label={`Sample ref ${curationMetrics.withSampleReference}`} variant="outlined" />
+            </Stack>
           </Stack>
         </Paper>
 
