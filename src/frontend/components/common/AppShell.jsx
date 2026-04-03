@@ -29,7 +29,7 @@ const WORKSPACE_STORAGE_KEY = "lastWorkspacePath";
 const railWidth = 108;
 
 function shouldUseCompactHeader(pathname) {
-  return pathname === "/";
+  return pathname === "/" || pathname === "/admin/problems" || pathname === "/languages";
 }
 
 function resolvePageMeta(pathname) {
@@ -392,11 +392,13 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
                 justifyContent={{ xs: "space-between", md: "flex-end" }}
                 sx={{ flexWrap: "wrap" }}
               >
-                <Chip
-                  size="small"
-                  label={locale === "zh-CN" ? "Chinese workspace" : "English workspace"}
-                  variant="outlined"
-                />
+                {!compactHeader && (
+                  <Chip
+                    size="small"
+                    label={locale === "zh-CN" ? "Chinese workspace" : "English workspace"}
+                    variant="outlined"
+                  />
+                )}
                 <ToggleButtonGroup
                   exclusive
                   size="small"
