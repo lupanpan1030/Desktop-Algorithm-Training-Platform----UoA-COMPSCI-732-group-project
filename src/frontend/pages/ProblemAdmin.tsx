@@ -580,18 +580,6 @@ export default function ProblemAdmin() {
 
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                 <Button
-                  variant={locale === "en" ? "contained" : "outlined"}
-                  onClick={() => setLocale("en")}
-                >
-                  English
-                </Button>
-                <Button
-                  variant={locale === "zh-CN" ? "contained" : "outlined"}
-                  onClick={() => setLocale("zh-CN")}
-                >
-                  中文
-                </Button>
-                <Button
                   variant="outlined"
                   startIcon={<RefreshIcon />}
                   onClick={() => void loadProblems(selectedProblemId)}
