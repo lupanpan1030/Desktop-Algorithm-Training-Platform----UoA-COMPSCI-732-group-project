@@ -77,6 +77,8 @@ export default function GlobalAiAssistantShell() {
   );
   const visibleFacts = useMemo(() => (pageContext?.facts ?? []).slice(0, 2), [pageContext?.facts]);
   const isProblemListPage = pageContext?.pageKind === "problem-list";
+  const isDenseAdminPage =
+    pageContext?.pageKind === "problem-admin" || pageContext?.pageKind === "language-admin";
 
   const handleSend = async () => {
     if (!input.trim()) {
@@ -376,10 +378,40 @@ export default function GlobalAiAssistantShell() {
             display: "flex",
             alignItems: "center",
             gap: 1.25,
-            width: compact ? 64 : open ? 74 : isProblemListPage ? 192 : 280,
-            minWidth: compact ? 64 : open ? 74 : isProblemListPage ? 152 : 220,
-            maxWidth: compact ? 64 : open ? 74 : isProblemListPage ? 192 : 280,
-            px: compact ? 0 : 1.1,
+            width: compact
+              ? 64
+              : open
+                ? 74
+                : isDenseAdminPage
+                  ? hovered
+                    ? 168
+                    : 58
+                  : isProblemListPage
+                    ? 192
+                    : 280,
+            minWidth: compact
+              ? 64
+              : open
+                ? 74
+                : isDenseAdminPage
+                  ? hovered
+                    ? 168
+                    : 58
+                  : isProblemListPage
+                    ? 152
+                    : 220,
+            maxWidth: compact
+              ? 64
+              : open
+                ? 74
+                : isDenseAdminPage
+                  ? hovered
+                    ? 168
+                    : 58
+                  : isProblemListPage
+                    ? 192
+                    : 280,
+            px: compact || isDenseAdminPage ? 0 : 1.1,
             py: compact ? 0 : 1,
             height: 64,
             borderRadius: 999,
@@ -390,7 +422,7 @@ export default function GlobalAiAssistantShell() {
             boxShadow: `0 18px 46px ${alpha(theme.palette.common.black, 0.18)}`,
             cursor: "pointer",
             overflow: "hidden",
-            opacity: compact ? 1 : open ? 0.22 : isProblemListPage ? 0.78 : 0.9,
+            opacity: compact ? 1 : open ? 0.22 : isDenseAdminPage ? 0.68 : isProblemListPage ? 0.78 : 0.9,
             transition:
               "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, width 180ms ease, opacity 180ms ease",
             "&:hover": {
@@ -402,7 +434,7 @@ export default function GlobalAiAssistantShell() {
         >
           <Box
             sx={{
-              ml: compact ? 1.25 : 0,
+              ml: compact || isDenseAdminPage ? 1.25 : 0,
               width: 42,
               height: 42,
               borderRadius: "50%",
@@ -429,9 +461,9 @@ export default function GlobalAiAssistantShell() {
 
           {!compact && (
             <>
-              {!open && (
+              {!open && (!isDenseAdminPage || hovered) && (
                 <Box sx={{ minWidth: 0, flex: 1, textAlign: "left" }}>
-                  {!isProblemListPage && (
+                  {!isProblemListPage && !isDenseAdminPage && (
                     <Typography
                       variant="caption"
                       sx={{ display: "block", color: "text.secondary", lineHeight: 1.1 }}
@@ -451,12 +483,14 @@ export default function GlobalAiAssistantShell() {
                   >
                     {pageContext?.pageKind === "problem-list"
                       ? "Quick help"
-                      : launcherLabel}
+                      : isDenseAdminPage
+                        ? "Quick help"
+                        : launcherLabel}
                   </Typography>
                 </Box>
               )}
 
-              {!open && !isProblemListPage && (
+              {!open && !isProblemListPage && !isDenseAdminPage && (
                 <Chip
                   size="small"
                   label={assistantStateLabel}
