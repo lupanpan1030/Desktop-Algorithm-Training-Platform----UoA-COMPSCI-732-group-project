@@ -296,7 +296,7 @@ export default function LanguageAdmin() {
               gap: 2.2,
               gridTemplateColumns: {
                 xs: "1fr",
-                xl: "minmax(320px, 360px) minmax(0, 1fr)",
+                xl: "minmax(280px, 320px) minmax(0, 1fr)",
               },
             }}
           >
@@ -315,54 +315,52 @@ export default function LanguageAdmin() {
                     variant="overline"
                     sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
                   >
-                    Configuration Notes
+                    Quick Reference
                   </Typography>
                   <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                    Understand the runtime model
+                    Keep the runtime model legible
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                    Use this as a quick decoding guide, not as a second primary workspace.
                   </Typography>
                 </Box>
 
-                <Paper
-                  variant="outlined"
+                <Box
                   sx={{
-                    p: 1.3,
-                    borderRadius: 4,
-                    bgcolor: alpha(theme.palette.background.paper, 0.42),
+                    py: 0.2,
+                    borderBottom: "1px solid",
+                    borderColor: alpha(theme.palette.divider, 0.22),
                   }}
                 >
                   <Typography variant="subtitle2">Compile command</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
                     Optional. Use this when a language needs a build step before execution, such as C++ or Java.
                   </Typography>
-                </Paper>
+                </Box>
 
-                <Paper
-                  variant="outlined"
+                <Box
                   sx={{
-                    p: 1.3,
-                    borderRadius: 4,
-                    bgcolor: alpha(theme.palette.background.paper, 0.42),
+                    py: 0.2,
+                    borderBottom: "1px solid",
+                    borderColor: alpha(theme.palette.divider, 0.22),
                   }}
                 >
                   <Typography variant="subtitle2">Run command</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
                     Required. This is the command template the judge uses to execute submitted code.
                   </Typography>
-                </Paper>
+                </Box>
 
-                <Paper
-                  variant="outlined"
+                <Box
                   sx={{
-                    p: 1.3,
-                    borderRadius: 4,
-                    bgcolor: alpha(theme.palette.background.paper, 0.42),
+                    py: 0.2,
                   }}
                 >
                   <Typography variant="subtitle2">Suffix and defaults</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
                     The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
                   </Typography>
-                </Paper>
+                </Box>
 
                 <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
                   <Chip
