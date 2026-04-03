@@ -6,6 +6,7 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron-forge start",
+    "start:node22": "bash ./scripts/start-dev-node.sh",
     "package": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge package",
     "make": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge make",
     "publish": "cross-env NODE_ENV=production npx ts-node src/backend/db/prepare-package-db.ts && npx prisma generate && electron-forge publish",

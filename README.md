@@ -67,6 +67,15 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
       npm start
       ```
   - This launches the Electron shell and the webpack-based renderer dev server.
+  - If `conda activate delightful-dogs-dev` still resolves `node` to Homebrew instead of the conda environment, use one of these repo-local helpers:
+      ```bash
+      source scripts/use-dev-node.sh
+      npm start
+      ```
+      or
+      ```bash
+      npm run start:node22
+      ```
 - To enable the real OpenAI-backed global assistant:
   - Set these in your local `.env`.
       ```bash

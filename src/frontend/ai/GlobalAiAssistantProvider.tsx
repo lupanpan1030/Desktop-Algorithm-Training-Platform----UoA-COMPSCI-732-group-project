@@ -47,7 +47,9 @@ function createMessageId(prefix: string) {
 }
 
 async function requestAssistant(payload: AssistantRequestPayload) {
-  const response = await api.post<AiRespondResponse>("/ai/respond", payload);
+  const response = await api.post<AiRespondResponse>("/ai/respond", payload, {
+    timeout: 45_000,
+  });
   return response.data;
 }
 
@@ -119,11 +121,15 @@ export function GlobalAiAssistantProvider({
       return;
     }
 
-    await runRequest({
-      action: "suggest",
-      pageContext,
-      conversation: toConversationTurns(messages),
-    });
+    try {
+      await runRequest({
+        action: "suggest",
+        pageContext,
+        conversation: toConversationTurns(messages),
+      });
+    } catch {
+      // Error state is already stored in runRequest; swallow to avoid uncaught UI overlays.
+    }
   }, [messages, pageContext, runRequest]);
 
   const sendMessage = useCallback(
@@ -143,23 +149,30 @@ export function GlobalAiAssistantProvider({
       ];
       setMessages(nextMessages);
 
-      const response = await runRequest({
-        action: "answer",
-        userMessage: trimmedMessage,
-        pageContext,
-        conversation: toConversationTurns(nextMessages),
-      });
+      let response: AiRespondResponse | undefined;
+      try {
+        response = await runRequest({
+          action: "answer",
+          userMessage: trimmedMessage,
+          pageContext,
+          conversation: toConversationTurns(nextMessages),
+        });
+      } catch {
+        return;
+      }
 
-      setMessages((previous) => [
-        ...previous,
-        {
-          id: createMessageId("assistant"),
-          role: "assistant",
-          content: response.answer,
-          inferredIntent: response.inferredIntent,
-          sourcesUsed: response.sourcesUsed,
-        },
-      ]);
+      if (response) {
+        setMessages((previous) => [
+          ...previous,
+          {
+            id: createMessageId("assistant"),
+            role: "assistant",
+            content: response.answer,
+            inferredIntent: response.inferredIntent,
+            sourcesUsed: response.sourcesUsed,
+          },
+        ]);
+      }
     },
     [messages, pageContext, runRequest]
   );

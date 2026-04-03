@@ -27,6 +27,19 @@ Start the full desktop app in development:
 npm start
 ```
 
+If your shell still resolves `node` to Homebrew after `conda activate delightful-dogs-dev`, use one of these repo-local helpers:
+
+```bash
+source scripts/use-dev-node.sh
+npm start
+```
+
+or launch directly with:
+
+```bash
+npm run start:node22
+```
+
 Run the backend API only:
 
 ```bash

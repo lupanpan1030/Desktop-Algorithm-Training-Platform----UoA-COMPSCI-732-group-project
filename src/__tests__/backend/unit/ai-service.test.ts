@@ -22,7 +22,7 @@ describe("AiService", () => {
       },
     });
 
-    expect(response.provider).toBe("mock-assistant-preview");
+    expect(response.provider).toBe("context-only");
     expect(response.inferredIntent).toBe("explain_problem");
     expect(response.suggestions.map((suggestion) => suggestion.prompt)).toContain(
       "Review my current code"
