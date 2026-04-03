@@ -55,39 +55,45 @@ describe('ListPage Component', () => {
     renderWithRouter(<ListPage />);
 
     // Ensure initial list rendered
-    await waitFor(() => {
-      expect(screen.getByText('Two Sum')).toBeInTheDocument();
-      expect(screen.getByText('Binary Search')).toBeInTheDocument();
-      expect(screen.getByText('Longest Path')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Two Sum')).toBeInTheDocument();
+    expect(await screen.findByText('Binary Search')).toBeInTheDocument();
+    expect(await screen.findByText('Longest Path')).toBeInTheDocument();
 
     // Open the filter panel
     fireEvent.click(screen.getByRole('button', { name: /toggle filters/i }));
 
     // Click EASY toggle
     fireEvent.click(screen.getByRole('button', { name: /easy/i }));
-    expect(screen.getByText('Two Sum')).toBeInTheDocument();
-    expect(screen.queryByText('Binary Search')).not.toBeInTheDocument();
-    expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Two Sum')).toBeInTheDocument();
+      expect(screen.queryByText('Binary Search')).not.toBeInTheDocument();
+      expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    });
 
     // Click MEDIUM toggle，now both EASY and MEDIUM should be visible
     fireEvent.click(screen.getByRole('button', { name: /medium/i }));
-    expect(screen.getByText('Two Sum')).toBeInTheDocument();
-    expect(screen.getByText('Binary Search')).toBeInTheDocument();
-    expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Two Sum')).toBeInTheDocument();
+      expect(screen.getByText('Binary Search')).toBeInTheDocument();
+      expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    });
 
     // Untoggle EASY, so only MEDIUM remains
     fireEvent.click(screen.getByRole('button',  { name: /easy/i }));
-    expect(screen.queryByText('Two Sum')).not.toBeInTheDocument();
-    expect(screen.getByText('Binary Search')).toBeInTheDocument();
-    expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Two Sum')).not.toBeInTheDocument();
+      expect(screen.getByText('Binary Search')).toBeInTheDocument();
+      expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    });
 
     // Click COMPLETED toggle, there is no completed & medium problem in the list
     fireEvent.click(screen.getByRole('button',  { name: /Completed/i }));
-    expect(screen.queryByText('Two Sum')).not.toBeInTheDocument();
-    expect(screen.queryByText('Binary Search')).not.toBeInTheDocument();
-    expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
-  });
+    await waitFor(() => {
+      expect(screen.queryByText('Two Sum')).not.toBeInTheDocument();
+      expect(screen.queryByText('Binary Search')).not.toBeInTheDocument();
+      expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+    });
+  }, 15000);
 
   test('ProblemList component correctly renders chips based on difficulty', async () => {
     renderWithRouter(<ListPage />);

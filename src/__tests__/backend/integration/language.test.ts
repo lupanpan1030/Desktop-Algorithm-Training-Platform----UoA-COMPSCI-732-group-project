@@ -11,7 +11,7 @@ import { setPrisma } from "../../../backend/db/prisma/prisma";
 
 /* ---------- Subject Under Test ---------- */
 import { LanguageDao } from "../../../backend/api/language/language-dao";
-import type { PrismaClient, ProgrammingLanguage } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type { CreateLanguageDto } from "../../../backend/api/language/language";
 
 let prisma: PrismaClient;

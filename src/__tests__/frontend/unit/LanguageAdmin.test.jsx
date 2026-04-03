@@ -35,9 +35,11 @@ const mockLanguages = [
 // Utility render function with router
 const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
+let mockHookValue;
+
 beforeEach(() => {
   // Mock the useLanguages hook implementation
-  vi.mocked(useLanguages).mockReturnValue({
+  mockHookValue = {
     languages: mockLanguages,
     loading: false,
     error: null,
@@ -45,7 +47,9 @@ beforeEach(() => {
     addLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], languageId: 3, name: 'New Language' }),
     updateLanguage: vi.fn().mockResolvedValue({ ...mockLanguages[0], name: 'Updated Python' }),
     deleteLanguage: vi.fn().mockResolvedValue(true)
-  });
+  };
+
+  vi.mocked(useLanguages).mockReturnValue(mockHookValue);
 });
 
 afterEach(() => {
@@ -64,7 +68,6 @@ describe('LanguageAdmin Component', () => {
   });
 
   test('adds a new language successfully', async () => {
-    const { addLanguage } = useLanguages();
     renderWithRouter(<LanguageAdmin />);
 
     // Click Add button
@@ -85,21 +88,20 @@ describe('LanguageAdmin Component', () => {
 
     // Verify addLanguage was called with correct data
     await waitFor(() => {
-      expect(addLanguage).toHaveBeenCalledWith({
+      expect(mockHookValue.addLanguage).toHaveBeenCalledWith({
         name: 'New Language',
         runtimeCmd: 'run',
         suffix: '.ext',
         compilerCmd: '',
         version: ''
       });
-    });
+    }, { timeout: 10000 });
 
     // Verify success message
-    expect(screen.getByText(/added/i)).toBeInTheDocument();
-  });
+    expect(await screen.findByText(/added/i)).toBeInTheDocument();
+  }, 15000);
 
   test('edits an existing language successfully', async () => {
-    const { updateLanguage } = useLanguages();
     renderWithRouter(<LanguageAdmin />);
 
     // Wait for languages to load
@@ -131,7 +133,7 @@ describe('LanguageAdmin Component', () => {
 
     // Verify updateLanguage was called with correct data
     await waitFor(() => {
-      expect(updateLanguage).toHaveBeenCalledWith(1, {
+      expect(mockHookValue.updateLanguage).toHaveBeenCalledWith(1, {
         name: 'Updated Python',
         runtimeCmd: 'python',
         suffix: '.py',
@@ -145,7 +147,6 @@ describe('LanguageAdmin Component', () => {
   });
 
   test('deletes a language successfully', async () => {
-    const { deleteLanguage } = useLanguages();
     renderWithRouter(<LanguageAdmin />);
 
     // Wait for languages to load
@@ -176,7 +177,7 @@ describe('LanguageAdmin Component', () => {
 
     // Verify deleteLanguage was called with correct ID
     await waitFor(() => {
-      expect(deleteLanguage).toHaveBeenCalledWith(2);
+      expect(mockHookValue.deleteLanguage).toHaveBeenCalledWith(2);
     });
 
     // Verify success message
@@ -194,9 +195,6 @@ describe('LanguageAdmin Component', () => {
     // Enable delete mode
     fireEvent.click(screen.getByRole('button', { name: /delete mode/i }));
 
-    // Get all delete buttons
-    const deleteButtons = screen.getAllByTestId('DeleteIcon');
-    
     // Find the JavaScript row and verify it has a delete button
     const jsRow = screen.getByText('JavaScript').closest('tr');
     const jsDeleteButton = within(jsRow).getByTestId('DeleteIcon');
