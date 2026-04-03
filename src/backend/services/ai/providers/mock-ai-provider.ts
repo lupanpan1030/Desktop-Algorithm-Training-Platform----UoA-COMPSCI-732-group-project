@@ -1,5 +1,6 @@
 import { AiPageContextDto, AiSuggestionDto } from "../../../api/ai/ai";
 import { AiProvider, AiProviderInput, AiProviderOutput } from "./ai-provider";
+import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
 
 type InferredIntent =
   | "explain_problem"
@@ -10,30 +11,6 @@ type InferredIntent =
   | "curation_help"
   | "language_help"
   | "general_question";
-
-const DEFAULT_SUGGESTIONS: Record<string, string[]> = {
-  "problem-list": [
-    "Help me choose the next problem",
-    "Explain these filters",
-    "Recommend a good problem to start with",
-  ],
-  "problem-detail": [
-    "Explain this problem",
-    "Give me a hint without revealing the full answer",
-    "Review my current code",
-    "Explain my latest result",
-  ],
-  "problem-admin": [
-    "What is missing before this problem is judge-ready?",
-    "Explain this imported metadata",
-    "What testcase should I add next?",
-  ],
-  "language-admin": [
-    "Explain these language settings",
-    "What do compile and run commands do?",
-    "How should Java be configured here?",
-  ],
-};
 
 function inferIntent(message: string | undefined, pageContext: AiPageContextDto): InferredIntent {
   const normalizedMessage = message?.trim().toLowerCase() ?? "";
@@ -105,16 +82,7 @@ function inferIntent(message: string | undefined, pageContext: AiPageContextDto)
 }
 
 function buildSuggestions(pageContext: AiPageContextDto): AiSuggestionDto[] {
-  const prompts =
-    pageContext.suggestedPrompts?.filter(Boolean) ??
-    DEFAULT_SUGGESTIONS[pageContext.pageKind] ??
-    ["Explain this page", "What should I do next?"];
-
-  return prompts.slice(0, 5).map((prompt, index) => ({
-    id: `${pageContext.pageKind}-${index}`,
-    label: prompt,
-    prompt,
-  }));
+  return buildDefaultSuggestions(pageContext);
 }
 
 function factsToMap(pageContext: AiPageContextDto) {
@@ -223,11 +191,7 @@ export class MockAiProvider implements AiProvider {
       answer,
       suggestions,
       inferredIntent,
-      sourcesUsed: [
-        input.pageContext.pageTitle,
-        input.pageContext.summary,
-        ...(input.pageContext.facts ?? []).slice(0, 3).map((fact) => fact.label),
-      ],
+      sourcesUsed: buildDefaultSources(input.pageContext),
       provider: "mock-assistant-preview",
     };
   }

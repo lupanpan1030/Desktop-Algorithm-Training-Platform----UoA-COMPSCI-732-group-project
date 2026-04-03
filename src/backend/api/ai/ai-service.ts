@@ -1,11 +1,11 @@
 import { AiRespondRequestDto, AiRespondResponseDto } from "./ai";
 import { AiProvider } from "../../services/ai/providers/ai-provider";
-import { MockAiProvider } from "../../services/ai/providers/mock-ai-provider";
+import { createAiProvider } from "../../services/ai/providers/create-ai-provider";
 
 export class AiService {
   private provider: AiProvider;
 
-  constructor(provider: AiProvider = new MockAiProvider()) {
+  constructor(provider: AiProvider = createAiProvider()) {
     this.provider = provider;
   }
 

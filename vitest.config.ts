@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   test: {
+    fileParallelism: false,
     workspace: [
       {
         extends: true,
@@ -20,7 +21,6 @@ export default defineConfig({
           name: 'backend',
           include: ['src/__tests__/backend/**/*.{test,spec}.{js,ts}'],
           environment: 'node',
-          fileParallelism: false,
           hookTimeout: 60000,
           testTimeout: 30000,
         },

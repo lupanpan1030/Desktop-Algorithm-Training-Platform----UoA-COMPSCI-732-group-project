@@ -57,14 +57,24 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
   - Create it with `conda env create -f environment.yml`
   - Activate it with `conda activate delightful-dogs-dev`
   - The recommended Node runtime is currently `22.x` LTS. Node `24.x` can still run the project, but it emits noisy TypeScript-config parsing warnings in Electron Forge development mode.
+  - Copy `.env.example` to `.env` before your first run.
 
 - To start project for development:
   - Ensure Node.js and npm are properly set up.
   - Run in the project root directory.
       ```bash
+      cp .env.example .env
       npm start
       ```
   - This launches the Electron shell and the webpack-based renderer dev server.
+- To enable the real OpenAI-backed global assistant:
+  - Set these in your local `.env`.
+      ```bash
+      AI_PROVIDER="openai"
+      OPENAI_API_KEY="your_key_here"
+      AI_MODEL="gpt-5-mini"
+      ```
+  - If `AI_PROVIDER` stays `mock`, the assistant still works, but it uses the local preview provider instead of the network API.
 - To run backend only:
   - Run in the project root directory.
       ```bash
@@ -111,6 +121,7 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
   - `Detail Page`: read the problem, code, run, submit, and inspect submission history.
   - `Problem Admin`: curate problems, testcases, imported sample references, tags, and starter-code metadata.
   - `Languages`: manage execution language presets.
+  - `Global AI Assistant`: open the floating assistant button from any page to get page-aware help and suggested questions.
 - To compile an executable for the current platform:
   - Run in the project root directory.
       ```bash
