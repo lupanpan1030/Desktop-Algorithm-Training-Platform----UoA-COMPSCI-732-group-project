@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, Button } from "@mui/material";
+import { Button, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,6 +22,8 @@ export default function LanguageToolbar({
   onToggleEdit,
   onRefresh,
 }: Props) {
+  const mode = showEdit ? "edit" : showDelete ? "delete" : "browse";
+
   return (
     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
       <Button
@@ -33,23 +35,67 @@ export default function LanguageToolbar({
       >
         Add language
       </Button>
-      <Button
-        variant={showEdit ? "contained" : "outlined"}
-        startIcon={<EditIcon />}
-        onClick={onToggleEdit}
-        disabled={showDelete}
+
+      <ToggleButtonGroup
+        exclusive
+        size="small"
+        value={mode}
+        onChange={(_, nextMode) => {
+          if (!nextMode || nextMode === mode) {
+            return;
+          }
+
+          if (nextMode === "browse") {
+            if (showEdit) {
+              onToggleEdit();
+            }
+            if (showDelete) {
+              onToggleDelete();
+            }
+            return;
+          }
+
+          if (nextMode === "edit") {
+            if (showDelete) {
+              onToggleDelete();
+            }
+            if (!showEdit) {
+              onToggleEdit();
+            }
+            return;
+          }
+
+          if (nextMode === "delete") {
+            if (showEdit) {
+              onToggleEdit();
+            }
+            if (!showDelete) {
+              onToggleDelete();
+            }
+          }
+        }}
+        sx={{
+          "& .MuiToggleButton-root": {
+            px: 1.35,
+            textTransform: "none",
+          },
+        }}
       >
-        Edit mode
-      </Button>
-      <Button
-        variant={showDelete ? "contained" : "outlined"}
-        color={showDelete ? "error" : "inherit"}
-        startIcon={<DeleteIcon />}
-        onClick={onToggleDelete}
-        disabled={showEdit}
-      >
-        Delete mode
-      </Button>
+        <ToggleButton value="browse">Browse</ToggleButton>
+        <ToggleButton value="edit">
+          <Stack direction="row" spacing={0.7} alignItems="center">
+            <EditIcon fontSize="small" />
+            <span>Edit</span>
+          </Stack>
+        </ToggleButton>
+        <ToggleButton value="delete" color="error">
+          <Stack direction="row" spacing={0.7} alignItems="center">
+            <DeleteIcon fontSize="small" />
+            <span>Delete</span>
+          </Stack>
+        </ToggleButton>
+      </ToggleButtonGroup>
+
       <Button
         variant="outlined"
         startIcon={<RefreshIcon />}
