@@ -25,16 +25,18 @@ This branch/version is the personal secondary-development edition of the origina
 - stabilising the local desktop + backend runtime
 - making database/bootstrap flow reproducible
 - improving the judge execution pipeline
-- cleaning up tests, docs, and engineering basics
+- turning the project into a maintainable local training platform with import and curation workflows
 
 The current redevelopment plan is tracked in [ROADMAP.md](./ROADMAP.md).
 
 ## Key Features
 - Local execution with a desktop GUI.
-- Configuring any programming language (as long as it exists in the local environment).
-- Real-time code execution and submission evaluation.
-- Integrated code editor.
-- Algorithm problem list with difficulty levels.
+- Configurable programming-language presets.
+- Run / submit evaluation with submission history review.
+- Monaco-based code editor with per-language local drafts and starter-code reset support.
+- Problem administration UI for problem CRUD, testcase CRUD, and imported metadata inspection.
+- Bilingual problem content support with English/Chinese locale switching.
+- Local LeetCode CN importer for building a personal practice dataset.
 
 ## Technology
 - Desktop: [electron.js](https://www.electronjs.org/), [electron-forge](https://www.electronforge.io/)
@@ -62,16 +64,26 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
       ```bash
       npm start
       ```
+  - This launches the Electron shell and the webpack-based renderer dev server.
 - To run backend only:
   - Run in the project root directory.
       ```bash
       npm run dev
       ```
+  - The API server listens on `http://localhost:6785`.
 - To run tests:
   - Run in the project root directory.
       ```bash
       npm run test
       ```
+  - Individual suites are available as `npm run test:front` and `npm run test:back`.
+- To regenerate backend routes and OpenAPI output after changing TSOA controllers or DTOs:
+  - Run in the project root directory.
+      ```bash
+      npx tsoa spec-and-routes
+      ```
+- Swagger UI debug page is available at:
+  - `http://localhost:6785/docs`
 - To initialize the local development database:
   - Run in the project root directory.
       ```bash
@@ -94,6 +106,11 @@ More details for development are provided in [dev-doc.md](./dev-doc.md).
   - Imported problems are stored as content-first entries.
   - The importer keeps your later testcase/judge work intact by preserving `judge_ready` and existing testcase rows.
   - Imported LeetCode problems will still need manual testcase completion before they become fully runnable in the local judge.
+- Current notable UI areas:
+  - `Problem List`: browse localized problems and difficulty/completion filters.
+  - `Detail Page`: read the problem, code, run, submit, and inspect submission history.
+  - `Problem Admin`: curate problems, testcases, imported sample references, tags, and starter-code metadata.
+  - `Languages`: manage execution language presets.
 - To compile an executable for the current platform:
   - Run in the project root directory.
       ```bash

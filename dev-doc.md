@@ -1,281 +1,173 @@
-# Algo-Platform
+# Algo Platform Development Notes
 
-## Setup & Run
+This document reflects the current personal redevelopment state of the repository.
 
-> The following command should be executed in the project root directory.
+## Setup
 
-### [Run (Development)](https://www.electronforge.io/#starting-your-app)
+Run commands from the project root.
+
+Recommended local environment:
+
+```bash
+conda env create -f environment.yml
+conda activate delightful-dogs-dev
+npm install
+```
+
+Recommended runtime:
+
+- Node `22.x` LTS for the quietest Electron Forge development flow
+- Node `24.x` still works, but emits noisy TypeScript-config parsing warnings
+
+## Common Commands
+
+Start the full desktop app in development:
 
 ```bash
 npm start
 ```
 
-### [Building Distributables](https://www.electronforge.io/#building-distributables)
-
-```bash
-npm run make
-```
-
-## Backend Server
-
-### Run Backend Server
+Run the backend API only:
 
 ```bash
 npm run dev
 ```
 
-### Regenerate Backend Routes.ts
-
-```bash
-npx tsoa routes
-```
-
-### Regenerate OpenApi Swagger.json
-
-Swagger UI debug page: `localhost:6785/docs`
-
-```bash
-npx tsoa spec
-```
-
-### Run All Tests
+Run all tests:
 
 ```bash
 npm run test
 ```
 
-### Run Frontend Tests
+Run only the frontend or backend suite:
 
 ```bash
 npm run test:front
-```
-
-### Run Backend Tests
-
-```bash
 npm run test:back
 ```
 
-## DB initialization
+Lint the repository:
 
-Run the following commands in the project root:
-
-- First-time database setup:
-
-  ```bash
-  npm run db:init
-  ```
-
-- Reset and reseed the database:
-
-  ```bash
-  npm run db:reset
-  ```
-
-- Prepare the packaged seed database used by production builds:
-
-  ```bash
-  npm run db:prepare-package-db
-  ```
-
-## Architecture
-
-```
-src/
-├── electron/                # Electron-specific code
-│   ├── main.ts              # Main process entry point
-│   ├── preload.ts           # Limited preload script (if needed)
-│   └── window.ts            # Window management functions
-│
-├── frontend/                # React.js application
-│   ├── components/          # Reusable UI components
-│   │   ├── common/          # Shared UI elements (buttons, inputs)
-│   │   ├── layout/          # Layout components (header, sidebar)
-│   │   └── problems/        # Problem-specific components
-│   ├── pages/               # Page components
-│   │   ├── Home.tsx
-│   │   ├── ProblemList.tsx  # Puzzles list (from MVP)
-│   │   ├── ProblemDetail.tsx # View specific puzzle (from MVP)
-│   │   └── Submission.tsx   # Submit solutions (from MVP)
-│   ├── hooks/               # Custom React hooks
-│   │   └── useApi.ts        # Hook for API communication
-│   ├── styles/              # CSS/styling
-│   ├── App.tsx              # Main React component
-│   └── index.tsx            # React entry point
-│
-├── backend/                 # Backend services
-│   ├── api/                 # Express router setup
-│   │   ├── routes/          # API route definitions
-│   │   │   ├── problems.ts
-│   │   │   ├── languages.ts
-│   │   │   ├── testcases.ts
-│   │   │   └── submissions.ts
-│   │   ├── middleware/      # Express middleware
-│   │   └── index.ts         # Express app setup
-│   │
-│   ├── db/                  # Database layer
-│   │   ├── prisma/          # Prisma ORM
-│   │   │   ├── schema.prisma  # DB schema definition
-│   │   │   └── migrations/    # DB migrations
-│   │   │
-│   │   └── crud/            # Database operations
-│   │       ├── problems.ts
-│   │       ├── testcases.ts
-│   │       ├── languages.ts
-│   │       └── submissions.ts
-│   │
-│   ├── services/            # Business logic
-│   │   └── judge/           # Code execution engine (key MVP component)
-│   │       └── executor.ts   # Code execution
-│   │
-│   └── utils/               # Utility functions
-│
-├── shared/                  # Shared code
-│   ├── types/               # TypeScript type definitions
-│   └── constants.ts         # Shared constants
-│
-└── tests/
-    ├── frontend/  
-    │   ├── unit/
-    │   └── integration/
-    └── backend/
-        ├── unit/
-        └── integration/
-
+```bash
+npm run lint
 ```
 
----
+Regenerate TSOA routes and OpenAPI output:
 
-### RESTful API Design for Delightful Dogs (Revised)
+```bash
+npx tsoa spec-and-routes
+```
 
----
+Swagger UI in local development:
 
-#### 1. CRUD Endpoints
+- `http://localhost:6785/docs`
 
----
+## Database Commands
 
----
+Initialize the local development database:
 
-**Problems**
+```bash
+npm run db:init
+```
 
-| Method | Path             | Description                    | Request Body (Types & Validation)                                                                                                                                                     | Response Format (Types & Status Codes)                                                                                                                                                                              |
-| ------ | ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/problems`      | List all problems              | _None_                                                                                                                                                                                | **200 OK:** Array of problem summaries<br>`Array<{ problemId: number, title: string, difficulty: "EASY" \| "MEDIUM" \| "HARD", completionState: "Completed" \| "Attempted" \| null}>`                                                                   |
-| GET    | `/problems/{id}` | Retrieve problem details by ID | _None_                                                                                                                                                                                | **200 OK:** Detailed problem object<br>`{ problemId: number, title: string, description: string, difficulty: enum, createdAt: ISO8601 }`<br>**404 Not Found:** `{ "message": "Problem not found" }` |
-| POST   | `/problems`      | Create a new problem           | **Required:**<br>`{ title: string, description: string, difficulty: enum, tags: string[] }`<br>• `title` must be 5–100 characters<br>• `description` must be 10–2000 characters       | **201 Created:** Detailed problem object (same as GET details)<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                                                               |
-| PUT    | `/problems/{id}` | Update an existing problem     | **Optional:**<br>`{ title?: string, description?: string, difficulty?: enum, tags?: string[] }`<br>If provided, `title` must be 5–100 characters and `description` 10–2000 characters | **200 OK:** Updated detailed problem object<br>**404 Not Found:** `{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`                       |
-| DELETE | `/problems/{id}` | Delete a problem by ID         | _None_                                                                                                                                                                                | **204 No Content:** _No body_                                                                                                                                                                                       |
+Reset and reseed the local development database:
 
----
+```bash
+npm run db:reset
+```
 
-**Programming Languages**
-| Method | Path | Description | Request Body (Types) | Response Format (Types) |
-|--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/languages` | List languages | - | `Array<{languageId: number, name: string, compilerCmd: string, runtimeCmd: string}>` |
-| `POST` | `/languages` | Add language | `{name: string, compilerCmd: string, runtimeCmd: string}` | `201` + created language object |
-| `PUT` | `/languages/{id}` | Update language | `{name?: string, compilerCmd?: string, runtimeCmd?: string}` | `200` + updated language object |
-| `DELETE` | `/languages/{id}` | Remove language | - | `204` |
+Prepare the packaged seed database used by production builds:
 
----
+```bash
+npm run db:prepare-package-db
+```
 
-**Test Cases**
-| Method | Path | Description | Request Body (Types) | Response Format (Types) |
-|--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/problems/{id}/testcases` | List test cases | - | **200 OK:** `Array<{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}>` <br>**404 Not Found:** `{ "message": "Problem not found" }` |
-| `POST` | `/problems/{id}/testcases` | Add test case | `{input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` | **201 Created:**  Detailed testcase object `{testcaseId: number, input: string, expectedOutput: string, timeLimitMs: number, memoryLimitMb: number}` <br>**404 Not Found:**`{ "message": "Problem not found" }`<br>**422 Validation Failed:** `{ "message": "Validation Failed", "details": { ... } }`    |
-|`DELETE`|`/problems/{id}/testcases/{id}`| Delete test case | - |**204 No Content:** _No body_ <br>**404 Not Found:**`{ "message": "Problem not found" }` |
+Import LeetCode CN problems from a local checkout:
 
----
+```bash
+npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20 --dry-run --verbose
+npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20
+```
 
-**Submissions**
-| Method | Path | Description | Request Body (Types) | Response Format (Types) |
-|--------|------|-------------|-----------------------|--------------------------|
-| `GET` | `/problems/{problemId}/submissions` | List submissions | - | `{ Array<submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601> }` |
-| `GET` | `/problems/{problemId}/submissions/{submissionId}` | Get submission | - | `{ submissionId: number, code: string, languageId: number, status: string, submittedAt: ISO8601, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }` |
+Notes:
 
----
+- imported problems are content-first entries
+- imported sample references and starter code are preserved as metadata
+- imported problems still need testcase completion before they become fully judge-ready
 
-#### 2. Execution Endpoints
+## Build Commands
 
-| Method | Path                     | Description                                                           | Request Body                                 | Response Format                                                                                                                       |
-| ------ | ------------------------ | --------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/problems/{problemId}/run`     | Execute code against a subset of test cases (e.g. the first 3 cases)    | `{ code: string, languageId: number }`       | `{ status: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`                                         |
-| `POST` | `/problems/{problemId}/submit`  | Submit code for full evaluation using the judge engine                | `{ code: string, languageId: number }`       | `{ submissionId: number, overallStatus: string, results: Array<[status: string, output: string?, runtimeMs: number, memoryKb: number]> }`              |
+Package the current platform:
 
-## Example Solutions for ACM Mode
+```bash
+npm run package
+```
 
-1. An example Python solution for the "Fibonacci Number" puzzle
+Create distributables:
 
-    ```python
-    def fibonacci(n):
-      """
-      Calculates the nth Fibonacci number.
+```bash
+npm run make
+```
 
-      Args:
-        n: The index of the Fibonacci number to calculate (non-negative integer).
+## Current Runtime Shape
 
-      Returns:
-        The nth Fibonacci number.
-      """
-      if n <= 1:
-        return n
-      else:
-        a = 0
-        b = 1
-        for _ in range(2, n + 1):
-          a, b = b, a + b
-        return b
+Main process:
 
-    if __name__ == "__main__":
-      # Read input from stdin
-      n = int(input())
+- `src/index.ts`
+- `src/preload.ts`
+- `src/backendManager.ts`
 
-      # Calculate the nth Fibonacci number
-      result = fibonacci(n)
+Backend API:
 
-      # Print the result to stdout
-      print(result)
+- `src/backend/api/app.ts`
+- `src/backend/api/server.ts`
+- `src/backend/api/routes.ts`
 
-    ```
+Frontend app:
 
-2. An example C++ solution for the "Fibonacci Number" puzzle
+- `src/frontend/App.jsx`
+- `src/frontend/pages/ListPage.jsx`
+- `src/frontend/pages/DetailPage.jsx`
+- `src/frontend/pages/ProblemAdmin.tsx`
+- `src/frontend/pages/LanguageAdmin.tsx`
 
-    ```cpp
-    #include <iostream>
+Database and import tooling:
 
-    /**
-    * Calculates the nth Fibonacci number.
-    * 
-    * @param n The index of the Fibonacci number to calculate (non-negative integer).
-    * @return The nth Fibonacci number.
-    */
-    long long fibonacci(int n) {
-        if (n <= 1) {
-            return n;
-        }
-        
-        long long a = 0;
-        long long b = 1;
-        for (int i = 2; i <= n; i++) {
-            long long temp = b;
-            b = a + b;
-            a = temp;
-        }
-        return b;
-    }
+- `src/backend/db/prisma/schema.prisma`
+- `src/backend/db/prisma/initialize-database.ts`
+- `src/backend/db/importers/import-leetcode-cn.ts`
 
-    int main() {
-        // Fast I/O optimization
-        std::ios_base::sync_with_stdio(false);
-        std::cin.tie(NULL);
-        
-        int n;
-        std::cin >> n;
-        
-        long long result = fibonacci(n);
-        std::cout << result << std::endl;
-        
-        return 0;
-    }
+Judge pipeline:
 
-    ```
+- `src/backend/services/judge/executor.ts`
+
+## Current Product Areas
+
+Problem detail flow:
+
+- localized problem content
+- Monaco editor with per-language drafts
+- run / submit
+- submission history review
+- starter-code reset support
+
+Problem administration:
+
+- problem CRUD
+- testcase CRUD
+- imported sample-reference inspection
+- tags / starter-code metadata review
+- locale-aware problem curation filters
+
+Language management:
+
+- CRUD for execution language presets
+
+## Current Gaps
+
+The most important remaining engineering work is:
+
+- hardening judge execution and diagnostics
+- improving portability and backup/restore story for local SQLite data
+- cleaning up mixed JS/TS patterns in the frontend
+- deciding the next major product direction, including potential AI-assisted workflows

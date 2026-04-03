@@ -2,7 +2,7 @@
   "name": "algo-platform",
   "productName": "algo-platform",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A local Electron-based algorithm practice platform with problem curation and judge tooling",
   "main": ".webpack/main",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron-forge start",

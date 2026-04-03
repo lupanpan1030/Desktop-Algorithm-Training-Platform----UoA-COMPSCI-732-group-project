@@ -8,23 +8,27 @@ Goal: make the core "read problem -> write code -> run -> submit -> review resul
 
 Current status:
 - foundational runtime/database fixes are complete
-- submission history UI is now the first active product-facing upgrade
+- submission history and result review are in place
+- per-language draft persistence and starter-code recovery are now stabilized
 
 Tasks:
-- surface submission history and per-attempt result review in the detail page
-- reduce noisy result-state coupling in the current editor/result pane
-- improve empty states and failure messages for run/submit/history flows
-- trim oversized payloads from submission list endpoints
+- tighten judge diagnostics and failure messages
+- improve result empty states and edge-case feedback
+- continue polishing the detail-page workflow around imported metadata and history
 
 ## P1: Complete Problem Administration
 
 Goal: make the project maintainable as a real local training platform, not just a demo dataset.
 
+Current status:
+- problem CRUD and testcase CRUD are available in the desktop UI
+- imported metadata, tags, starter code, and locale-aware filters are now visible in Problem Admin
+
 Tasks:
-- add problem CRUD screens beyond the current language admin flow
-- add testcase CRUD and validation in the desktop UI
-- support safer preview/edit flows for examples, hidden tests, and metadata
+- support faster testcase authoring from imported sample references
+- add safer preview/edit flows for examples, hidden tests, and metadata
 - add form-level validation and stronger success/error feedback
+- add bulk curation helpers for unfinished imported problems
 
 ## P2: Harden the Judge Pipeline
 
@@ -59,8 +63,8 @@ Tasks:
 
 ## Immediate Priority Order
 
-1. Submission history and result review on the problem detail page.
-2. Problem/testcase admin workflow in the desktop UI.
-3. Judge execution hardening and better diagnostics.
-4. Data portability and upgrade-safe persistence.
-5. Broader refactors, CI, and type cleanup.
+1. Judge execution hardening and better diagnostics.
+2. Data portability and upgrade-safe persistence.
+3. Faster imported-problem curation flows.
+4. Broader refactors, CI, and type cleanup.
+5. Evaluate the next major product direction, including AI-assisted workflows.
