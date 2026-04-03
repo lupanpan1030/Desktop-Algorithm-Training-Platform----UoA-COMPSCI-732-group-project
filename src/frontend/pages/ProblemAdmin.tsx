@@ -954,6 +954,74 @@ export default function ProblemAdmin() {
               )}
             </Paper>
 
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.8, md: 2.1 },
+                borderRadius: 6,
+                bgcolor: alpha(theme.palette.background.paper, 0.68),
+                borderColor: alpha(theme.palette.divider, 0.42),
+              }}
+            >
+              <Stack spacing={1.5}>
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  justifyContent="space-between"
+                  spacing={1.6}
+                  alignItems={{ md: "center" }}
+                >
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                    >
+                      Testcase Coverage
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                      Build the judge surface deliberately
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                      Mark sample cases for Run; hidden cases still participate in Submit.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<AddIcon />}
+                    disabled={selectedProblemId == null}
+                    onClick={handleOpenAddTestCase}
+                  >
+                    Add testcase
+                  </Button>
+                </Stack>
+
+                {selectedProblem && (
+                  <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                    <Chip label={`${selectedProblem.sampleCaseCount} sample`} variant="outlined" />
+                    <Chip label={`${selectedProblem.hiddenCaseCount} hidden`} variant="outlined" />
+                    <Chip
+                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
+                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
+                    />
+                  </Stack>
+                )}
+
+                {selectedProblemId == null ? (
+                  <Alert severity="info">Choose a problem before managing testcases.</Alert>
+                ) : testcases.length > 0 ? (
+                  <TestCaseTable
+                    testcases={testcases}
+                    onEdit={handleOpenEditTestCase}
+                    onDelete={setTestcaseDeleteTarget}
+                  />
+                ) : (
+                  <Alert severity="warning">
+                    No testcases are configured yet. Add at least one testcase to make the problem judge-ready.
+                  </Alert>
+                )}
+              </Stack>
+            </Paper>
+
             {selectedProblem && (
               <Box
                 sx={{
@@ -1188,73 +1256,6 @@ export default function ProblemAdmin() {
               </Box>
             )}
 
-            <Paper
-              variant="outlined"
-              sx={{
-                p: { xs: 1.8, md: 2.1 },
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
-              }}
-            >
-              <Stack spacing={1.5}>
-                <Stack
-                  direction={{ xs: "column", md: "row" }}
-                  justifyContent="space-between"
-                  spacing={1.6}
-                  alignItems={{ md: "center" }}
-                >
-                  <Box>
-                    <Typography
-                      variant="overline"
-                      sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
-                    >
-                      Testcase Coverage
-                    </Typography>
-                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                      Build the judge surface deliberately
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                      Mark sample cases for Run; hidden cases still participate in Submit.
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<AddIcon />}
-                    disabled={selectedProblemId == null}
-                    onClick={handleOpenAddTestCase}
-                  >
-                    Add testcase
-                  </Button>
-                </Stack>
-
-                {selectedProblem && (
-                  <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
-                    <Chip label={`${selectedProblem.sampleCaseCount} sample`} variant="outlined" />
-                    <Chip label={`${selectedProblem.hiddenCaseCount} hidden`} variant="outlined" />
-                    <Chip
-                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
-                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
-                    />
-                  </Stack>
-                )}
-
-                {selectedProblemId == null ? (
-                  <Alert severity="info">Choose a problem before managing testcases.</Alert>
-                ) : testcases.length > 0 ? (
-                  <TestCaseTable
-                    testcases={testcases}
-                    onEdit={handleOpenEditTestCase}
-                    onDelete={setTestcaseDeleteTarget}
-                  />
-                ) : (
-                  <Alert severity="warning">
-                    No testcases are configured yet. Add at least one testcase to make the problem judge-ready.
-                  </Alert>
-                )}
-              </Stack>
-            </Paper>
           </Stack>
         </Box>
       </Stack>
