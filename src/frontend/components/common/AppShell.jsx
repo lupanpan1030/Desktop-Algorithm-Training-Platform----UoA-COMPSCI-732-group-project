@@ -267,7 +267,7 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
     <Box
       sx={(theme) => ({
         display: "flex",
-        minHeight: "100vh",
+        height: "100dvh",
         width: "100vw",
         overflow: "hidden",
         bgcolor: theme.palette.background.default,
@@ -433,8 +433,19 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
           </Paper>
         </Box>
 
-        <Box sx={{ flex: 1, minHeight: 0, px: { xs: 2, md: 0 }, py: 2, pr: { md: 3 } }}>
-          <Box sx={{ height: "100%", minHeight: 0, overflow: "auto" }}>{children}</Box>
+        <Box sx={{ flex: 1, minHeight: 0, px: { xs: 2, md: 0 }, py: 2, pr: { md: 3 }, overflow: "hidden" }}>
+          <Box
+            sx={{
+              height: "100%",
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              pr: 0.4,
+              pb: { xs: 10, md: 12 },
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
     </Box>

@@ -215,7 +215,7 @@ export default function LanguageAdmin() {
   }, [del, deleteLanguage, fetchLanguages]);
 
   return (
-    <Box sx={{ height: "100%", overflow: "auto" }}>
+    <Box sx={{ minHeight: "100%" }}>
       <Stack spacing={2.2}>
         <Paper
           variant="outlined"

@@ -594,7 +594,7 @@ export default function ProblemAdmin() {
   };
 
   return (
-    <Box sx={{ height: "100%", overflow: "auto" }}>
+    <Box sx={{ minHeight: "100%" }}>
       <Stack spacing={2.2}>
         <Paper
           variant="outlined"
