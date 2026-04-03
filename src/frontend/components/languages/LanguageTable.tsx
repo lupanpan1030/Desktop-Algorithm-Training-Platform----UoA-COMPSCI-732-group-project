@@ -1,35 +1,16 @@
-/**
- * LanguageTable component
- * ------------------------------------
- * Renders a compact, responsive table listing all programming languages
- * and optionally shows inline edit / delete actions.
- */
 import React from "react";
 import {
-  useTheme,
-  Table,
-  TableHead,
-  TableBody,
-  TableFooter,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Paper,
+  alpha,
+  Chip,
   IconButton,
+  Paper,
+  Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { strings } from "../../i18n/messages";
-
-declare module "@mui/material/styles" {
-  interface TypeAction {
-    rowStripe?: string;
-  }
-  interface TypeAction {
-    rowHover?: string;
-  }
-}
 
 export interface Language {
   languageId: number;
@@ -38,14 +19,9 @@ export interface Language {
   runtimeCmd?: string;
   suffix?: string;
   version?: string;
-  /**
-   * built‑in language flag
-   * When true, the language cannot be removed from the system.
-   */
   isDefault?: boolean;
 }
 
-// Component props
 interface Props {
   languages: Language[];
   showDelete?: boolean;
@@ -54,10 +30,6 @@ interface Props {
   onDelete?: (id: number, name: string) => void;
 }
 
-/**
- * Data table
- * Columns: Language | Compile | Run | Suffix | Version (+ Action)
- */
 export default function LanguageTable({
   languages,
   showDelete = false,
@@ -68,115 +40,81 @@ export default function LanguageTable({
   const theme = useTheme();
 
   return (
-    <TableContainer
-      component={Paper}
-      sx={{
-        overflowX: "auto",
-        whiteSpace: "nowrap",
-        scrollbarWidth: "thin",
-        "&::-webkit-scrollbar": {
-          height: "4px",
-        },
-      }}
-    >
-      <Table size="small">
-        <caption style={{ position: "absolute", left: -9999 }}>
-          {strings.tableCaption}
-        </caption>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: theme.palette.secondary.light }}>
-            {[
-              strings.tableColLanguage,
-              strings.tableColCompile,
-              strings.tableColRun,
-              strings.tableColSuffix,
-              strings.tableColVersion,
-              showDelete || showEdit ? strings.tableColAction : "",
-            ].map(
-              (h) =>
-                h && (
-                  <TableCell key={h}>
-                    <strong>{h}</strong>
-                  </TableCell>
-                )
-            )}
-          </TableRow>
-        </TableHead>
+    <Stack spacing={1.1}>
+      {languages.map((language) => {
+        const canDelete = showDelete && !language.isDefault;
 
-        <TableBody>
-          {languages.map((l, idx) => {
-            const canDelete = showDelete && !l.isDefault;
-            // Show trash icon only when delete‑mode is on and the language is not default
-            return (
-              <TableRow
-                key={l.languageId}
-                sx={{
-                  backgroundColor:
-                    idx % 2 !== 0
-                      ? theme.palette.action.rowHover
-                      : theme.palette.background.paper,
-                }}
-              >
-                <TableCell>{l.name}</TableCell>
-                <TableCell>{l.compilerCmd ?? "-"}</TableCell>
-                <TableCell>{l.runtimeCmd ?? "-"}</TableCell>
-                <TableCell>{l.suffix ?? "-"}</TableCell>
-                <TableCell>{l.version ?? "-"}</TableCell>
+        return (
+          <Paper
+            key={language.languageId}
+            variant="outlined"
+            sx={{
+              p: 1.4,
+              borderRadius: 4,
+              bgcolor: alpha(theme.palette.background.paper, 0.42),
+              borderColor: alpha(theme.palette.divider, 0.34),
+            }}
+          >
+            <Stack spacing={1.05}>
+              <Stack direction="row" justifyContent="space-between" spacing={1.2}>
+                <div>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {language.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {language.suffix || "no suffix"}
+                    {language.version ? ` · ${language.version}` : ""}
+                  </Typography>
+                </div>
 
                 {(showDelete || showEdit) && (
-                  <TableCell>
+                  <Stack direction="row" spacing={0.3}>
                     {showEdit && (
-                      <Tooltip
-                        title={strings.tooltipEdit(l.name)}
-                        arrow
-                        placement="right"
-                      >
-                        <IconButton
-                          size="small"
-                          aria-label={strings.tooltipEdit(l.name)}
-                          onClick={() => onEdit?.(l)}
-                        >
+                      <Tooltip title={`Edit ${language.name}`} arrow>
+                        <IconButton size="small" onClick={() => onEdit?.(language)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
                     {canDelete && (
-                      <Tooltip
-                        title={strings.tooltipDelete(l.name)}
-                        arrow
-                        placement="right"
-                      >
+                      <Tooltip title={`Delete ${language.name}`} arrow>
                         <IconButton
                           size="small"
                           color="error"
-                          aria-label={strings.tooltipDelete(l.name)}
-                          onClick={() => onDelete?.(l.languageId, l.name)}
+                          onClick={() => onDelete?.(language.languageId, language.name)}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
-                  </TableCell>
+                  </Stack>
                 )}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-        <TableFooter>
-          <TableRow
-            sx={{
-              backgroundColor:
-                languages.length % 2 === 0
-                  ? theme.palette.background.paper
-                  : theme.palette.action.rowHover,
-            }}
-          >
-            <TableCell colSpan={showDelete || showEdit ? 6 : 5}>
-              {strings.tableCaption}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </TableContainer>
+              </Stack>
+
+              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                {language.isDefault && <Chip size="small" label="Default" color="primary" />}
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={language.compilerCmd ? "Compiled" : "Interpreted"}
+                />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={language.runtimeCmd ? "Run command set" : "No run command"}
+                />
+              </Stack>
+
+              <Typography variant="caption" color="text.secondary">
+                Compile: {language.compilerCmd || "none"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Run: {language.runtimeCmd || "none"}
+              </Typography>
+            </Stack>
+          </Paper>
+        );
+      })}
+    </Stack>
   );
 }

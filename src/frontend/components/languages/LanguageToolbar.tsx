@@ -1,19 +1,10 @@
-/**
- * LanguageToolbar component
- * ----------------------------------------
- * Displays a responsive toolbar for adding, editing, deleting, and refreshing languages.
- *
- */
-import React from 'react';
-import { Stack, Tooltip } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import { strings } from '../../i18n/messages';
+import React from "react";
+import { Stack, Button } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
-// Component props
 interface Props {
   showDelete: boolean;
   showEdit: boolean;
@@ -32,40 +23,41 @@ export default function LanguageToolbar({
   onRefresh,
 }: Props) {
   return (
-    <Stack direction="row" spacing={2}>
-      <>
-        <Tooltip title={strings.tooltipAdd} placement="top">
-          <IconButton onClick={onAdd} disabled={showDelete || showEdit}>
-            <AddIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={strings.tooltipDeleteMode} placement="top">
-          <IconButton
-            color={showDelete ? "error" : "default"}
-            onClick={onToggleDelete}
-            disabled={showEdit}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={strings.tooltipEditMode} placement="top">
-          <IconButton
-            color={showEdit ? "secondary" : "default"}
-            onClick={onToggleEdit}
-            disabled={showDelete}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={strings.tooltipRefresh} placement="top" sx={{mb:1}}>
-          <IconButton onClick={onRefresh} disabled={showDelete || showEdit}>
-            <RefreshIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </>
+    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      <Button
+        variant="contained"
+        color="secondary"
+        startIcon={<AddIcon />}
+        onClick={onAdd}
+        disabled={showDelete || showEdit}
+      >
+        Add language
+      </Button>
+      <Button
+        variant={showEdit ? "contained" : "outlined"}
+        startIcon={<EditIcon />}
+        onClick={onToggleEdit}
+        disabled={showDelete}
+      >
+        Edit mode
+      </Button>
+      <Button
+        variant={showDelete ? "contained" : "outlined"}
+        color={showDelete ? "error" : "inherit"}
+        startIcon={<DeleteIcon />}
+        onClick={onToggleDelete}
+        disabled={showEdit}
+      >
+        Delete mode
+      </Button>
+      <Button
+        variant="outlined"
+        startIcon={<RefreshIcon />}
+        onClick={onRefresh}
+        disabled={showDelete || showEdit}
+      >
+        Refresh
+      </Button>
     </Stack>
   );
 }

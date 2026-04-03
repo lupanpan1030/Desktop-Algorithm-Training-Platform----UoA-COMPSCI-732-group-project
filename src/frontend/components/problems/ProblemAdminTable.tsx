@@ -1,18 +1,15 @@
 import React from "react";
 import {
+  alpha,
+  Box,
   Chip,
   IconButton,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { ProblemSummary } from "../../hooks/useApi";
@@ -31,6 +28,19 @@ const difficultyColorMap: Record<string, "success" | "warning" | "error" | "defa
   HARD: "error",
 };
 
+function buildSecondaryMeta(problem: ProblemSummary) {
+  const items = [
+    `${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`,
+    `${problem.source} / ${problem.locale}`,
+  ];
+
+  if (problem.sourceSlug) {
+    items.push(problem.sourceSlug);
+  }
+
+  return items.join(" · ");
+}
+
 export default function ProblemAdminTable({
   problems,
   selectedProblemId,
@@ -38,78 +48,55 @@ export default function ProblemAdminTable({
   onEdit,
   onDelete,
 }: Props) {
+  const theme = useTheme();
+
   return (
-    <TableContainer component={Paper} sx={{ maxHeight: 560 }}>
-      <Table stickyHeader size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Problem</strong></TableCell>
-            <TableCell><strong>Meta</strong></TableCell>
-            <TableCell><strong>Tests</strong></TableCell>
-            <TableCell align="right"><strong>Actions</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {problems.map((problem) => {
-            const selected = problem.problemId === selectedProblemId;
-            return (
-              <TableRow
-                hover
-                key={problem.problemId}
-                selected={selected}
-                onClick={() => onSelect(problem.problemId)}
-                sx={{ cursor: "pointer" }}
+    <Stack spacing={1.1} sx={{ maxHeight: 620, overflowY: "auto", pr: 0.4 }}>
+      {problems.map((problem) => {
+        const selected = problem.problemId === selectedProblemId;
+
+        return (
+          <Paper
+            key={problem.problemId}
+            variant="outlined"
+            onClick={() => onSelect(problem.problemId)}
+            sx={{
+              p: 1.35,
+              borderRadius: 4,
+              cursor: "pointer",
+              borderColor: selected
+                ? alpha(theme.palette.primary.main, 0.42)
+                : alpha(theme.palette.divider, 0.34),
+              bgcolor: selected
+                ? alpha(theme.palette.primary.main, 0.1)
+                : alpha(theme.palette.background.paper, 0.44),
+              transition:
+                "transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease",
+              "&:hover": {
+                transform: "translateY(-1px)",
+                borderColor: alpha(theme.palette.primary.main, 0.3),
+                boxShadow: `0 12px 26px ${alpha(theme.palette.primary.main, 0.08)}`,
+              },
+            }}
+          >
+            <Stack spacing={1}>
+              <Stack
+                direction="row"
+                spacing={1.2}
+                alignItems="flex-start"
+                justifyContent="space-between"
               >
-                <TableCell>
-                  <Typography variant="subtitle2">{problem.title}</Typography>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {problem.title}
+                  </Typography>
                   <Typography variant="caption" color="text.secondary">
                     #{problem.problemId}
-                    {problem.externalProblemId
-                      ? ` · external ${problem.externalProblemId}`
-                      : ""}
+                    {problem.externalProblemId ? ` · external ${problem.externalProblemId}` : ""}
                   </Typography>
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                    <Chip
-                      label={problem.difficulty}
-                      color={difficultyColorMap[problem.difficulty] ?? "default"}
-                      size="small"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={`${problem.source} / ${problem.locale}`}
-                      size="small"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={problem.judgeReady ? "Judge Ready" : "Needs Tests"}
-                      size="small"
-                      color={problem.judgeReady ? "success" : "default"}
-                    />
-                    {problem.sampleReferenceAvailable && (
-                      <Chip
-                        label="Sample Ref"
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                    {problem.tags.length > 0 && (
-                      <Chip
-                        label={`${problem.tags.length} tags`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                  </Stack>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{problem.testcaseCount}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {problem.sampleCaseCount} sample / {problem.hiddenCaseCount} hidden
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
+                </Box>
+
+                <Stack direction="row" spacing={0.3} sx={{ flexShrink: 0 }}>
                   <Tooltip title="Edit problem" arrow>
                     <IconButton
                       size="small"
@@ -133,12 +120,35 @@ export default function ProblemAdminTable({
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
+                </Stack>
+              </Stack>
+
+              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                <Chip
+                  label={problem.difficulty}
+                  color={difficultyColorMap[problem.difficulty] ?? "default"}
+                  size="small"
+                />
+                <Chip
+                  label={problem.judgeReady ? "Judge ready" : "Needs tests"}
+                  size="small"
+                  variant={problem.judgeReady ? "filled" : "outlined"}
+                />
+                {problem.sampleReferenceAvailable && (
+                  <Chip label="Sample ref" size="small" variant="outlined" />
+                )}
+                {problem.tags.length > 0 && (
+                  <Chip label={`${problem.tags.length} tags`} size="small" variant="outlined" />
+                )}
+              </Stack>
+
+              <Typography variant="caption" color="text.secondary">
+                {buildSecondaryMeta(problem)}
+              </Typography>
+            </Stack>
+          </Paper>
+        );
+      })}
+    </Stack>
   );
 }

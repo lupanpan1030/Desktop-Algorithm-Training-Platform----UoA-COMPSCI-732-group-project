@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  alpha,
   Box,
   Button,
   Chip,
@@ -13,6 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteConfirmDialog from "../components/languages/DeleteConfirmDialog";
@@ -65,7 +67,40 @@ function buildErrorMessage(fallback: string, error: unknown) {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function MetricCard({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string | number;
+  helper: string;
+}) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={(theme) => ({
+        p: 1.35,
+        borderRadius: 4,
+        bgcolor: alpha(theme.palette.background.paper, 0.5),
+        borderColor: alpha(theme.palette.divider, 0.34),
+      })}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.08 }}>
+        {value}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
+        {helper}
+      </Typography>
+    </Paper>
+  );
+}
+
 export default function ProblemAdmin() {
+  const theme = useTheme();
   const {
     getProblems,
     getProblem,
@@ -242,6 +277,18 @@ export default function ProblemAdmin() {
     [visibleProblems]
   );
 
+  const curationMetrics = useMemo(
+    () => ({
+      visible: visibleProblems.length,
+      ready: visibleProblems.filter((problem) => problem.judgeReady).length,
+      needsTests: visibleProblems.filter((problem) => !problem.judgeReady).length,
+      withSampleReference: visibleProblems.filter(
+        (problem) => problem.sampleReferenceAvailable
+      ).length,
+    }),
+    [visibleProblems]
+  );
+
   const selectedProblemSummary = useMemo(
     () =>
       problems.find((problem) => problem.problemId === selectedProblemId) ?? null,
@@ -317,10 +364,7 @@ export default function ProblemAdmin() {
           ? `Selected problem description: ${selectedProblem.description.slice(0, 900)}`
           : null,
         selectedProblem?.sampleTestcase
-          ? `Imported sample reference: ${selectedProblem.sampleTestcase.slice(
-              0,
-              400
-            )}`
+          ? `Imported sample reference: ${selectedProblem.sampleTestcase.slice(0, 400)}`
           : null,
         selectedProblem?.starterCodes?.length
           ? `Starter code languages: ${selectedProblem.starterCodes
@@ -407,9 +451,7 @@ export default function ProblemAdmin() {
       await loadProblems(savedProblem.problemId);
       await loadProblemWorkspace(savedProblem.problemId);
       showSnackbar(
-        problemDialog.mode === "add"
-          ? "Problem created."
-          : "Problem updated.",
+        problemDialog.mode === "add" ? "Problem created." : "Problem updated.",
         "success"
       );
     } catch (error) {
@@ -478,9 +520,7 @@ export default function ProblemAdmin() {
       await loadProblems(selectedProblemId);
       await loadProblemWorkspace(selectedProblemId);
       showSnackbar(
-        testCaseDialog.mode === "add"
-          ? "Test case created."
-          : "Test case updated.",
+        testCaseDialog.mode === "add" ? "Test case created." : "Test case updated.",
         "success"
       );
     } catch (error) {
@@ -505,68 +545,150 @@ export default function ProblemAdmin() {
   };
 
   return (
-    <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
-      <Stack spacing={3}>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "center" }}
-          spacing={2}
+    <Box sx={{ height: "100%", overflow: "auto" }}>
+      <Stack spacing={2.2}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 1.8, md: 2.2 },
+            borderRadius: 6,
+            bgcolor: alpha(theme.palette.background.paper, 0.72),
+            borderColor: alpha(theme.palette.divider, 0.42),
+          }}
         >
-          <Box>
-            <Typography variant="h4">Problem Administration</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage local problems, imported problems, and their sample or hidden testcases.
-            </Typography>
-          </Box>
+          <Stack spacing={1.6}>
+            <Stack
+              direction={{ xs: "column", lg: "row" }}
+              spacing={1.6}
+              justifyContent="space-between"
+              alignItems={{ lg: "center" }}
+            >
+              <Box>
+                <Typography
+                  variant="overline"
+                  sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                >
+                  Curation Workspace
+                </Typography>
+                <Typography variant="h5" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                  Problem administration
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.55, maxWidth: 760 }}>
+                  Review imported content, refine metadata, and close the gap between raw problems and judge-ready problems.
+                </Typography>
+              </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Button
-              variant={locale === "en" ? "contained" : "outlined"}
-              onClick={() => setLocale("en")}
-            >
-              English
-            </Button>
-            <Button
-              variant={locale === "zh-CN" ? "contained" : "outlined"}
-              onClick={() => setLocale("zh-CN")}
-            >
-              中文
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={() => void loadProblems(selectedProblemId)}
-            >
-              Refresh
-            </Button>
-            <Button
-              variant="outlined"
-              disabled={!nextProblemNeedingTests}
-              onClick={() => {
-                if (nextProblemNeedingTests) {
-                  setSelectedProblemId(nextProblemNeedingTests.problemId);
-                }
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                <Button
+                  variant={locale === "en" ? "contained" : "outlined"}
+                  onClick={() => setLocale("en")}
+                >
+                  English
+                </Button>
+                <Button
+                  variant={locale === "zh-CN" ? "contained" : "outlined"}
+                  onClick={() => setLocale("zh-CN")}
+                >
+                  中文
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={() => void loadProblems(selectedProblemId)}
+                >
+                  Refresh
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={!nextProblemNeedingTests}
+                  onClick={() => {
+                    if (nextProblemNeedingTests) {
+                      setSelectedProblemId(nextProblemNeedingTests.problemId);
+                    }
+                  }}
+                >
+                  Next needs tests
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenAddProblem}
+                >
+                  Add problem
+                </Button>
+              </Stack>
+            </Stack>
+
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: {
+                  xs: "1fr 1fr",
+                  xl: "repeat(4, minmax(0, 1fr))",
+                },
               }}
             >
-              Next Needs Tests
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
-              onClick={handleOpenAddProblem}
-            >
-              Add Problem
-            </Button>
+              <MetricCard
+                label="Visible"
+                value={curationMetrics.visible}
+                helper="Problems in the current curation scope"
+              />
+              <MetricCard
+                label="Judge ready"
+                value={curationMetrics.ready}
+                helper="Problems ready for submit-time evaluation"
+              />
+              <MetricCard
+                label="Needs tests"
+                value={curationMetrics.needsTests}
+                helper="Problems that still need testcase work"
+              />
+              <MetricCard
+                label="Sample ref"
+                value={curationMetrics.withSampleReference}
+                helper="Problems with imported sample references"
+              />
+            </Box>
           </Stack>
-        </Stack>
+        </Paper>
 
         {pageError && <Alert severity="error">{pageError}</Alert>}
 
-        <Stack direction={{ xs: "column", xl: "row" }} spacing={3} alignItems="stretch">
-          <Paper sx={{ p: 2, flex: "0 0 420px", minWidth: 0 }}>
-            <Stack spacing={2}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2.2,
+            gridTemplateColumns: {
+              xs: "1fr",
+              xl: "minmax(320px, 380px) minmax(0, 1fr)",
+            },
+          }}
+        >
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.8,
+              borderRadius: 6,
+              bgcolor: alpha(theme.palette.background.paper, 0.68),
+              borderColor: alpha(theme.palette.divider, 0.42),
+              minHeight: 0,
+            }}
+          >
+            <Stack spacing={1.5}>
+              <Box>
+                <Typography
+                  variant="overline"
+                  sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                >
+                  Problem Catalog
+                </Typography>
+                <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                  Find the next curation target
+                </Typography>
+              </Box>
+
               <TextField
                 label="Search problems"
                 value={search}
@@ -611,7 +733,7 @@ export default function ProblemAdmin() {
                   value={tagFilter}
                   onChange={(event) => setTagFilter(event.target.value)}
                   size="small"
-                  sx={{ minWidth: 180 }}
+                  sx={{ minWidth: 160 }}
                 >
                   <MenuItem value="all">All tags</MenuItem>
                   {availableTags.map((tag) => (
@@ -627,13 +749,29 @@ export default function ProblemAdmin() {
                   value={sampleReferenceFilter}
                   onChange={(event) => setSampleReferenceFilter(event.target.value)}
                   size="small"
-                  sx={{ minWidth: 180 }}
+                  sx={{ minWidth: 160 }}
                 >
                   <MenuItem value="all">All problems</MenuItem>
                   <MenuItem value="with-reference">With reference</MenuItem>
                   <MenuItem value="without-reference">Without reference</MenuItem>
                 </TextField>
               </Stack>
+
+              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                <Chip size="small" label={`${visibleProblems.length} visible`} variant="outlined" />
+                <Chip
+                  size="small"
+                  label={search.trim() ? "Search active" : "No search"}
+                  variant="outlined"
+                />
+                <Chip
+                  size="small"
+                  label={nextProblemNeedingTests ? "Next test target available" : "No pending target"}
+                  variant={nextProblemNeedingTests ? "filled" : "outlined"}
+                />
+              </Stack>
+
+              <Divider />
 
               {pageLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
@@ -653,29 +791,46 @@ export default function ProblemAdmin() {
             </Stack>
           </Paper>
 
-          <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
-            <Paper sx={{ p: 3 }}>
+          <Stack spacing={2.2} sx={{ minWidth: 0 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.8, md: 2.1 },
+                borderRadius: 6,
+                bgcolor: alpha(theme.palette.background.paper, 0.68),
+                borderColor: alpha(theme.palette.divider, 0.42),
+              }}
+            >
               {detailLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
                   <CircularProgress />
                 </Box>
               ) : selectedProblem ? (
-                <Stack spacing={2}>
+                <Stack spacing={1.8}>
                   <Stack
-                    direction={{ xs: "column", md: "row" }}
+                    direction={{ xs: "column", lg: "row" }}
                     justifyContent="space-between"
-                    spacing={2}
+                    spacing={1.6}
                   >
                     <Box>
-                      <Typography variant="h5">{selectedProblem.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="overline"
+                        sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                      >
+                        Selected Problem
+                      </Typography>
+                      <Typography variant="h5" sx={{ mt: 0.2, lineHeight: 1.08 }}>
+                        {selectedProblem.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.55 }}>
                         Problem #{selectedProblem.problemId}
                         {selectedProblem.externalProblemId
                           ? ` · external ${selectedProblem.externalProblemId}`
                           : ""}
                       </Typography>
                     </Box>
-                    <Stack direction="row" spacing={1}>
+
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                       <Button
                         variant="outlined"
                         onClick={() =>
@@ -684,7 +839,7 @@ export default function ProblemAdmin() {
                           )
                         }
                       >
-                        Edit Problem
+                        Edit problem
                       </Button>
                       <Button
                         variant="outlined"
@@ -713,18 +868,19 @@ export default function ProblemAdmin() {
                           )
                         }
                       >
-                        Delete Problem
+                        Delete problem
                       </Button>
                     </Stack>
                   </Stack>
 
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
                     <Chip label={selectedProblem.difficulty} color="primary" variant="outlined" />
                     <Chip label={`${selectedProblem.source} / ${selectedProblem.locale}`} variant="outlined" />
                     <Chip label={`default: ${selectedProblem.defaultLocale}`} variant="outlined" />
                     <Chip
-                      label={selectedProblem.judgeReady ? "Judge Ready" : "Needs Tests"}
+                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
                       color={selectedProblem.judgeReady ? "success" : "default"}
+                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
                     />
                     <Chip label={`${selectedProblem.testcaseCount} testcases`} variant="outlined" />
                     <Chip
@@ -734,11 +890,14 @@ export default function ProblemAdmin() {
                     <Chip
                       label={
                         selectedProblem.sampleReferenceAvailable
-                          ? "Has imported sample reference"
-                          : "No imported sample reference"
+                          ? "Imported sample reference"
+                          : "No sample reference"
                       }
                       variant="outlined"
                     />
+                    {selectedProblem.sourceSlug && (
+                      <Chip label={`slug: ${selectedProblem.sourceSlug}`} variant="outlined" />
+                    )}
                     {selectedProblem.availableLocales?.map((availableLocale) => (
                       <Chip
                         key={availableLocale}
@@ -748,31 +907,65 @@ export default function ProblemAdmin() {
                         onClick={() => setLocale(availableLocale)}
                       />
                     ))}
-                    {selectedProblem.sourceSlug && (
-                      <Chip label={`slug: ${selectedProblem.sourceSlug}`} variant="outlined" />
-                    )}
                   </Stack>
 
                   {selectedProblem.tags.length > 0 && (
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Tags
-                      </Typography>
-                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                        {selectedProblem.tags.map((tag) => (
-                          <Chip key={tag} label={tag} size="small" />
-                        ))}
-                      </Stack>
-                    </Box>
+                    <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                      {selectedProblem.tags.map((tag) => (
+                        <Chip key={tag} label={tag} size="small" />
+                      ))}
+                    </Stack>
                   )}
+                </Stack>
+              ) : (
+                <Alert severity="info">
+                  Select a problem from the catalog to inspect and curate it.
+                </Alert>
+              )}
+            </Paper>
 
-                  <Divider />
-
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Description
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 2, maxHeight: 260, overflow: "auto" }}>
+            {selectedProblem && (
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 2.2,
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    xl: "minmax(0, 1.2fr) minmax(320px, 0.8fr)",
+                  },
+                }}
+              >
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 1.8,
+                    borderRadius: 6,
+                    bgcolor: alpha(theme.palette.background.paper, 0.68),
+                    borderColor: alpha(theme.palette.divider, 0.42),
+                  }}
+                >
+                  <Stack spacing={1.2}>
+                    <Box>
+                      <Typography
+                        variant="overline"
+                        sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                      >
+                        Description
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Review the current localized prompt before editing metadata or tests.
+                      </Typography>
+                    </Box>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.6,
+                        borderRadius: 4,
+                        maxHeight: 320,
+                        overflow: "auto",
+                        bgcolor: alpha(theme.palette.background.default, 0.4),
+                      }}
+                    >
                       <Typography
                         variant="body2"
                         sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
@@ -780,76 +973,131 @@ export default function ProblemAdmin() {
                         {selectedProblem.description}
                       </Typography>
                     </Paper>
-                  </Box>
+                  </Stack>
+                </Paper>
 
+                <Stack spacing={2.2}>
                   {selectedProblem.sampleTestcase && (
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Imported Sample Testcase Reference
-                      </Typography>
-                      <Paper variant="outlined" sx={{ p: 2 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.8,
+                        borderRadius: 6,
+                        bgcolor: alpha(theme.palette.background.paper, 0.68),
+                        borderColor: alpha(theme.palette.divider, 0.42),
+                      }}
+                    >
+                      <Stack spacing={1.1}>
+                        <Box>
+                          <Typography
+                            variant="overline"
+                            sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                          >
+                            Sample Reference
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Imported reference content you can turn into public or hidden testcases.
+                          </Typography>
+                        </Box>
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 1.3,
+                            borderRadius: 4,
+                            bgcolor: alpha(theme.palette.background.default, 0.4),
+                          }}
                         >
-                          {selectedProblem.sampleTestcase}
-                        </Typography>
-                      </Paper>
-                    </Box>
+                          <Typography
+                            variant="body2"
+                            sx={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}
+                          >
+                            {selectedProblem.sampleTestcase}
+                          </Typography>
+                        </Paper>
+                      </Stack>
+                    </Paper>
                   )}
 
                   {selectedProblem.starterCodes.length > 0 && (
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Imported Starter Code
-                      </Typography>
-                      <Stack spacing={2}>
-                        {selectedProblem.starterCodes.map((starterCode) => (
-                          <Paper
-                            key={starterCode.languageSlug}
-                            variant="outlined"
-                            sx={{ p: 2 }}
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.8,
+                        borderRadius: 6,
+                        bgcolor: alpha(theme.palette.background.paper, 0.68),
+                        borderColor: alpha(theme.palette.divider, 0.42),
+                      }}
+                    >
+                      <Stack spacing={1.2}>
+                        <Box>
+                          <Typography
+                            variant="overline"
+                            sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
                           >
-                            <Typography variant="subtitle2" gutterBottom>
-                              {starterCode.languageName}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              component="pre"
+                            Starter Code
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Imported starter templates currently available for this problem.
+                          </Typography>
+                        </Box>
+                        <Stack spacing={1}>
+                          {selectedProblem.starterCodes.map((starterCode) => (
+                            <Paper
+                              key={starterCode.languageSlug}
+                              variant="outlined"
                               sx={{
-                                m: 0,
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-word",
-                                fontFamily: "monospace",
+                                p: 1.2,
+                                borderRadius: 4,
+                                bgcolor: alpha(theme.palette.background.default, 0.34),
                               }}
                             >
-                              {starterCode.template}
-                            </Typography>
-                          </Paper>
-                        ))}
+                              <Typography variant="subtitle2">{starterCode.languageName}</Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.4, display: "block", whiteSpace: "pre-wrap" }}
+                              >
+                                {starterCode.template.slice(0, 200)}
+                                {starterCode.template.length > 200 ? "..." : ""}
+                              </Typography>
+                            </Paper>
+                          ))}
+                        </Stack>
                       </Stack>
-                    </Box>
+                    </Paper>
                   )}
                 </Stack>
-              ) : (
-                <Alert severity="info">
-                  Select a problem from the list to inspect and manage it.
-                </Alert>
-              )}
-            </Paper>
+              </Box>
+            )}
 
-            <Paper sx={{ p: 3 }}>
-              <Stack spacing={2}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.8, md: 2.1 },
+                borderRadius: 6,
+                bgcolor: alpha(theme.palette.background.paper, 0.68),
+                borderColor: alpha(theme.palette.divider, 0.42),
+              }}
+            >
+              <Stack spacing={1.5}>
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   justifyContent="space-between"
-                  spacing={2}
-                  alignItems={{ xs: "flex-start", md: "center" }}
+                  spacing={1.6}
+                  alignItems={{ md: "center" }}
                 >
                   <Box>
-                    <Typography variant="h6">Testcases</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Mark sample cases for `Run`; hidden cases still participate in `Submit`.
+                    <Typography
+                      variant="overline"
+                      sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                    >
+                      Testcase Coverage
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                      Build the judge surface deliberately
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                      Mark sample cases for Run; hidden cases still participate in Submit.
                     </Typography>
                   </Box>
                   <Button
@@ -859,9 +1107,20 @@ export default function ProblemAdmin() {
                     disabled={selectedProblemId == null}
                     onClick={handleOpenAddTestCase}
                   >
-                    Add Testcase
+                    Add testcase
                   </Button>
                 </Stack>
+
+                {selectedProblem && (
+                  <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                    <Chip label={`${selectedProblem.sampleCaseCount} sample`} variant="outlined" />
+                    <Chip label={`${selectedProblem.hiddenCaseCount} hidden`} variant="outlined" />
+                    <Chip
+                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
+                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
+                    />
+                  </Stack>
+                )}
 
                 {selectedProblemId == null ? (
                   <Alert severity="info">Choose a problem before managing testcases.</Alert>
@@ -879,7 +1138,7 @@ export default function ProblemAdmin() {
               </Stack>
             </Paper>
           </Stack>
-        </Stack>
+        </Box>
       </Stack>
 
       <ProblemFormDialog
