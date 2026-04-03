@@ -5,7 +5,12 @@ import FallbackEditor from './FallbackEditor';
 import EditorHeader from './EditorHeader';
 import MonacoConfig from './MonacoConfig';
 import useApi from '../../hooks/useApi';
-import { saveCodeToLocalStorage, getCodeFromLocalStorage } from '../../utils/localStorageHelper';
+import {
+    getCodeDraftFromLocalStorage,
+    getEditorLanguagePreference,
+    saveCodeToLocalStorage,
+    saveEditorLanguagePreference,
+} from '../../utils/localStorageHelper';
 import { getStarterCodeForLanguage } from '../../utils/starterCode';
 
 
@@ -38,12 +43,9 @@ export default function CodeEditor({
     const editorRef = useRef(null);
     const lastAppliedDraftRef = useRef(null);
     const { getLanguages, loading: languagesLoading, error: languagesError } = useApi();
-    const [code, setCode] = useState(() => {
-        const savedCode = localStorage.getItem(`editorCode_${problemId}`);
-        return savedCode || '';
-    });
+    const [code, setCode] = useState('');
     const [language, setLanguage] = useState(() => {
-        const savedLanguage = localStorage.getItem(`editorLanguage_${problemId}`);
+        const savedLanguage = getEditorLanguagePreference(problemId);
         return savedLanguage || 'python';
     });
     const [languageMap, setLanguageMap] = useState({});
@@ -90,14 +92,14 @@ export default function CodeEditor({
     useEffect(() => {
         // Only try to load code once we have the language map
         if (Object.keys(languageMap).length > 0) {
-            const savedLanguage = localStorage.getItem(`editorLanguage_${problemId}`) || 'python';
-            const savedCode = getCodeFromLocalStorage(problemId, savedLanguage, languageMap);
-            const starterCode = savedCode ? '' : resolveStarterCode(savedLanguage);
-            const nextCode = savedCode || starterCode || '';
+            const savedLanguage = getEditorLanguagePreference(problemId) || 'python';
+            const draft = getCodeDraftFromLocalStorage(problemId, savedLanguage, languageMap);
+            const starterCode = draft.exists ? '' : resolveStarterCode(savedLanguage);
+            const nextCode = draft.exists ? draft.code : starterCode || '';
             setLanguage(savedLanguage);
 
             setCode(nextCode);
-            if (!savedCode && starterCode) {
+            if (!draft.exists && starterCode) {
                 persistCode(savedLanguage, starterCode);
             }
         }
@@ -168,16 +170,15 @@ export default function CodeEditor({
     const handleLanguageChange = useCallback((event) => {
         const newLanguage = event.target.value;
         setLanguage(newLanguage);
-        localStorage.setItem(`editorLanguage_${problemId}`, newLanguage);
+        saveEditorLanguagePreference(problemId, newLanguage);
         // Load saved code for the new language
-        let savedCode = '';
-        if (Object.keys(languageMap).length > 0) {
-            savedCode = getCodeFromLocalStorage(problemId, newLanguage, languageMap);
-        }
-        const starterCode = savedCode ? '' : resolveStarterCode(newLanguage);
-        const nextCode = savedCode || starterCode || '';
+        const draft = Object.keys(languageMap).length > 0
+            ? getCodeDraftFromLocalStorage(problemId, newLanguage, languageMap)
+            : { exists: false, code: '' };
+        const starterCode = draft.exists ? '' : resolveStarterCode(newLanguage);
+        const nextCode = draft.exists ? draft.code : starterCode || '';
         setCode(nextCode);
-        if (!savedCode && starterCode) {
+        if (!draft.exists && starterCode) {
             persistCode(newLanguage, starterCode);
         }
         if (onCodeChange) {
