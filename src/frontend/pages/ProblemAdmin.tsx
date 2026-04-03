@@ -330,6 +330,14 @@ export default function ProblemAdmin() {
     [visibleProblems]
   );
 
+  const renderedProblemDescription = useMemo(() => {
+    if (!selectedProblem) {
+      return "";
+    }
+
+    return DOMPurify.sanitize(marked.parse(selectedProblem.description, { async: false }) as string);
+  }, [selectedProblem]);
+
   const selectedProblemSummary = useMemo(
     () =>
       problems.find((problem) => problem.problemId === selectedProblemId) ?? null,
@@ -1093,7 +1101,7 @@ export default function ProblemAdmin() {
                           },
                         }}
                         dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(marked(selectedProblem.description)),
+                          __html: renderedProblemDescription,
                         }}
                       />
                     </Paper>
