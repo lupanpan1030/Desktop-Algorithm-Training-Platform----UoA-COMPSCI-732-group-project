@@ -1,5 +1,6 @@
 import { SubmissionStatus } from '@prisma/client';
 import { LanguageService } from '../language/language-service';
+import { ProblemsDao } from '../problem/problem-dao';
 import { TestCaseService } from '../testcase/testcase-service';
 import { SubmissionDao } from './submission-dao';
 import { 
@@ -28,8 +29,11 @@ export class SubmissionService {
    */
   async getSubmissionsByProblem(problemId: number): Promise<SubmissionListItemDto[]> {
     const submission = await SubmissionDao.getSubmissionsByProblemId(problemId);
-    if (!submission) {
-      throw new NotFoundError(`No submissions found for problem ID ${problemId}`);
+    if (submission.length === 0) {
+      const problem = await ProblemsDao.getProblemById(problemId);
+      if (!problem) {
+        throw new NotFoundError(`Problem with ID ${problemId} not found`);
+      }
     }
     return submission;
   }

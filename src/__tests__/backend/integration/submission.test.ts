@@ -6,6 +6,7 @@ import {
   dropAndSeedProblems,
   dropAndSeedSubmission,
   dropAndSeedSubmissionResults,
+  testPrisma,
 } from "../utils/setupTestDB";
 import { createApp } from "../../../backend/api/app";
 import { setPrisma } from "../../../backend/db/prisma/prisma";
@@ -49,6 +50,29 @@ describe("Submissions API (integration)", () => {
         // ISO date format check
         expect(() => new Date(item.submittedAt)).not.toThrow();
       }
+    });
+
+    it("returns 200 + an empty list when the problem exists but has no submissions", async () => {
+      await testPrisma.problem.create({
+        data: {
+          problem_id: 9,
+          title: "No Submission Problem",
+          description: "A seeded problem with no submissions yet.",
+          difficulty: "EASY",
+        },
+      });
+
+      const res = await request(app).get("/problems/9/submissions");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("returns 404 when the problem does not exist", async () => {
+      const res = await request(app).get("/problems/999/submissions");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toMatchObject({ message: expect.any(String) });
     });
   });
 

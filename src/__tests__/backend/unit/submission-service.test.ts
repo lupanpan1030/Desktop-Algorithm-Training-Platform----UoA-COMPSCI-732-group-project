@@ -1,8 +1,10 @@
 import { SubmissionStatus } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SubmissionService } from "../../../backend/api/submission/submission-service";
+import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
 import { SubmissionDao } from "../../../backend/api/submission/submission-dao";
 import { judgeSolution } from "../../../backend/services/judge/executor";
+import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 
 vi.mock("../../../backend/api/submission/submission-dao", () => ({
   SubmissionDao: {
@@ -11,6 +13,12 @@ vi.mock("../../../backend/api/submission/submission-dao", () => ({
     createSubmission: vi.fn(),
     updateSubmissionStatus: vi.fn(),
     createSubmissionResults: vi.fn(),
+  },
+}));
+
+vi.mock("../../../backend/api/problem/problem-dao", () => ({
+  ProblemsDao: {
+    getProblemById: vi.fn(),
   },
 }));
 
@@ -27,9 +35,13 @@ vi.mock("../../../backend/services/judge/executor", async () => {
 
 const mockedJudgeSolution = vi.mocked(judgeSolution);
 const mockedSubmissionDao = SubmissionDao as unknown as {
+  getSubmissionsByProblemId: ReturnType<typeof vi.fn>;
   createSubmission: ReturnType<typeof vi.fn>;
   updateSubmissionStatus: ReturnType<typeof vi.fn>;
   createSubmissionResults: ReturnType<typeof vi.fn>;
+};
+const mockedProblemsDao = ProblemsDao as unknown as {
+  getProblemById: ReturnType<typeof vi.fn>;
 };
 
 describe("SubmissionService", () => {
@@ -37,6 +49,8 @@ describe("SubmissionService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedSubmissionDao.getSubmissionsByProblemId.mockResolvedValue([]);
+    mockedProblemsDao.getProblemById.mockResolvedValue(null);
     service.languageService = {
       getLanguageById: vi.fn().mockResolvedValue({
         languageId: 1,
@@ -57,6 +71,25 @@ describe("SubmissionService", () => {
         },
       ]),
     };
+  });
+
+  it("returns an empty list when the problem exists but has no submissions", async () => {
+    mockedProblemsDao.getProblemById.mockResolvedValue({
+      problem_id: 1,
+    });
+
+    const response = await service.getSubmissionsByProblem(1);
+
+    expect(response).toEqual([]);
+    expect(mockedSubmissionDao.getSubmissionsByProblemId).toHaveBeenCalledWith(1);
+    expect(mockedProblemsDao.getProblemById).toHaveBeenCalledWith(1);
+  });
+
+  it("throws NotFoundError when the problem does not exist and has no submissions", async () => {
+    await expect(service.getSubmissionsByProblem(999)).rejects.toBeInstanceOf(
+      NotFoundError
+    );
+    expect(mockedProblemsDao.getProblemById).toHaveBeenCalledWith(999);
   });
 
   it("omits expected output on compile errors during run", async () => {
