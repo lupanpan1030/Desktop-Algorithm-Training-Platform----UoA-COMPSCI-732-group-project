@@ -309,6 +309,7 @@ export default function LanguageAdmin() {
               display: "grid",
               gap: 2.2,
               justifyContent: "center",
+              alignItems: "start",
               gridTemplateColumns: {
                 xs: "1fr",
                 xl: "minmax(300px, 336px) minmax(780px, 980px)",
@@ -421,10 +422,11 @@ export default function LanguageAdmin() {
                 bgcolor: alpha(theme.palette.background.paper, 0.68),
                 borderColor: alpha(theme.palette.divider, 0.42),
                 minHeight: 0,
+                alignSelf: "start",
               }}
             >
               {selectedLanguage ? (
-                <Stack spacing={1.5}>
+                <Stack spacing={1.6} sx={{ width: "100%", maxWidth: 940 }}>
                   <Stack
                     direction={{ xs: "column", md: "row" }}
                     justifyContent="space-between"
@@ -517,61 +519,72 @@ export default function LanguageAdmin() {
                     />
                   </Box>
 
-                  <Paper
-                    variant="outlined"
+                  <Box
                     sx={{
-                      p: 1.3,
-                      borderRadius: 4,
-                      bgcolor: alpha(theme.palette.background.paper, 0.42),
-                      borderColor: alpha(theme.palette.divider, 0.3),
+                      display: "grid",
+                      gap: 1,
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        lg: "repeat(2, minmax(0, 1fr))",
+                      },
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary">
-                      Compile command
-                    </Typography>
-                    <Typography
-                      component="pre"
-                      variant="body2"
+                    <Paper
+                      variant="outlined"
                       sx={{
-                        mt: 0.6,
-                        mb: 0,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        fontFamily:
-                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        p: 1.3,
+                        borderRadius: 4,
+                        bgcolor: alpha(theme.palette.background.paper, 0.42),
+                        borderColor: alpha(theme.palette.divider, 0.3),
                       }}
                     >
-                      {selectedLanguage.compilerCmd || "none"}
-                    </Typography>
-                  </Paper>
+                      <Typography variant="caption" color="text.secondary">
+                        Compile command
+                      </Typography>
+                      <Typography
+                        component="pre"
+                        variant="body2"
+                        sx={{
+                          mt: 0.6,
+                          mb: 0,
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          fontFamily:
+                            '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        }}
+                      >
+                        {selectedLanguage.compilerCmd || "none"}
+                      </Typography>
+                    </Paper>
 
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 1.3,
-                      borderRadius: 4,
-                      bgcolor: alpha(theme.palette.background.paper, 0.42),
-                      borderColor: alpha(theme.palette.divider, 0.3),
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary">
-                      Run command
-                    </Typography>
-                    <Typography
-                      component="pre"
-                      variant="body2"
+                    <Paper
+                      variant="outlined"
                       sx={{
-                        mt: 0.6,
-                        mb: 0,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        fontFamily:
-                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        p: 1.3,
+                        borderRadius: 4,
+                        bgcolor: alpha(theme.palette.background.paper, 0.42),
+                        borderColor: alpha(theme.palette.divider, 0.3),
                       }}
                     >
-                      {selectedLanguage.runtimeCmd || "none"}
-                    </Typography>
-                  </Paper>
+                      <Typography variant="caption" color="text.secondary">
+                        Run command
+                      </Typography>
+                      <Typography
+                        component="pre"
+                        variant="body2"
+                        sx={{
+                          mt: 0.6,
+                          mb: 0,
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          fontFamily:
+                            '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        }}
+                      >
+                        {selectedLanguage.runtimeCmd || "none"}
+                      </Typography>
+                    </Paper>
+                  </Box>
                 </Stack>
               ) : (
                 <Alert severity="info">Select a language from the directory to inspect its runtime settings.</Alert>
