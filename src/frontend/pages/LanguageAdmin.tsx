@@ -321,18 +321,6 @@ export default function LanguageAdmin() {
                   </Typography>
                 </Box>
 
-                <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
-                  <Chip
-                    size="small"
-                    label={showEdit ? "Edit mode on" : "Edit mode off"}
-                    variant={showEdit ? "filled" : "outlined"}
-                  />
-                  <Chip
-                    size="small"
-                    label={showDelete ? "Delete mode on" : "Delete mode off"}
-                    variant={showDelete ? "filled" : "outlined"}
-                  />
-                </Stack>
               </Stack>
             </Paper>
 
