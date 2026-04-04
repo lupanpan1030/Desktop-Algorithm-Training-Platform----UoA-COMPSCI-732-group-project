@@ -231,7 +231,14 @@ export default function LanguageAdmin() {
   }, [del, deleteLanguage, fetchLanguages]);
 
   return (
-    <Box sx={{ minHeight: "100%" }}>
+    <Box
+      sx={{
+        minHeight: "100%",
+        width: "100%",
+        maxWidth: { xl: 1480 },
+        mx: "auto",
+      }}
+    >
       <Stack spacing={2.2}>
         <Paper
           variant="outlined"
@@ -301,9 +308,10 @@ export default function LanguageAdmin() {
             sx={{
               display: "grid",
               gap: 2.2,
+              justifyContent: "center",
               gridTemplateColumns: {
                 xs: "1fr",
-                xl: "minmax(280px, 320px) minmax(0, 1fr)",
+                xl: "minmax(300px, 336px) minmax(780px, 980px)",
               },
             }}
           >
