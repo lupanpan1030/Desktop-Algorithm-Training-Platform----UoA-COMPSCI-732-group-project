@@ -1,5 +1,8 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Snackbar,
   Alert,
@@ -12,6 +15,7 @@ import {
   Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import LanguageToolbar from "../components/languages/LanguageToolbar";
 import LanguageTable from "../components/languages/LanguageTable";
 import LanguageFormDialog from "../components/languages/LanguageFormDialog";
@@ -353,16 +357,27 @@ export default function LanguageAdmin() {
                 </Stack>
               </Paper>
 
-              <Paper
-                variant="outlined"
+              <Accordion
+                disableGutters
+                elevation={0}
                 sx={{
-                  p: 1.8,
                   borderRadius: 6,
                   bgcolor: alpha(theme.palette.background.paper, 0.68),
                   borderColor: alpha(theme.palette.divider, 0.42),
+                  border: "1px solid",
+                  overflow: "hidden",
+                  "&::before": { display: "none" },
                 }}
               >
-                <Stack spacing={1.4}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreRoundedIcon />}
+                  sx={{
+                    px: 1.8,
+                    py: 0.2,
+                    minHeight: 0,
+                    "& .MuiAccordionSummary-content": { my: 1.3 },
+                  }}
+                >
                   <Box>
                     <Typography
                       variant="overline"
@@ -370,48 +385,51 @@ export default function LanguageAdmin() {
                     >
                       Quick Reference
                     </Typography>
-                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                    <Typography variant="subtitle2" sx={{ mt: 0.15 }}>
                       Keep the runtime model legible
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
-                      Pick a language on the left, then inspect and edit the selected runtime on the right.
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.35, display: "block" }}>
+                      Expand for compile, run, suffix, and default guidance.
                     </Typography>
                   </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 1.8, pt: 0, pb: 1.8 }}>
+                  <Stack spacing={1.15}>
+                    <Box
+                      sx={{
+                        py: 0.2,
+                        borderBottom: "1px solid",
+                        borderColor: alpha(theme.palette.divider, 0.22),
+                      }}
+                    >
+                      <Typography variant="subtitle2">Compile command</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                        Optional. Use this when a language needs a build step before execution, such as C++ or Java.
+                      </Typography>
+                    </Box>
 
-                  <Box
-                    sx={{
-                      py: 0.2,
-                      borderBottom: "1px solid",
-                      borderColor: alpha(theme.palette.divider, 0.22),
-                    }}
-                  >
-                    <Typography variant="subtitle2">Compile command</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                      Optional. Use this when a language needs a build step before execution, such as C++ or Java.
-                    </Typography>
-                  </Box>
+                    <Box
+                      sx={{
+                        py: 0.2,
+                        borderBottom: "1px solid",
+                        borderColor: alpha(theme.palette.divider, 0.22),
+                      }}
+                    >
+                      <Typography variant="subtitle2">Run command</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                        Required. This is the command template the judge uses to execute submitted code.
+                      </Typography>
+                    </Box>
 
-                  <Box
-                    sx={{
-                      py: 0.2,
-                      borderBottom: "1px solid",
-                      borderColor: alpha(theme.palette.divider, 0.22),
-                    }}
-                  >
-                    <Typography variant="subtitle2">Run command</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                      Required. This is the command template the judge uses to execute submitted code.
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ py: 0.2 }}>
-                    <Typography variant="subtitle2">Suffix and defaults</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                      The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
+                    <Box sx={{ py: 0.2 }}>
+                      <Typography variant="subtitle2">Suffix and defaults</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                        The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
             </Stack>
 
             <Paper

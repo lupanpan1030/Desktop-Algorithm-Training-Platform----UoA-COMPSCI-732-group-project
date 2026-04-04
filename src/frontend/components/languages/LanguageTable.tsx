@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  alpha,
-  Chip,
-  IconButton,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { alpha, Chip, IconButton, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -30,14 +22,6 @@ interface Props {
   showEdit?: boolean;
   onEdit?: (lang: Language) => void;
   onDelete?: (id: number, name: string) => void;
-}
-
-function summarizeCommand(command?: string | null) {
-  if (!command) {
-    return "none";
-  }
-
-  return command.length > 72 ? `${command.slice(0, 72)}...` : command;
 }
 
 export default function LanguageTable({
@@ -63,8 +47,8 @@ export default function LanguageTable({
             variant="outlined"
             onClick={() => onSelect?.(language)}
             sx={{
-              p: 1,
-              borderRadius: 3.5,
+              p: 0.95,
+              borderRadius: 3,
               cursor: onSelect ? "pointer" : "default",
               bgcolor: alpha(theme.palette.background.paper, 0.42),
               borderColor: selected
@@ -93,8 +77,8 @@ export default function LanguageTable({
               },
             }}
           >
-            <Stack spacing={0.85}>
-              <Stack direction="row" justifyContent="space-between" spacing={1.2}>
+            <Stack spacing={0.75}>
+              <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="flex-start">
                 <div>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {language.name}
@@ -145,52 +129,6 @@ export default function LanguageTable({
                   variant="outlined"
                   label={language.compilerCmd ? "Compiled" : "Interpreted"}
                 />
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  label={language.runtimeCmd ? "Run command set" : "No run command"}
-                />
-              </Stack>
-
-              <Stack spacing={0.55}>
-                <Stack direction="row" spacing={0.8} alignItems="baseline">
-                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 52 }}>
-                    Compile
-                  </Typography>
-                  <Tooltip title={language.compilerCmd || "none"} arrow disableInteractive>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "text.primary",
-                        fontFamily: '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {summarizeCommand(language.compilerCmd)}
-                    </Typography>
-                  </Tooltip>
-                </Stack>
-                <Stack direction="row" spacing={0.8} alignItems="baseline">
-                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 52 }}>
-                    Run
-                  </Typography>
-                  <Tooltip title={language.runtimeCmd || "none"} arrow disableInteractive>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "text.primary",
-                        fontFamily: '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {summarizeCommand(language.runtimeCmd)}
-                    </Typography>
-                  </Tooltip>
-                </Stack>
               </Stack>
             </Stack>
           </Paper>
