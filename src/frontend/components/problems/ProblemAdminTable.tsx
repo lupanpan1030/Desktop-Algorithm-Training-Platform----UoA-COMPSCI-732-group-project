@@ -34,6 +34,10 @@ function buildSecondaryMeta(problem: ProblemSummary) {
     `${problem.source} / ${problem.locale}`,
   ];
 
+  if (problem.sampleReferenceAvailable) {
+    items.push("sample ref");
+  }
+
   if (problem.sourceSlug) {
     items.push(problem.sourceSlug);
   }
@@ -61,8 +65,8 @@ export default function ProblemAdminTable({
             variant="outlined"
             onClick={() => onSelect(problem.problemId)}
             sx={{
-              p: 1.35,
-              borderRadius: 4,
+              p: 1.05,
+              borderRadius: 3.5,
               cursor: "pointer",
               borderColor: selected
                 ? alpha(theme.palette.primary.main, 0.42)
@@ -90,7 +94,7 @@ export default function ProblemAdminTable({
               },
             }}
           >
-            <Stack spacing={1}>
+            <Stack spacing={0.8}>
               <Stack
                 direction="row"
                 spacing={1.2}
@@ -145,9 +149,6 @@ export default function ProblemAdminTable({
                   size="small"
                   variant={problem.judgeReady ? "filled" : "outlined"}
                 />
-                {problem.sampleReferenceAvailable && (
-                  <Chip label="Sample ref" size="small" variant="outlined" />
-                )}
                 {problem.tags.length > 0 && (
                   <Chip label={`${problem.tags.length} tags`} size="small" variant="outlined" />
                 )}
