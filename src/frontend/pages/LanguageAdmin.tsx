@@ -307,105 +307,103 @@ export default function LanguageAdmin() {
               },
             }}
           >
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 1.8,
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
-              }}
-            >
-              <Stack spacing={1.4}>
-                <Box>
-                  <Typography
-                    variant="overline"
-                    sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+            <Stack spacing={2.2}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 1.8,
+                  borderRadius: 6,
+                  bgcolor: alpha(theme.palette.background.paper, 0.68),
+                  borderColor: alpha(theme.palette.divider, 0.42),
+                }}
+              >
+                <Stack spacing={1.4}>
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                    >
+                      Language Directory
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                      Select the runtime to inspect
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                      Use the compact list for scanning. The full compile and run settings live in the detail pane.
+                    </Typography>
+                  </Box>
+                  <LanguageTable
+                    languages={languages}
+                    selectedLanguageId={selectedLanguageId}
+                    onSelect={(lang: Language) => setSelectedLanguageId(lang.languageId)}
+                    showDelete={showDelete}
+                    showEdit={showEdit}
+                    onEdit={(lang: Language) => setEdit({ open: true, lang })}
+                    onDelete={(id, name) => setDel({ open: true, id, name })}
+                  />
+                </Stack>
+              </Paper>
+
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 1.8,
+                  borderRadius: 6,
+                  bgcolor: alpha(theme.palette.background.paper, 0.68),
+                  borderColor: alpha(theme.palette.divider, 0.42),
+                }}
+              >
+                <Stack spacing={1.4}>
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                    >
+                      Quick Reference
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
+                      Keep the runtime model legible
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                      Pick a language on the left, then inspect and edit the selected runtime on the right.
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      py: 0.2,
+                      borderBottom: "1px solid",
+                      borderColor: alpha(theme.palette.divider, 0.22),
+                    }}
                   >
-                    Quick Reference
-                  </Typography>
-                  <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                    Keep the runtime model legible
-                  </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
-                  Pick a language on the left, then inspect and edit the selected runtime on the right.
-                </Typography>
-              </Box>
+                    <Typography variant="subtitle2">Compile command</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                      Optional. Use this when a language needs a build step before execution, such as C++ or Java.
+                    </Typography>
+                  </Box>
 
-                <Box
-                  sx={{
-                    py: 0.2,
-                    borderBottom: "1px solid",
-                    borderColor: alpha(theme.palette.divider, 0.22),
-                  }}
-                >
-                  <Typography variant="subtitle2">Compile command</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                    Optional. Use this when a language needs a build step before execution, such as C++ or Java.
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    py: 0.2,
-                    borderBottom: "1px solid",
-                    borderColor: alpha(theme.palette.divider, 0.22),
-                  }}
-                >
-                  <Typography variant="subtitle2">Run command</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                    Required. This is the command template the judge uses to execute submitted code.
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    py: 0.2,
-                  }}
-                >
-                  <Typography variant="subtitle2">Suffix and defaults</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
-                    The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 1.8,
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
-              }}
-            >
-              <Stack spacing={1.4}>
-                <Box>
-                  <Typography
-                    variant="overline"
-                    sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                  <Box
+                    sx={{
+                      py: 0.2,
+                      borderBottom: "1px solid",
+                      borderColor: alpha(theme.palette.divider, 0.22),
+                    }}
                   >
-                    Language Directory
-                  </Typography>
-                  <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                    Select the runtime to inspect
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
-                    Use the compact list for scanning. The full compile and run settings live in the detail pane.
-                  </Typography>
-                </Box>
-                <LanguageTable
-                  languages={languages}
-                  selectedLanguageId={selectedLanguageId}
-                  onSelect={(lang: Language) => setSelectedLanguageId(lang.languageId)}
-                  showDelete={showDelete}
-                  showEdit={showEdit}
-                  onEdit={(lang: Language) => setEdit({ open: true, lang })}
-                  onDelete={(id, name) => setDel({ open: true, id, name })}
-                />
-              </Stack>
-            </Paper>
+                    <Typography variant="subtitle2">Run command</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                      Required. This is the command template the judge uses to execute submitted code.
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ py: 0.2 }}>
+                    <Typography variant="subtitle2">Suffix and defaults</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                      The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Stack>
 
             <Paper
               variant="outlined"
