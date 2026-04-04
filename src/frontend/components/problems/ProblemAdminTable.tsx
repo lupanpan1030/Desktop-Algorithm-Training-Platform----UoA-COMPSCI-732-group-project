@@ -55,7 +55,7 @@ export default function ProblemAdminTable({
   const theme = useTheme();
 
   return (
-    <Stack spacing={1.1} sx={{ maxHeight: 620, overflowY: "auto", pr: 0.4 }}>
+    <Stack spacing={1.1}>
       {problems.map((problem) => {
         const selected = problem.problemId === selectedProblemId;
 
