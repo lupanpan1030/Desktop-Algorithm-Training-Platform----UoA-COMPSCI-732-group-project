@@ -30,6 +30,14 @@ interface Props {
   onDelete?: (id: number, name: string) => void;
 }
 
+function summarizeCommand(command?: string | null) {
+  if (!command) {
+    return "none";
+  }
+
+  return command.length > 72 ? `${command.slice(0, 72)}...` : command;
+}
+
 export default function LanguageTable({
   languages,
   showDelete = false,
@@ -49,13 +57,13 @@ export default function LanguageTable({
             key={language.languageId}
             variant="outlined"
             sx={{
-              p: 1.4,
-              borderRadius: 4,
+              p: 1.15,
+              borderRadius: 3.5,
               bgcolor: alpha(theme.palette.background.paper, 0.42),
               borderColor: alpha(theme.palette.divider, 0.34),
             }}
           >
-            <Stack spacing={1.05}>
+            <Stack spacing={0.85}>
               <Stack direction="row" justifyContent="space-between" spacing={1.2}>
                 <div>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -105,12 +113,46 @@ export default function LanguageTable({
                 />
               </Stack>
 
-              <Typography variant="caption" color="text.secondary">
-                Compile: {language.compilerCmd || "none"}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Run: {language.runtimeCmd || "none"}
-              </Typography>
+              <Stack spacing={0.55}>
+                <Stack direction="row" spacing={0.8} alignItems="baseline">
+                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 52 }}>
+                    Compile
+                  </Typography>
+                  <Tooltip title={language.compilerCmd || "none"} arrow disableInteractive>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.primary",
+                        fontFamily: '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {summarizeCommand(language.compilerCmd)}
+                    </Typography>
+                  </Tooltip>
+                </Stack>
+                <Stack direction="row" spacing={0.8} alignItems="baseline">
+                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 52 }}>
+                    Run
+                  </Typography>
+                  <Tooltip title={language.runtimeCmd || "none"} arrow disableInteractive>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.primary",
+                        fontFamily: '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {summarizeCommand(language.runtimeCmd)}
+                    </Typography>
+                  </Tooltip>
+                </Stack>
+              </Stack>
             </Stack>
           </Paper>
         );
