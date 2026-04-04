@@ -24,6 +24,8 @@ export interface Language {
 
 interface Props {
   languages: Language[];
+  selectedLanguageId?: number | null;
+  onSelect?: (lang: Language) => void;
   showDelete?: boolean;
   showEdit?: boolean;
   onEdit?: (lang: Language) => void;
@@ -40,6 +42,8 @@ function summarizeCommand(command?: string | null) {
 
 export default function LanguageTable({
   languages,
+  selectedLanguageId = null,
+  onSelect,
   showDelete = false,
   showEdit = false,
   onEdit,
@@ -51,16 +55,42 @@ export default function LanguageTable({
     <Stack spacing={1.1}>
       {languages.map((language) => {
         const canDelete = showDelete && !language.isDefault;
+        const selected = language.languageId === selectedLanguageId;
 
         return (
           <Paper
             key={language.languageId}
             variant="outlined"
+            onClick={() => onSelect?.(language)}
             sx={{
-              p: 1.15,
+              p: 1,
               borderRadius: 3.5,
+              cursor: onSelect ? "pointer" : "default",
               bgcolor: alpha(theme.palette.background.paper, 0.42),
-              borderColor: alpha(theme.palette.divider, 0.34),
+              borderColor: selected
+                ? alpha(theme.palette.primary.main, 0.42)
+                : alpha(theme.palette.divider, 0.34),
+              transition:
+                "border-color 160ms ease, background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease",
+              "& .language-row-actions": {
+                opacity: selected || !onSelect ? 1 : 0,
+                visibility: selected || !onSelect ? "visible" : "hidden",
+                transform: selected || !onSelect ? "translateY(0)" : "translateY(-2px)",
+                transition: "opacity 160ms ease, visibility 160ms ease, transform 160ms ease",
+              },
+              "&:hover": {
+                borderColor: alpha(theme.palette.primary.main, 0.32),
+                bgcolor: selected
+                  ? alpha(theme.palette.primary.main, 0.1)
+                  : alpha(theme.palette.background.paper, 0.6),
+                transform: "translateY(-1px)",
+                boxShadow: `0 10px 20px ${alpha(theme.palette.primary.main, 0.06)}`,
+              },
+              "&:hover .language-row-actions, &:focus-within .language-row-actions": {
+                opacity: 1,
+                visibility: "visible",
+                transform: "translateY(0)",
+              },
             }}
           >
             <Stack spacing={0.85}>
@@ -76,10 +106,16 @@ export default function LanguageTable({
                 </div>
 
                 {(showDelete || showEdit) && (
-                  <Stack direction="row" spacing={0.3}>
+                  <Stack direction="row" spacing={0.3} className="language-row-actions">
                     {showEdit && (
                       <Tooltip title={`Edit ${language.name}`} arrow>
-                        <IconButton size="small" onClick={() => onEdit?.(language)}>
+                        <IconButton
+                          size="small"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onEdit?.(language);
+                          }}
+                        >
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -89,7 +125,10 @@ export default function LanguageTable({
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => onDelete?.(language.languageId, language.name)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDelete?.(language.languageId, language.name);
+                          }}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>

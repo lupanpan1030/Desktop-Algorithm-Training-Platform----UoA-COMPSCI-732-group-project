@@ -9,6 +9,7 @@ import {
   Paper,
   alpha,
   Chip,
+  Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import LanguageToolbar from "../components/languages/LanguageToolbar";
@@ -29,6 +30,33 @@ interface DelState {
   open: boolean;
   id: number | null;
   name: string;
+}
+
+function DetailFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={(theme) => ({
+        p: 1.05,
+        borderRadius: 3,
+        bgcolor: alpha(theme.palette.background.paper, 0.42),
+        borderColor: alpha(theme.palette.divider, 0.28),
+      })}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.25, fontWeight: 600 }}>
+        {value}
+      </Typography>
+    </Paper>
+  );
 }
 
 export default function LanguageAdmin() {
@@ -55,6 +83,7 @@ export default function LanguageAdmin() {
   const [addOpen, setAddOpen] = useState(false);
   const [edit, setEdit] = useState<EditState>({ open: false, lang: null });
   const [del, setDel] = useState<DelState>({ open: false, id: null, name: "" });
+  const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(null);
 
   const [snack, setSnack] = useState<{
     open: boolean;
@@ -136,6 +165,25 @@ export default function LanguageAdmin() {
       interpreted,
     };
   }, [languages]);
+
+  useEffect(() => {
+    setSelectedLanguageId((current) => {
+      if (languages.length === 0) {
+        return null;
+      }
+
+      if (current != null && languages.some((language) => language.languageId === current)) {
+        return current;
+      }
+
+      return languages[0].languageId;
+    });
+  }, [languages]);
+
+  const selectedLanguage = useMemo(
+    () => languages.find((language) => language.languageId === selectedLanguageId) ?? null,
+    [languages, selectedLanguageId]
+  );
 
   const handleAdd = useCallback(
     async (v: any) => {
@@ -279,10 +327,10 @@ export default function LanguageAdmin() {
                   <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
                     Keep the runtime model legible
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
-                    Use this as a quick decoding guide, not as a second primary workspace.
-                  </Typography>
-                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                  Pick a language on the left, then inspect and edit the selected runtime on the right.
+                </Typography>
+              </Box>
 
                 <Box
                   sx={{
@@ -320,7 +368,6 @@ export default function LanguageAdmin() {
                     The suffix controls temporary file naming; default languages are protected entries shipped with the platform.
                   </Typography>
                 </Box>
-
               </Stack>
             </Paper>
 
@@ -339,20 +386,190 @@ export default function LanguageAdmin() {
                     variant="overline"
                     sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
                   >
-                    Language Catalog
+                    Language Directory
                   </Typography>
                   <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.1 }}>
-                    Review runtime definitions deliberately
+                    Select the runtime to inspect
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.45, display: "block" }}>
+                    Use the compact list for scanning. The full compile and run settings live in the detail pane.
                   </Typography>
                 </Box>
                 <LanguageTable
                   languages={languages}
+                  selectedLanguageId={selectedLanguageId}
+                  onSelect={(lang: Language) => setSelectedLanguageId(lang.languageId)}
                   showDelete={showDelete}
                   showEdit={showEdit}
                   onEdit={(lang: Language) => setEdit({ open: true, lang })}
                   onDelete={(id, name) => setDel({ open: true, id, name })}
                 />
               </Stack>
+            </Paper>
+
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 1.8,
+                borderRadius: 6,
+                bgcolor: alpha(theme.palette.background.paper, 0.68),
+                borderColor: alpha(theme.palette.divider, 0.42),
+                minHeight: 0,
+              }}
+            >
+              {selectedLanguage ? (
+                <Stack spacing={1.5}>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    justifyContent="space-between"
+                    spacing={1.4}
+                    alignItems={{ md: "center" }}
+                  >
+                    <Box>
+                      <Typography
+                        variant="overline"
+                        sx={{ color: "text.secondary", display: "block", lineHeight: 1.35 }}
+                      >
+                        Selected Runtime
+                      </Typography>
+                      <Typography variant="h5" sx={{ mt: 0.2, lineHeight: 1.08 }}>
+                        {selectedLanguage.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+                        {selectedLanguage.suffix || "no suffix"}
+                        {selectedLanguage.version ? ` · ${selectedLanguage.version}` : ""}
+                      </Typography>
+                    </Box>
+
+                    <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                      {showEdit && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setEdit({ open: true, lang: selectedLanguage })}
+                        >
+                          Edit selected
+                        </Button>
+                      )}
+                      {showDelete && !selectedLanguage.isDefault && (
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() =>
+                            setDel({
+                              open: true,
+                              id: selectedLanguage.languageId,
+                              name: selectedLanguage.name,
+                            })
+                          }
+                        >
+                          Delete selected
+                        </Button>
+                      )}
+                    </Stack>
+                  </Stack>
+
+                  <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                    {selectedLanguage.isDefault && <Chip size="small" label="Default" color="primary" />}
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={selectedLanguage.compilerCmd ? "Compiled" : "Interpreted"}
+                    />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={selectedLanguage.runtimeCmd ? "Run command set" : "No run command"}
+                    />
+                    <Chip
+                      size="small"
+                      variant={showEdit || showDelete ? "filled" : "outlined"}
+                      label={
+                        showEdit
+                          ? "Edit mode active"
+                          : showDelete
+                            ? "Delete mode active"
+                            : "Browse mode"
+                      }
+                    />
+                  </Stack>
+
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gap: 1,
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "repeat(3, minmax(0, 1fr))",
+                      },
+                    }}
+                  >
+                    <DetailFact label="Suffix" value={selectedLanguage.suffix || "Not configured"} />
+                    <DetailFact label="Version" value={selectedLanguage.version || "Not specified"} />
+                    <DetailFact
+                      label="Execution kind"
+                      value={selectedLanguage.compilerCmd ? "Compile then run" : "Run directly"}
+                    />
+                  </Box>
+
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.3,
+                      borderRadius: 4,
+                      bgcolor: alpha(theme.palette.background.paper, 0.42),
+                      borderColor: alpha(theme.palette.divider, 0.3),
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      Compile command
+                    </Typography>
+                    <Typography
+                      component="pre"
+                      variant="body2"
+                      sx={{
+                        mt: 0.6,
+                        mb: 0,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        fontFamily:
+                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                      }}
+                    >
+                      {selectedLanguage.compilerCmd || "none"}
+                    </Typography>
+                  </Paper>
+
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.3,
+                      borderRadius: 4,
+                      bgcolor: alpha(theme.palette.background.paper, 0.42),
+                      borderColor: alpha(theme.palette.divider, 0.3),
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      Run command
+                    </Typography>
+                    <Typography
+                      component="pre"
+                      variant="body2"
+                      sx={{
+                        mt: 0.6,
+                        mb: 0,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        fontFamily:
+                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
+                      }}
+                    >
+                      {selectedLanguage.runtimeCmd || "none"}
+                    </Typography>
+                  </Paper>
+                </Stack>
+              ) : (
+                <Alert severity="info">Select a language from the directory to inspect its runtime settings.</Alert>
+              )}
             </Paper>
           </Box>
         )}
