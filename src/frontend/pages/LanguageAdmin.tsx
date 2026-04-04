@@ -31,38 +31,6 @@ interface DelState {
   name: string;
 }
 
-function MetricCard({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: string | number;
-  helper: string;
-}) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={(theme) => ({
-        p: 1.35,
-        borderRadius: 4,
-        bgcolor: alpha(theme.palette.background.paper, 0.5),
-        borderColor: alpha(theme.palette.divider, 0.34),
-      })}
-    >
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="h6" sx={{ mt: 0.2, lineHeight: 1.08 }}>
-        {value}
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: "block" }}>
-        {helper}
-      </Typography>
-    </Paper>
-  );
-}
-
 export default function LanguageAdmin() {
   const theme = useTheme();
   const {
@@ -261,21 +229,12 @@ export default function LanguageAdmin() {
               />
             </Stack>
 
-            <Box
-              sx={{
-                display: "grid",
-                gap: 1,
-                gridTemplateColumns: {
-                  xs: "1fr 1fr",
-                  xl: "repeat(4, minmax(0, 1fr))",
-                },
-              }}
-            >
-              <MetricCard label="Languages" value={metrics.total} helper="Configured runtimes" />
-              <MetricCard label="Defaults" value={metrics.defaults} helper="Protected built-in entries" />
-              <MetricCard label="Compiled" value={metrics.compiled} helper="Require a compile step" />
-              <MetricCard label="Interpreted" value={metrics.interpreted} helper="Run directly via runtime command" />
-            </Box>
+            <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+              <Chip label={`Languages ${metrics.total}`} variant="outlined" />
+              <Chip label={`Defaults ${metrics.defaults}`} variant="outlined" />
+              <Chip label={`Compiled ${metrics.compiled}`} variant="outlined" />
+              <Chip label={`Interpreted ${metrics.interpreted}`} variant="outlined" />
+            </Stack>
           </Stack>
         </Paper>
 
