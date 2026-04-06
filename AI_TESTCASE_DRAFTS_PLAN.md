@@ -253,6 +253,25 @@ That future path is stronger, but it requires new storage, execution, and valida
 
 ## Recommended Rollout
 
+## Current Status
+
+Implemented so far:
+
+- dedicated `POST /problems/{problemId}/ai/test-drafts` endpoint
+- draft review panel inside `Problem Admin`
+- editable draft input / expected output / sample toggle
+- save single draft into the existing testcase APIs
+- save all high-confidence drafts
+- generation controls for draft count, sample drafts, and hidden drafts
+- batch selection, save selected, and discard selected
+- clearer provenance and review-risk labels in the UI
+
+Still pending for later:
+
+- richer provenance explanations in the backend payload
+- analytics around accepted vs rejected drafts
+- optional oracle-backed `C-lite` verification for selected problems
+
 ### Phase 1
 
 - add doc and DTOs

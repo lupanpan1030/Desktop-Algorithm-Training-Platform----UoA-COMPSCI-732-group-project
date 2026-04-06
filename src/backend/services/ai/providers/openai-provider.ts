@@ -245,6 +245,30 @@ function normalizeStringArray(value?: string[]) {
   return value?.map((item) => item?.trim()).filter(Boolean) ?? [];
 }
 
+function normalizeRiskFlags(
+  confidence: "low" | "medium" | "high",
+  riskFlags: string[]
+) {
+  const normalized = [...new Set(riskFlags)];
+
+  if (confidence === "low" && !normalized.includes("requires_manual_output_review")) {
+    normalized.push("requires_manual_output_review");
+  }
+
+  return normalized;
+}
+
+function normalizeSourceHints(
+  isSample: boolean,
+  sourceHints: string[]
+) {
+  if (sourceHints.length > 0) {
+    return [...new Set(sourceHints)];
+  }
+
+  return [isSample ? "description example" : "edge-case reasoning"];
+}
+
 function normalizeDrafts(
   input: AiTestDraftInput,
   parsed?: ParsedTestDraftPayload
@@ -278,15 +302,25 @@ function normalizeDrafts(
       }
       seen.add(signature);
 
+      const confidence = normalizeConfidence(draft.confidence);
+      const riskFlags = normalizeRiskFlags(
+        confidence,
+        normalizeStringArray(draft.riskFlags)
+      );
+      const sourceHints = normalizeSourceHints(
+        isSample,
+        normalizeStringArray(draft.sourceHints)
+      );
+
       return {
         id: `openai-${input.problemId}-${index + 1}`,
         input: normalizedInput,
         expectedOutput: normalizedOutput,
         isSample,
         rationale: draft.rationale?.trim() || "AI-generated testcase draft.",
-        confidence: normalizeConfidence(draft.confidence),
-        riskFlags: normalizeStringArray(draft.riskFlags),
-        sourceHints: normalizeStringArray(draft.sourceHints),
+        confidence,
+        riskFlags,
+        sourceHints,
       };
     })
     .filter((draft): draft is AiTestcaseDraftDto => Boolean(draft))

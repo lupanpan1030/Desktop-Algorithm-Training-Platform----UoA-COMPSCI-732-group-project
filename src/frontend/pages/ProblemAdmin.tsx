@@ -71,6 +71,7 @@ type TestCaseDialogState = {
 type AiDraftReviewState = {
   loading: boolean;
   savingIds: string[];
+  selectedIds: string[];
   error: string | null;
   warnings: string[];
   provider: string | null;
@@ -88,6 +89,7 @@ function createInitialAiDraftReviewState(): AiDraftReviewState {
   return {
     loading: false,
     savingIds: [],
+    selectedIds: [],
     error: null,
     warnings: [],
     provider: null,
@@ -623,12 +625,13 @@ export default function ProblemAdmin() {
       locale,
     };
 
-    setAiDraftReview((previous) => ({
-      ...previous,
-      loading: true,
-      error: null,
-      savingIds: [],
-    }));
+      setAiDraftReview((previous) => ({
+        ...previous,
+        loading: true,
+        error: null,
+        savingIds: [],
+        selectedIds: [],
+      }));
 
     try {
       const response = await generateAiTestDrafts(selectedProblemId, requestBody);
@@ -638,6 +641,7 @@ export default function ProblemAdmin() {
         provider: response.provider,
         warnings: response.warnings,
         drafts: response.drafts,
+        selectedIds: response.drafts.map((draft) => draft.id),
         error: null,
         lastRequest: {
           ...previous.lastRequest,
@@ -668,8 +672,22 @@ export default function ProblemAdmin() {
       error: null,
       provider: previous.provider,
       savingIds: [],
+      selectedIds: [],
     }));
   }, []);
+
+  const handleUpdateAiDraftRequest = useCallback(
+    (patch: Partial<GenerateAiTestDraftsPayload>) => {
+      setAiDraftReview((previous) => ({
+        ...previous,
+        lastRequest: {
+          ...previous.lastRequest,
+          ...patch,
+        },
+      }));
+    },
+    []
+  );
 
   const handleUpdateAiDraft = useCallback(
     (
@@ -691,6 +709,44 @@ export default function ProblemAdmin() {
       ...previous,
       drafts: previous.drafts.filter((draft) => draft.id !== draftId),
       savingIds: previous.savingIds.filter((id) => id !== draftId),
+      selectedIds: previous.selectedIds.filter((id) => id !== draftId),
+    }));
+  }, []);
+
+  const handleToggleAiDraftSelection = useCallback((draftId: string) => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      selectedIds: previous.selectedIds.includes(draftId)
+        ? previous.selectedIds.filter((id) => id !== draftId)
+        : [...previous.selectedIds, draftId],
+    }));
+  }, []);
+
+  const handleSelectAllAiDrafts = useCallback(() => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      selectedIds:
+        previous.selectedIds.length === previous.drafts.length
+          ? []
+          : previous.drafts.map((draft) => draft.id),
+    }));
+  }, []);
+
+  const handleSelectHighConfidenceAiDrafts = useCallback(() => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      selectedIds: previous.drafts
+        .filter((draft) => draft.confidence === "high")
+        .map((draft) => draft.id),
+    }));
+  }, []);
+
+  const handleDiscardSelectedAiDrafts = useCallback(() => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      drafts: previous.drafts.filter((draft) => !previous.selectedIds.includes(draft.id)),
+      savingIds: previous.savingIds.filter((id) => !previous.selectedIds.includes(id)),
+      selectedIds: [],
     }));
   }, []);
 
@@ -729,6 +785,7 @@ export default function ProblemAdmin() {
           ...previous,
           drafts: previous.drafts.filter((draft) => !draftIds.includes(draft.id)),
           savingIds: previous.savingIds.filter((id) => !draftIds.includes(id)),
+          selectedIds: previous.selectedIds.filter((id) => !draftIds.includes(id)),
         }));
 
         showSnackbar(
@@ -772,6 +829,10 @@ export default function ProblemAdmin() {
 
     void persistAiDrafts(highConfidenceDraftIds);
   }, [aiDraftReview.drafts, persistAiDrafts]);
+
+  const handleSaveSelectedAiDrafts = useCallback(() => {
+    void persistAiDrafts(aiDraftReview.selectedIds);
+  }, [aiDraftReview.selectedIds, persistAiDrafts]);
 
   return (
     <Box sx={{ minHeight: "100%" }}>
@@ -1237,16 +1298,24 @@ export default function ProblemAdmin() {
                   disabled={selectedProblemId == null}
                   loading={aiDraftReview.loading}
                   savingIds={aiDraftReview.savingIds}
+                  selectedIds={aiDraftReview.selectedIds}
                   provider={aiDraftReview.provider}
                   warnings={aiDraftReview.warnings}
                   error={aiDraftReview.error}
                   drafts={aiDraftReview.drafts}
+                  requestOptions={aiDraftReview.lastRequest}
                   onGenerate={() => void handleGenerateAiDrafts()}
                   onClear={handleClearAiDrafts}
+                  onUpdateRequest={handleUpdateAiDraftRequest}
                   onSaveDraft={handleSaveAiDraft}
+                  onSaveSelected={handleSaveSelectedAiDrafts}
                   onSaveHighConfidence={handleSaveHighConfidenceAiDrafts}
                   onDiscardDraft={handleDiscardAiDraft}
+                  onDiscardSelected={handleDiscardSelectedAiDrafts}
                   onUpdateDraft={handleUpdateAiDraft}
+                  onToggleDraftSelection={handleToggleAiDraftSelection}
+                  onSelectAll={handleSelectAllAiDrafts}
+                  onSelectHighConfidence={handleSelectHighConfidenceAiDrafts}
                 />
               </Stack>
             </Paper>
