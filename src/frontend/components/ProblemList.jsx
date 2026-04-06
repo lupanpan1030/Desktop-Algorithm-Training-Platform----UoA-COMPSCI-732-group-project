@@ -50,6 +50,21 @@ function completionDescriptor(problem) {
   };
 }
 
+function sourceLabel(source) {
+  if (!source || source === "LOCAL") {
+    return "Local";
+  }
+
+  if (source === "LEETCODE") {
+    return "LeetCode";
+  }
+
+  return source
+    .toString()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 export default function ProblemList({ problems }) {
   const theme = useTheme();
 
@@ -64,13 +79,20 @@ export default function ProblemList({ problems }) {
     >
       {problems.map((problem) => {
         const completion = completionDescriptor(problem);
-        const secondaryMeta = [];
+        const sampleCaseCount = Number(problem.sampleCaseCount ?? 0);
+        const hiddenCaseCount = Number(problem.hiddenCaseCount ?? 0);
+        const secondaryMeta = [sourceLabel(problem.source)];
 
-        secondaryMeta.push(`${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`);
-        if (problem.sampleReferenceAvailable) {
-          secondaryMeta.push("Sample reference");
-        } else if (problem.source && problem.source !== "LOCAL") {
-          secondaryMeta.push(problem.source);
+        if (hiddenCaseCount > 0) {
+          secondaryMeta.push(`${hiddenCaseCount} hidden`);
+        }
+
+        if (sampleCaseCount > 0) {
+          secondaryMeta.push(`${sampleCaseCount} sample`);
+        }
+
+        if (problem.tags?.length > 0) {
+          secondaryMeta.push(problem.tags[0]);
         }
 
         return (
@@ -145,16 +167,14 @@ export default function ProblemList({ problems }) {
                   </Stack>
                 </Stack>
 
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ display: "block", minHeight: 18 }}
+                >
                   {secondaryMeta.join(" · ")}
                 </Typography>
-
-                {problem.tags?.length > 0 && (
-                  <Typography variant="caption" color="text.secondary">
-                    {problem.tags.slice(0, 3).join(" · ")}
-                    {problem.tags.length > 3 ? ` · +${problem.tags.length - 3}` : ""}
-                  </Typography>
-                )}
               </Stack>
 
               <Box
