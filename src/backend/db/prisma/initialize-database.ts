@@ -6,6 +6,12 @@ import {
   toSqliteFileUrl,
 } from "./bootstrap-sqlite";
 
+type DatabaseSyncResult = {
+  created: boolean;
+  changed: boolean;
+  backupPath: string | null;
+};
+
 function resolveDatabasePath() {
   const configuredUrl = process.env.DATABASE_URL;
 
@@ -16,10 +22,16 @@ function resolveDatabasePath() {
   return path.resolve(process.cwd(), "dev.db");
 }
 
+function shouldSyncDatabaseSchema() {
+  const mode = process.env.DB_SCHEMA_SYNC_MODE?.trim().toLowerCase();
+  return mode !== "skip" && mode !== "disabled";
+}
+
 export async function initializeDatabase() {
   const dbFilePath = resolveDatabasePath();
 
   process.env.DATABASE_URL = toSqliteFileUrl(dbFilePath);
+  console.log(`Initializing SQLite database at ${dbFilePath}...`);
 
   let isFreshDatabase = false;
   try {
@@ -29,7 +41,27 @@ export async function initializeDatabase() {
     console.log("Database file not found. Initializing...");
   }
 
-  const syncResult = await syncSqliteDatabase(dbFilePath);
+  let syncResult: DatabaseSyncResult = {
+    created: false,
+    changed: false,
+    backupPath: null,
+  };
+
+  if (shouldSyncDatabaseSchema()) {
+    console.log("Synchronizing SQLite schema...");
+    syncResult = await syncSqliteDatabase(dbFilePath);
+  } else {
+    try {
+      await fs.access(dbFilePath);
+    } catch {
+      throw new Error(
+        `Database file was not found at ${dbFilePath}, but automatic schema sync is disabled for this runtime.`
+      );
+    }
+
+    console.log("Skipping automatic SQLite schema sync for this packaged runtime.");
+  }
+
   if (!isFreshDatabase && syncResult.changed) {
     console.log("Database schema updated to match the current Prisma schema.");
     if (syncResult.backupPath) {
@@ -38,6 +70,7 @@ export async function initializeDatabase() {
   }
 
   if (syncResult.created) {
+    console.log("Seeding fresh SQLite database...");
     const { seedFreshDatabase } = await import("../seeds/init-db_first");
     await seedFreshDatabase();
   }
@@ -46,14 +79,16 @@ export async function initializeDatabase() {
     backfillProblemTranslationsFromBase,
     syncAllProblemPrimaryLocalizations,
   } = await import("../problem-catalog/problem-localization");
-  await backfillProblemTranslationsFromBase((await import("./prisma")).getPrisma());
 
+  console.log("Reconciling problem catalog...");
   const { reconcileProblemCatalog } = await import("../problem-catalog/reconcile-problem-catalog");
   const reconciliation = await reconcileProblemCatalog();
+  console.log("Reconciling language catalog...");
   const { reconcileLanguageCatalog } = await import("../language-catalog/reconcile-language-catalog");
   const languageReconciliation = await reconcileLanguageCatalog();
 
   const prisma = (await import("./prisma")).getPrisma();
+  console.log("Synchronizing problem localizations...");
   await backfillProblemTranslationsFromBase(prisma);
   await syncAllProblemPrimaryLocalizations(prisma);
 
@@ -71,4 +106,6 @@ export async function initializeDatabase() {
       `Language catalog reconciled. Renamed ${languageReconciliation.renamedLanguages} duplicate languages, backfilled ${languageReconciliation.backfilledNames} normalized language names, and synchronized ${languageReconciliation.normalizedSuffixes} suffix keys.`
     );
   }
+
+  console.log("Database initialization complete.");
 }

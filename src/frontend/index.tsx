@@ -1,3 +1,7 @@
+function isRendererDevelopmentMode() {
+  return typeof process !== "undefined" && process.env?.NODE_ENV === "development";
+}
+
 // Anti Stabilization Function
 const debounce = <T extends (...args: any[]) => void>(fn: T, delay: number): T => {
   let timer: number | null = null;
@@ -13,7 +17,7 @@ const debounce = <T extends (...args: any[]) => void>(fn: T, delay: number): T =
 if (
   typeof window !== 'undefined' &&
   'ResizeObserver' in window &&
-  process.env.NODE_ENV === 'development'
+  isRendererDevelopmentMode()
 ) {
   const OriginalResizeObserver = window.ResizeObserver;
 

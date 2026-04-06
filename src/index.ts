@@ -65,8 +65,8 @@ const createWindow = (): void => {
 
   const rendererCsp =
     process.env.NODE_ENV === 'development'
-      ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ${backendBaseUrl} http://localhost:* ws://localhost:*; img-src 'self' data:; worker-src 'self' blob:;`
-      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ${backendBaseUrl}; img-src 'self' data:; worker-src 'self' blob:;`;
+      ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ${backendBaseUrl} http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; img-src 'self' data:; worker-src 'self' blob:;`
+      : `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ${backendBaseUrl} http://127.0.0.1:${normalizeBackendPort(process.env.PORT)}; img-src 'self' data:; worker-src 'self' blob:;`;
 
   // Set Content-Security-Policy for the main document while allowing dev-server websockets.
   if (!cspHandlerRegistered) {
@@ -119,7 +119,25 @@ const createWindow = (): void => {
     );
   });
 
-  mainWindow.webContents.on('did-finish-load', () => {
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.on(
+      'console-message',
+      (details) => {
+        const message = details.message ?? "";
+        if (
+          message.includes("Download the React DevTools for a better development experience")
+        ) {
+          return;
+        }
+
+        console.log(
+          `[renderer:${details.level}] ${message} (${details.sourceId}:${details.lineNumber})`
+        );
+      }
+    );
+  }
+
+  mainWindow.webContents.once('did-finish-load', () => {
     console.log('Renderer finished loading.');
   });
 };
@@ -129,6 +147,8 @@ const createWindow = (): void => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   try {
+    process.env.APP_CONFIG_DIR =
+      process.env.APP_CONFIG_DIR?.trim() || app.getPath("userData");
     if (process.env.NODE_ENV === 'production') {
       await initProdEnv();
     }

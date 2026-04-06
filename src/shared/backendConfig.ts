@@ -1,4 +1,4 @@
-export const DEFAULT_BACKEND_HOST = "127.0.0.1";
+export const DEFAULT_BACKEND_HOST = "localhost";
 export const DEFAULT_BACKEND_PORT = 6785;
 
 export function normalizeBackendPort(value?: string | number | null) {

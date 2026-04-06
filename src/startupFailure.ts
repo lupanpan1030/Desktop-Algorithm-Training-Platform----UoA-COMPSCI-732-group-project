@@ -60,7 +60,9 @@ function normalizeDetail(detail?: string) {
 }
 
 function extractLanguageCatalogIssues(text: string) {
-  const match = text.match(/Resolve these entries before startup:\s*(.+?)(?:\.$|$)/is);
+  const match = text.match(
+    /Resolve these entries before startup:\s*([\s\S]+?)(?:\.$|$)/i
+  );
   if (!match) {
     return [];
   }

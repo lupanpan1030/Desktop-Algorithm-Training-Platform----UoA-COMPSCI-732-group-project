@@ -9,12 +9,26 @@ import { StartupFailure } from './startupFailure';
 let backendProcess: ChildProcess | undefined;
 let directServerInstance: http.Server | undefined;
 let cleanupRegistered = false;
-const BACKEND_START_TIMEOUT_MS = 30000;
+const DEFAULT_BACKEND_START_TIMEOUT_MS =
+  process.env.NODE_ENV === 'development' ? 90000 : 30000;
 const MAX_BACKEND_LOG_LINES = 12;
 let recentBackendLogLines: string[] = [];
 
 function getBackendPort() {
   return normalizeBackendPort(process.env.PORT);
+}
+
+function getBackendStartTimeoutMs() {
+  const rawTimeout = process.env.BACKEND_START_TIMEOUT_MS?.trim();
+  const parsedTimeout = rawTimeout
+    ? Number.parseInt(rawTimeout, 10)
+    : DEFAULT_BACKEND_START_TIMEOUT_MS;
+
+  if (Number.isInteger(parsedTimeout) && parsedTimeout >= 1000) {
+    return parsedTimeout;
+  }
+
+  return DEFAULT_BACKEND_START_TIMEOUT_MS;
 }
 
 function resetBackendStartupLog() {
@@ -111,11 +125,12 @@ export async function startBackend(): Promise<void> {
   }
 }
 
-export function waitForBackend(timeoutMs = BACKEND_START_TIMEOUT_MS): Promise<void> {
+export function waitForBackend(timeoutMs = getBackendStartTimeoutMs()): Promise<void> {
   const url = `${buildBackendBaseUrl(getBackendPort())}/problems`;
 
   return new Promise((resolve, reject) => {
     const startedAt = Date.now();
+    console.log(`Waiting for backend readiness at ${url} (timeout ${timeoutMs}ms)...`);
     const handleBackendExit = (code: number | null, signal: NodeJS.Signals | null) => {
       clearInterval(interval);
       reject(
@@ -139,6 +154,7 @@ export function waitForBackend(timeoutMs = BACKEND_START_TIMEOUT_MS): Promise<vo
         .get(url, res => {
           if (res.statusCode === 200) {
             cleanup();
+            console.log(`Backend became ready after ${Date.now() - startedAt}ms.`);
             resolve();
             return;
           }

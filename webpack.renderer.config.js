@@ -1,20 +1,17 @@
 console.log('✅ MonacoWebpackPlugin injected');
 
-import CopyWebpackPlugin from 'copy-webpack-plugin';
-import { fileURLToPath } from 'node:url';
-import * as path from 'path';
-import type { Configuration } from 'webpack';
-import { rules } from './webpack.rules.ts';
-import { plugins } from './webpack.plugins.ts';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'; 
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { rules } = require('./webpack.rules.js');
+const { plugins } = require('./webpack.plugins.js');
+
 const devRendererCsp =
-  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data:; worker-src 'self' blob:;";
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; img-src 'self' data:; worker-src 'self' blob:;";
 const prodRendererCsp =
-  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:6785; img-src 'self' data:; worker-src 'self' blob:;";
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' http://localhost:6785 http://127.0.0.1:6785; img-src 'self' data:; worker-src 'self' blob:;";
 
 rules.push({
   test: /\.css$/,
@@ -27,13 +24,12 @@ rules.push({
   type: 'asset/resource',
 });
 
-// More reliable environmental detection
 const isDevelopment = process.env.NODE_ENV === 'development';
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log(`Building in ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'} mode`);
 console.log('Current directory:', __dirname);
 
-let rendererConfigPreparation: Configuration;
+let rendererConfigPreparation;
 
 if (!isDevelopment) {
   rendererConfigPreparation = {
@@ -43,9 +39,8 @@ if (!isDevelopment) {
     },
     output: {
       publicPath: './../',
-      globalObject: 'self',  // Make sure the worker is initialized correctly
+      globalObject: 'self',
     },
-    
     plugins: [
       ...plugins,
       new HtmlWebpackPlugin({
@@ -58,14 +53,10 @@ if (!isDevelopment) {
           }
         }
       }),
-
-      // Monaco supports plugin configuration
       new MonacoWebpackPlugin({
         languages: ['javascript', 'python', 'cpp', 'java'],
         filename: 'monaco-editor-workers/[name].worker.js',
       }),
-
-      // Copy the Monaco editor resources - make sure the vs folder is in the correct location
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -94,8 +85,7 @@ if (!isDevelopment) {
       },
     },
   };
-}
-else {
+} else {
   rendererConfigPreparation = {
     devtool: 'source-map',
     module: {
@@ -104,7 +94,6 @@ else {
     output: {
       publicPath: './../',
     },
-
     plugins: [
       ...plugins,
       new HtmlWebpackPlugin({
@@ -117,15 +106,12 @@ else {
           }
         }
       }),
-
-      // Insert Monaco support plugin
       new MonacoWebpackPlugin({
         filename: 'vs/[name].worker.js',
         publicPath: 'vs/',
-        globalAPI: true, // Add this to force the use of global loader configuration
+        globalAPI: true,
         languages: ['javascript', 'python', 'cpp', 'java'],
       }),
-
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -141,4 +127,6 @@ else {
   };
 }
 
-export const rendererConfig = rendererConfigPreparation;
+const rendererConfig = rendererConfigPreparation;
+
+module.exports = { rendererConfig };

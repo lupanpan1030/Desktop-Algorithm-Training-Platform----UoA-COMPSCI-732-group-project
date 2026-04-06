@@ -15,6 +15,9 @@ export async function initProdEnv() {
   }
 
   process.env.DATABASE_URL = "file:" + userDbPath;
+  // Packaged builds do not ship the Prisma CLI or source schema path, so
+  // runtime schema diffing must stay disabled here.
+  process.env.DB_SCHEMA_SYNC_MODE = "skip";
 
   // Prisma engine binary paths
   if (process.platform === 'linux') {
