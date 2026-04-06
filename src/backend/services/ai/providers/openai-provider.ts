@@ -1,6 +1,13 @@
 import axios from "axios";
 import { AiPageContextDto, AiSuggestionDto } from "../../../api/ai/ai";
 import { AiProvider, AiProviderInput, AiProviderOutput } from "./ai-provider";
+import {
+  DEFAULT_AI_MODEL,
+  DEFAULT_OPENAI_BASE_URL,
+  DEFAULT_OPENAI_TIMEOUT_MS,
+  ResolvedAiRuntimeSettings,
+  resolveAiRuntimeSettings,
+} from "../ai-runtime-settings";
 import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
 
 type ParsedAssistantPayload = {
@@ -23,10 +30,6 @@ type OpenAiResponseOutputItem = {
 type OpenAiResponse = {
   output?: OpenAiResponseOutputItem[];
 };
-
-const DEFAULT_MODEL = "gpt-5-mini";
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-const DEFAULT_TIMEOUT_MS = 30000;
 
 function normalizeIntent(value?: string) {
   return value?.trim() || "general_question";
@@ -146,11 +149,11 @@ export class OpenAiProvider implements AiProvider {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
 
-  constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY?.trim() ?? "";
-    this.model = process.env.AI_MODEL?.trim() || DEFAULT_MODEL;
-    this.baseUrl = process.env.OPENAI_BASE_URL?.trim() || DEFAULT_BASE_URL;
-    this.timeoutMs = Number(process.env.OPENAI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
+  constructor(settings: ResolvedAiRuntimeSettings = resolveAiRuntimeSettings()) {
+    this.apiKey = settings.apiKey.trim();
+    this.model = settings.model.trim() || DEFAULT_AI_MODEL;
+    this.baseUrl = settings.baseUrl.trim() || DEFAULT_OPENAI_BASE_URL;
+    this.timeoutMs = Number(settings.timeoutMs ?? DEFAULT_OPENAI_TIMEOUT_MS);
 
     if (!this.apiKey) {
       throw new Error(

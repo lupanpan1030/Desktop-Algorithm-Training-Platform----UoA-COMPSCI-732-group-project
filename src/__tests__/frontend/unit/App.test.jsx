@@ -43,6 +43,7 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: "Workspace" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Curation" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Languages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Assistant" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /open ai assistant/i })
     ).toBeInTheDocument();

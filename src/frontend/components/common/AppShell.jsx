@@ -22,14 +22,20 @@ import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import PrecisionManufacturingRoundedIcon from "@mui/icons-material/PrecisionManufacturingRounded";
 import RouteRoundedIcon from "@mui/icons-material/RouteRounded";
+import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { Link, matchPath, useLocation } from "react-router-dom";
 import { useProblemLocale } from "../../problem-locale";
 
 const WORKSPACE_STORAGE_KEY = "lastWorkspacePath";
-const railWidth = 108;
+const railWidth = 124;
 
 function shouldUseCompactHeader(pathname) {
-  return pathname === "/" || pathname === "/admin/problems" || pathname === "/languages";
+  return (
+    pathname === "/" ||
+    pathname === "/admin/problems" ||
+    pathname === "/languages" ||
+    pathname === "/settings/ai"
+  );
 }
 
 function resolvePageMeta(pathname) {
@@ -57,6 +63,15 @@ function resolvePageMeta(pathname) {
       title: "Languages",
       description:
         "Manage compile and runtime settings for the programming environments available in the local judge.",
+    };
+  }
+
+  if (pathname === "/settings/ai") {
+    return {
+      eyebrow: "Assistant Runtime",
+      title: "Assistant",
+      description:
+        "Configure provider mode, API credentials, and runtime defaults for the global AI companion.",
     };
   }
 
@@ -167,15 +182,22 @@ function RailContent({
       active: pathname === "/languages",
       icon: <PrecisionManufacturingRoundedIcon fontSize="small" />,
     },
+    {
+      key: "assistant",
+      label: "Assistant",
+      to: "/settings/ai",
+      active: pathname === "/settings/ai",
+      icon: <SmartToyRoundedIcon fontSize="small" />,
+    },
   ];
 
   return (
-    <Stack sx={{ height: "100%", p: 1.5 }}>
-      <Stack spacing={1.5}>
+    <Stack sx={{ height: "100%", p: 1.35 }}>
+      <Stack spacing={1.25} alignItems="center" sx={{ px: 0.4 }}>
         <Box
           sx={(theme) => ({
-            width: 50,
-            height: 50,
+            width: 54,
+            height: 54,
             borderRadius: 3,
             display: "grid",
             placeItems: "center",
@@ -186,11 +208,18 @@ function RailContent({
         >
           <AutoAwesomeRoundedIcon />
         </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
+        <Box sx={{ width: "100%", textAlign: "center" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", letterSpacing: 0.35, lineHeight: 1.1 }}
+          >
             Algo
           </Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 800, lineHeight: 1.08, letterSpacing: 0.1 }}
+          >
             Workspace
           </Typography>
         </Box>
@@ -210,23 +239,6 @@ function RailContent({
       </Stack>
 
       <Box sx={{ flex: 1 }} />
-
-      <Paper
-        variant="outlined"
-        sx={(theme) => ({
-          px: 1.2,
-          py: 1.1,
-          borderRadius: 4,
-          bgcolor: alpha(theme.palette.background.paper, 0.7),
-        })}
-      >
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-          Companion
-        </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-          Global help is always available.
-        </Typography>
-      </Paper>
     </Stack>
   );
 }
@@ -443,7 +455,7 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
               overflowY: "auto",
               overflowX: "hidden",
               pr: 0.4,
-              pb: { xs: 10, md: 12 },
+              pb: { xs: 10, md: 2 },
             }}
           >
             {children}

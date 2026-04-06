@@ -1,25 +1,12 @@
 import { AiProvider } from "./ai-provider";
 import { MockAiProvider } from "./mock-ai-provider";
 import { OpenAiProvider } from "./openai-provider";
-
-function normalizeProvider(value?: string | null) {
-  const normalized = value?.trim().toLowerCase();
-
-  if (!normalized) {
-    return "mock";
-  }
-
-  if (normalized === "openai") {
-    return "openai";
-  }
-
-  return "mock";
-}
+import { resolveAiRuntimeSettings } from "../ai-runtime-settings";
 
 export function createAiProvider(): AiProvider {
-  const provider = normalizeProvider(process.env.AI_PROVIDER);
+  const settings = resolveAiRuntimeSettings();
 
-  if (provider === "openai") {
+  if (settings.provider === "openai" && settings.apiKeyConfigured) {
     return new OpenAiProvider();
   }
 

@@ -7,6 +7,7 @@ import DetailPage from './pages/DetailPage';
 import { useAppTheme } from './theme';
 import LanguageAdmin from "./pages/LanguageAdmin.tsx";
 import ProblemAdmin from "./pages/ProblemAdmin.tsx";
+import AiSettings from "./pages/AiSettings.tsx";
 import { ProblemLocaleProvider } from "./problem-locale";
 import { GlobalAiAssistantProvider } from "./ai/GlobalAiAssistantProvider";
 import GlobalAiAssistantShell from "./components/ai/GlobalAiAssistantShell";
@@ -40,6 +41,7 @@ function App() {
                                 <Route path="/problems/:id" element={<DetailPage />} />
                                 <Route path="/admin/problems" element={<ProblemAdmin />} />
                                 <Route path="/languages" element={<LanguageAdmin />} />
+                                <Route path="/settings/ai" element={<AiSettings />} />
                             </Routes>
                         </AppShell>
                         <GlobalAiAssistantShell />

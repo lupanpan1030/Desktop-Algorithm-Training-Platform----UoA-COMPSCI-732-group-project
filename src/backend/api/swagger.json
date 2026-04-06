@@ -339,6 +339,107 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"AiSettingsDto": {
+				"properties": {
+					"provider": {
+						"type": "string",
+						"enum": [
+							"mock",
+							"openai"
+						]
+					},
+					"model": {
+						"type": "string"
+					},
+					"baseUrl": {
+						"type": "string"
+					},
+					"timeoutMs": {
+						"type": "number",
+						"format": "double"
+					},
+					"apiKeyConfigured": {
+						"type": "boolean"
+					},
+					"apiKeySource": {
+						"type": "string",
+						"enum": [
+							"saved",
+							"environment",
+							"none"
+						]
+					},
+					"apiKeyPreview": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"preview",
+							"ready",
+							"misconfigured"
+						]
+					},
+					"statusLabel": {
+						"type": "string"
+					},
+					"statusReason": {
+						"type": "string"
+					},
+					"storagePath": {
+						"type": "string"
+					},
+					"storageScope": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"provider",
+					"model",
+					"baseUrl",
+					"timeoutMs",
+					"apiKeyConfigured",
+					"apiKeySource",
+					"apiKeyPreview",
+					"status",
+					"statusLabel",
+					"statusReason",
+					"storagePath",
+					"storageScope"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateAiSettingsRequestDto": {
+				"properties": {
+					"provider": {
+						"type": "string",
+						"enum": [
+							"mock",
+							"openai"
+						]
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"clearApiKey": {
+						"type": "boolean"
+					},
+					"model": {
+						"type": "string"
+					},
+					"baseUrl": {
+						"type": "string"
+					},
+					"timeoutMs": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"_36_Enums.Difficulty": {
 				"type": "string",
 				"enum": [
@@ -654,6 +755,30 @@
 					"compilerCmd",
 					"runtimeCmd",
 					"isDefault"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConflictError": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"stack": {
+						"type": "string"
+					},
+					"statusCode": {
+						"type": "number",
+						"format": "double",
+						"default": 409
+					}
+				},
+				"required": [
+					"name",
+					"message"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1411,6 +1536,68 @@
 				]
 			}
 		},
+		"/settings/ai": {
+			"get": {
+				"operationId": "GetAiSettings",
+				"responses": {
+					"200": {
+						"description": "AI settings loaded",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AiSettingsDto"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"put": {
+				"operationId": "UpdateAiSettings",
+				"responses": {
+					"200": {
+						"description": "AI settings updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AiSettingsDto"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateAiSettingsRequestDto"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/problems": {
 			"get": {
 				"operationId": "GetAllProblems",
@@ -1684,6 +1871,16 @@
 							}
 						}
 					},
+					"409": {
+						"description": "Language name or suffix already exists",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConflictError"
+								}
+							}
+						}
+					},
 					"422": {
 						"description": "Validation Failed",
 						"content": {
@@ -1777,6 +1974,16 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Language name or suffix already exists",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConflictError"
 								}
 							}
 						}

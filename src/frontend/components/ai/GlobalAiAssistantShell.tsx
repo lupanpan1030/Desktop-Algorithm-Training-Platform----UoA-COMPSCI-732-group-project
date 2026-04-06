@@ -1,16 +1,16 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import {
   Alert,
   Box,
   ButtonBase,
   Chip,
   Divider,
-  Drawer,
   Fade,
   IconButton,
   Paper,
@@ -20,9 +20,94 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useGlobalAiAssistant } from "../../ai/GlobalAiAssistantProvider";
+import { buildAssistantCards } from "../../ai/assistantCards";
+import { buildContextReliability } from "../../ai/contextReliability";
 
 const panelWidth = 432;
+const launcherStorageKey = "global-ai-assistant-launcher-v1";
+const launcherSize = 64;
+const launcherCollapsedWidth = 58;
+const desktopLauncherInset = 24;
+const mobileLauncherInset = 14;
+const launcherDragThreshold = 6;
+
+type LauncherSide = "left" | "right";
+
+type LauncherAnchor = {
+  side: LauncherSide;
+  y: number;
+};
+
+type DragState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  offsetX: number;
+  offsetY: number;
+  x: number;
+  y: number;
+  width: number;
+  moved: boolean;
+};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function clampLauncherY(y: number, viewportHeight: number) {
+  return clamp(
+    y,
+    desktopLauncherInset,
+    Math.max(desktopLauncherInset, viewportHeight - launcherSize - desktopLauncherInset)
+  );
+}
+
+function readStoredLauncherAnchor() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(launcherStorageKey);
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsed = JSON.parse(rawValue) as Partial<LauncherAnchor>;
+    if (
+      (parsed.side !== "left" && parsed.side !== "right") ||
+      typeof parsed.y !== "number"
+    ) {
+      return null;
+    }
+
+    return {
+      side: parsed.side,
+      y: clampLauncherY(parsed.y, window.innerHeight),
+    } satisfies LauncherAnchor;
+  } catch {
+    return null;
+  }
+}
+
+function getDefaultLauncherAnchor(): LauncherAnchor {
+  if (typeof window === "undefined") {
+    return {
+      side: "right",
+      y: 120,
+    };
+  }
+
+  return {
+    side: "right",
+    y: clampLauncherY(
+      window.innerHeight - launcherSize - desktopLauncherInset,
+      window.innerHeight
+    ),
+  };
+}
 
 function buildAssistantStateLabel(
   pending: boolean,
@@ -49,11 +134,39 @@ function buildLauncherLabel(pageTitle?: string) {
   return `Ask about ${pageTitle}`;
 }
 
+function buildContextFreshnessLabel(updatedAt: number | null) {
+  if (!updatedAt || typeof Date.now !== "function") {
+    return "Context pending";
+  }
+
+  const elapsedMs = Math.max(0, Date.now() - updatedAt);
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+  if (elapsedSeconds < 10) {
+    return "Context just updated";
+  }
+
+  if (elapsedSeconds < 60) {
+    return `Updated ${elapsedSeconds}s ago`;
+  }
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  return `Updated ${elapsedMinutes}m ago`;
+}
+
 export default function GlobalAiAssistantShell() {
   const theme = useTheme();
   const compact = useMediaQuery(theme.breakpoints.down("md"));
   const [hovered, setHovered] = useState(false);
   const [input, setInput] = useState("");
+  const [launcherAnchor, setLauncherAnchor] = useState<LauncherAnchor>(
+    () => readStoredLauncherAnchor() ?? getDefaultLauncherAnchor()
+  );
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [pageContextUpdatedAt, setPageContextUpdatedAt] = useState<number | null>(null);
+  const [, setFreshnessTick] = useState(0);
+  const dragStateRef = useRef<DragState | null>(null);
+  const suppressClickRef = useRef(false);
   const {
     open,
     pending,
@@ -61,9 +174,12 @@ export default function GlobalAiAssistantShell() {
     pageContext,
     suggestions,
     messages,
+    threadSummaries,
+    restoredConversation,
     openAssistant,
     closeAssistant,
     clearConversation,
+    forgetConversation,
     applySuggestedPrompt,
   } = useGlobalAiAssistant();
 
@@ -75,10 +191,45 @@ export default function GlobalAiAssistantShell() {
     () => buildAssistantStateLabel(pending, error, suggestions.length),
     [error, pending, suggestions.length]
   );
+  const contextReliability = useMemo(
+    () =>
+      buildContextReliability({
+        pageContext,
+        pending,
+        error,
+        restoredConversation,
+      }),
+    [error, pageContext, pending, restoredConversation]
+  );
+  const contextFreshnessLabel = buildContextFreshnessLabel(pageContextUpdatedAt);
   const visibleFacts = useMemo(() => (pageContext?.facts ?? []).slice(0, 2), [pageContext?.facts]);
+  const visibleThreads = useMemo(
+    () => threadSummaries.slice(0, 4),
+    [threadSummaries]
+  );
   const isProblemListPage = pageContext?.pageKind === "problem-list";
   const isDenseAdminPage =
     pageContext?.pageKind === "problem-admin" || pageContext?.pageKind === "language-admin";
+  const shouldExpandLauncher = !compact && !open && (hovered || Boolean(dragState));
+  const launcherWidth = compact
+    ? launcherSize
+    : dragState
+      ? dragState.width
+      : shouldExpandLauncher
+        ? isDenseAdminPage
+          ? 164
+          : isProblemListPage
+            ? 176
+            : 248
+        : launcherCollapsedWidth;
+  const launcherCtaLabel =
+    isProblemListPage || isDenseAdminPage ? "Quick help" : launcherLabel;
+  const panelSide = launcherAnchor.side;
+
+  const commitDragState = (nextState: DragState | null) => {
+    dragStateRef.current = nextState;
+    setDragState(nextState);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) {
@@ -89,6 +240,233 @@ export default function GlobalAiAssistantShell() {
     setInput("");
     await applySuggestedPrompt(nextMessage);
   };
+
+  const handleOpenThread = (route: string) => {
+    if (!route) {
+      return;
+    }
+
+    if (typeof window !== "undefined" && pageContext?.route !== route) {
+      const normalizedRoute = route.startsWith("/") ? route : `/${route}`;
+      if (window.location.hash !== `#${normalizedRoute}`) {
+        window.location.hash = normalizedRoute;
+      }
+    }
+
+    openAssistant();
+  };
+
+  const handleLauncherClick = () => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+
+    openAssistant();
+  };
+
+  const handleResetLauncherPosition = () => {
+    if (compact) {
+      return;
+    }
+
+    setLauncherAnchor(getDefaultLauncherAnchor());
+    commitDragState(null);
+    setHovered(false);
+  };
+
+  const finalizeDrag = (pointerId?: number) => {
+    const activeDragState = dragStateRef.current;
+
+    if (!activeDragState || typeof window === "undefined") {
+      return;
+    }
+
+    if (pointerId != null && activeDragState.pointerId !== pointerId) {
+      return;
+    }
+
+    const snappedSide: LauncherSide =
+      activeDragState.x + activeDragState.width / 2 >= window.innerWidth / 2
+        ? "right"
+        : "left";
+
+    setLauncherAnchor({
+      side: snappedSide,
+      y: clampLauncherY(activeDragState.y, window.innerHeight),
+    });
+    suppressClickRef.current = activeDragState.moved;
+    commitDragState(null);
+  };
+
+  const handleLauncherPointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    if (compact || open) {
+      return;
+    }
+
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    suppressClickRef.current = false;
+    setHovered(false);
+    target.setPointerCapture(event.pointerId);
+    commitDragState({
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      moved: false,
+    });
+  };
+
+  const handleLauncherPointerMove = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    const activeDragState = dragStateRef.current;
+    if (!activeDragState || compact || open || typeof window === "undefined") {
+      return;
+    }
+
+    if (activeDragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const nextState: DragState = {
+      ...activeDragState,
+      x: clamp(
+        event.clientX - activeDragState.offsetX,
+        desktopLauncherInset,
+        Math.max(
+          desktopLauncherInset,
+          window.innerWidth - activeDragState.width - desktopLauncherInset
+        )
+      ),
+      y: clampLauncherY(
+        event.clientY - activeDragState.offsetY,
+        window.innerHeight
+      ),
+      moved:
+        activeDragState.moved ||
+        Math.abs(event.clientX - activeDragState.startX) > launcherDragThreshold ||
+        Math.abs(event.clientY - activeDragState.startY) > launcherDragThreshold,
+    };
+
+    commitDragState(nextState);
+  };
+
+  const handleLauncherPointerUp = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    if (!compact && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    finalizeDrag(event.pointerId);
+  };
+
+  const handleLauncherPointerCancel = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    if (!compact && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    finalizeDrag(event.pointerId);
+  };
+
+  useEffect(() => {
+    if (!pageContext) {
+      setPageContextUpdatedAt(null);
+      return;
+    }
+
+    setPageContextUpdatedAt(Date.now());
+  }, [pageContext]);
+
+  useEffect(() => {
+    if (!pageContextUpdatedAt) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setFreshnessTick((current) => current + 1);
+    }, 15_000);
+
+    return () => window.clearInterval(intervalId);
+  }, [pageContextUpdatedAt]);
+
+  useEffect(() => {
+    if (compact || typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      launcherStorageKey,
+      JSON.stringify(launcherAnchor)
+    );
+  }, [compact, launcherAnchor]);
+
+  useEffect(() => {
+    if (compact || typeof window === "undefined") {
+      return;
+    }
+
+    const handleResize = () => {
+      setLauncherAnchor((currentAnchor) => ({
+        ...currentAnchor,
+        y: clampLauncherY(currentAnchor.y, window.innerHeight),
+      }));
+
+      const activeDragState = dragStateRef.current;
+      if (!activeDragState) {
+        return;
+      }
+
+      commitDragState({
+        ...activeDragState,
+        x: clamp(
+          activeDragState.x,
+          desktopLauncherInset,
+          Math.max(
+            desktopLauncherInset,
+            window.innerWidth - activeDragState.width - desktopLauncherInset
+          )
+        ),
+        y: clampLauncherY(activeDragState.y, window.innerHeight),
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [compact]);
+
+  function formatThreadTime(updatedAt: number) {
+    if (!updatedAt) {
+      return "Saved";
+    }
+
+    const elapsedMs = Math.max(0, Date.now() - updatedAt);
+    const elapsedMinutes = Math.floor(elapsedMs / 60000);
+    if (elapsedMinutes < 1) {
+      return "Just now";
+    }
+    if (elapsedMinutes < 60) {
+      return `${elapsedMinutes}m ago`;
+    }
+
+    const elapsedHours = Math.floor(elapsedMinutes / 60);
+    if (elapsedHours < 24) {
+      return `${elapsedHours}h ago`;
+    }
+
+    const elapsedDays = Math.floor(elapsedHours / 24);
+    return `${elapsedDays}d ago`;
+  }
 
   const companionPanel = (
     <Stack
@@ -145,13 +523,24 @@ export default function GlobalAiAssistantShell() {
               <Typography variant="h6" sx={{ lineHeight: 1.1 }}>
                 {pageContext?.pageTitle ?? "Global AI Assistant"}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35 }}>
-                {assistantStateLabel}
-              </Typography>
+              <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap" sx={{ mt: 0.45 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {assistantStateLabel}
+                </Typography>
+                <Chip size="small" label={contextFreshnessLabel} variant="outlined" />
+              </Stack>
             </Box>
           </Stack>
 
           <Stack direction="row" spacing={0.5}>
+            {!compact && (
+              <IconButton
+                aria-label="reset ai assistant launcher position"
+                onClick={handleResetLauncherPosition}
+              >
+                <RestartAltRoundedIcon fontSize="small" />
+              </IconButton>
+            )}
             <IconButton
               aria-label="clear assistant conversation"
               onClick={clearConversation}
@@ -201,6 +590,163 @@ export default function GlobalAiAssistantShell() {
             </Stack>
           )}
         </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            mt: 1.15,
+            p: 1.15,
+            borderRadius: 3,
+            bgcolor: alpha(theme.palette.background.paper, 0.54),
+            borderColor:
+              contextReliability.tone === "success"
+                ? alpha(theme.palette.success.main, 0.22)
+                : contextReliability.tone === "warning"
+                  ? alpha(theme.palette.warning.main, 0.22)
+                  : alpha(theme.palette.divider, 0.24),
+          }}
+        >
+          <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap" alignItems="center">
+            <Chip
+              size="small"
+              label={contextReliability.label}
+              color={
+                contextReliability.tone === "success"
+                  ? "success"
+                  : contextReliability.tone === "warning"
+                    ? "warning"
+                    : contextReliability.tone === "info"
+                      ? "info"
+                      : "default"
+              }
+              variant={contextReliability.tone === "default" ? "outlined" : "filled"}
+            />
+            {restoredConversation && (
+              <Chip size="small" label="Restored thread" variant="outlined" />
+            )}
+            {threadSummaries.length > 1 && (
+              <Chip size="small" label={`${threadSummaries.length} saved threads`} variant="outlined" />
+            )}
+          </Stack>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 0.8, display: "block", lineHeight: 1.45 }}
+          >
+            {contextReliability.detail}
+          </Typography>
+        </Paper>
+
+        {visibleThreads.length > 1 && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mt: 1.15,
+              p: 1.15,
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.paper, 0.54),
+              borderColor: alpha(theme.palette.divider, 0.24),
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              spacing={1}
+            >
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                  Recent Threads
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 700 }}>
+                  Resume another route conversation
+                </Typography>
+              </Box>
+              <Chip size="small" label={visibleThreads.length} variant="outlined" />
+            </Stack>
+
+            <Stack spacing={0.8} sx={{ mt: 1.05 }}>
+              {visibleThreads.map((thread) => {
+                const isActiveThread = thread.route === pageContext?.route;
+
+                return (
+                  <Paper
+                    key={thread.route}
+                    variant="outlined"
+                    sx={{
+                      p: 0.8,
+                      borderRadius: 2.6,
+                      bgcolor: isActiveThread
+                        ? alpha(theme.palette.secondary.main, 0.08)
+                        : alpha(theme.palette.background.default, 0.42),
+                      borderColor: isActiveThread
+                        ? alpha(theme.palette.secondary.main, 0.26)
+                        : alpha(theme.palette.divider, 0.18),
+                    }}
+                  >
+                    <Stack direction="row" spacing={0.75} alignItems="stretch">
+                      <ButtonBase
+                        onClick={() => handleOpenThread(thread.route)}
+                        sx={{
+                          flex: 1,
+                          px: 0.65,
+                          py: 0.45,
+                          borderRadius: 2,
+                          alignItems: "flex-start",
+                          justifyContent: "flex-start",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Box sx={{ minWidth: 0 }}>
+                          <Stack
+                            direction="row"
+                            spacing={0.8}
+                            alignItems="center"
+                            useFlexGap
+                            flexWrap="wrap"
+                          >
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary" }}>
+                              {thread.pageTitle}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatThreadTime(thread.updatedAt)}
+                            </Typography>
+                            {isActiveThread && (
+                              <Chip size="small" label="Current" color="secondary" variant="outlined" />
+                            )}
+                          </Stack>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              mt: 0.35,
+                              display: "block",
+                              lineHeight: 1.4,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {thread.preview}
+                          </Typography>
+                        </Box>
+                      </ButtonBase>
+
+                      <IconButton
+                        aria-label={`forget conversation for ${thread.pageTitle}`}
+                        onClick={() => forgetConversation(thread.route)}
+                        sx={{ alignSelf: "center" }}
+                      >
+                        <CloseRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </Paper>
+                );
+              })}
+            </Stack>
+          </Paper>
+        )}
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2, minHeight: 0 }}>
@@ -231,20 +777,57 @@ export default function GlobalAiAssistantShell() {
                 <Typography variant="body2" sx={{ mt: 0.75, whiteSpace: "pre-wrap" }}>
                   {message.content}
                 </Typography>
-                {message.role === "assistant" && message.inferredIntent && (
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    flexWrap="wrap"
-                    sx={{ mt: 1.25 }}
-                  >
-                    <Chip size="small" label={message.inferredIntent} variant="outlined" />
-                    {message.sourcesUsed?.slice(0, 2).map((source) => (
-                      <Chip key={source} size="small" label={source} variant="outlined" />
-                    ))}
-                  </Stack>
-                )}
+                {message.role === "assistant" && (() => {
+                  const cards = buildAssistantCards(message);
+                  if (!cards.length) {
+                    return null;
+                  }
+
+                  return (
+                    <Box
+                      sx={{
+                        mt: 1.35,
+                        display: "grid",
+                        gap: 1,
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          md: cards.length > 1 ? "repeat(2, minmax(0, 1fr))" : "1fr",
+                        },
+                      }}
+                    >
+                      {cards.map((card) => (
+                        <Paper
+                          key={`${message.id}-${card.id}`}
+                          variant="outlined"
+                          sx={{
+                            p: 1.1,
+                            borderRadius: 2.6,
+                            bgcolor: alpha(theme.palette.background.default, 0.48),
+                            borderColor: alpha(theme.palette.secondary.main, 0.12),
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{ display: "block", color: "text.secondary", lineHeight: 1.2 }}
+                          >
+                            {card.title}
+                          </Typography>
+                          <Stack spacing={0.55} sx={{ mt: 0.7 }}>
+                            {card.entries.map((entry) => (
+                              <Typography
+                                key={entry}
+                                variant="caption"
+                                sx={{ color: "text.primary", lineHeight: 1.45 }}
+                              >
+                                {entry}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        </Paper>
+                      ))}
+                    </Box>
+                  );
+                })()}
               </Paper>
             ))}
 
@@ -358,75 +941,76 @@ export default function GlobalAiAssistantShell() {
       <Box
         sx={{
           position: "fixed",
-          right: { xs: 14, md: 24 },
-          bottom: { xs: 14, md: 24 },
+          ...(compact
+            ? {
+                right: mobileLauncherInset,
+                bottom: mobileLauncherInset,
+              }
+            : dragState
+              ? {
+                  left: dragState.x,
+                  top: dragState.y,
+                }
+              : panelSide === "left"
+                ? {
+                    left: desktopLauncherInset,
+                    top: launcherAnchor.y,
+                  }
+                : {
+                    right: desktopLauncherInset,
+                    top: launcherAnchor.y,
+                  }),
           zIndex: theme.zIndex.drawer + 2,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          width: { xs: "auto", md: "min(360px, calc(100vw - 32px))" },
+          width: compact ? "auto" : launcherWidth,
         }}
       >
         <Paper
           component="button"
           type="button"
           aria-label="open ai assistant"
-          onClick={openAssistant}
-          onMouseEnter={() => setHovered(true)}
+          onClick={handleLauncherClick}
+          onMouseEnter={() => {
+            if (!dragState) {
+              setHovered(true);
+            }
+          }}
           onMouseLeave={() => setHovered(false)}
+          onPointerDown={handleLauncherPointerDown}
+          onPointerMove={handleLauncherPointerMove}
+          onPointerUp={handleLauncherPointerUp}
+          onPointerCancel={handleLauncherPointerCancel}
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.25,
-            width: compact
-              ? 64
-              : open
-                ? 74
-                : isDenseAdminPage
-                  ? hovered
-                    ? 168
-                    : 58
-                  : isProblemListPage
-                    ? 192
-                    : 280,
-            minWidth: compact
-              ? 64
-              : open
-                ? 74
-                : isDenseAdminPage
-                  ? hovered
-                    ? 168
-                    : 58
-                  : isProblemListPage
-                    ? 152
-                    : 220,
-            maxWidth: compact
-              ? 64
-              : open
-                ? 74
-                : isDenseAdminPage
-                  ? hovered
-                    ? 168
-                    : 58
-                  : isProblemListPage
-                    ? 192
-                    : 280,
-            px: compact || isDenseAdminPage ? 0 : 1.1,
+            justifyContent: shouldExpandLauncher ? "flex-start" : "center",
+            gap: shouldExpandLauncher ? 1.1 : 0,
+            width: launcherWidth,
+            minWidth: launcherWidth,
+            maxWidth: launcherWidth,
+            px: compact ? 0 : shouldExpandLauncher ? 1.1 : 0,
             py: compact ? 0 : 1,
-            height: 64,
+            height: launcherSize,
             borderRadius: 999,
             border: "1px solid",
             borderColor: alpha(theme.palette.secondary.main, 0.22),
             bgcolor: alpha(theme.palette.background.paper, 0.9),
             backdropFilter: "blur(16px)",
             boxShadow: `0 18px 46px ${alpha(theme.palette.common.black, 0.18)}`,
-            cursor: "pointer",
+            cursor: compact ? "pointer" : dragState ? "grabbing" : open ? "default" : "grab",
             overflow: "hidden",
-            opacity: compact ? 1 : open ? 0.22 : isDenseAdminPage ? 0.68 : isProblemListPage ? 0.78 : 0.9,
+            touchAction: compact ? "auto" : "none",
+            pointerEvents: open ? "none" : "auto",
+            opacity: open ? 0 : compact ? 1 : 0.94,
+            transform: open ? "scale(0.94)" : "translateY(0)",
             transition:
-              "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, width 180ms ease, opacity 180ms ease",
+              dragState
+                ? "none"
+                : "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, width 180ms ease, opacity 180ms ease",
             "&:hover": {
-              transform: "translateY(-2px)",
+              transform: compact || dragState ? undefined : "translateY(-2px)",
               borderColor: alpha(theme.palette.secondary.main, 0.38),
               boxShadow: `0 22px 52px ${alpha(theme.palette.secondary.main, 0.18)}`,
             },
@@ -434,7 +1018,6 @@ export default function GlobalAiAssistantShell() {
         >
           <Box
             sx={{
-              ml: compact || isDenseAdminPage ? 1.25 : 0,
               width: 42,
               height: 42,
               borderRadius: "50%",
@@ -461,7 +1044,7 @@ export default function GlobalAiAssistantShell() {
 
           {!compact && (
             <>
-              {!open && (!isDenseAdminPage || hovered) && (
+              {shouldExpandLauncher && (
                 <Box sx={{ minWidth: 0, flex: 1, textAlign: "left" }}>
                   {!isProblemListPage && !isDenseAdminPage && (
                     <Typography
@@ -481,26 +1064,9 @@ export default function GlobalAiAssistantShell() {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {pageContext?.pageKind === "problem-list"
-                      ? "Quick help"
-                      : isDenseAdminPage
-                        ? "Quick help"
-                        : launcherLabel}
+                    {launcherCtaLabel}
                   </Typography>
                 </Box>
-              )}
-
-              {!open && !isProblemListPage && !isDenseAdminPage && (
-                <Chip
-                  size="small"
-                  label={assistantStateLabel}
-                  sx={{
-                    mr: 0.5,
-                    bgcolor: alpha(theme.palette.success.main, 0.08),
-                    border: "1px solid",
-                    borderColor: alpha(theme.palette.success.main, 0.18),
-                  }}
-                />
               )}
             </>
           )}
@@ -508,25 +1074,47 @@ export default function GlobalAiAssistantShell() {
       </Box>
 
       {compact ? (
-        <Drawer
-          anchor="right"
-          open={open}
-          onClose={closeAssistant}
-          PaperProps={{
-            sx: {
-              width: "100%",
-              maxWidth: "100vw",
-            },
-          }}
-        >
-          {companionPanel}
-        </Drawer>
+        <Fade in={open} mountOnEnter unmountOnExit>
+          <Box
+            onClick={closeAssistant}
+            sx={{
+              position: "fixed",
+              inset: 0,
+              zIndex: theme.zIndex.drawer + 3,
+              p: 1.1,
+              bgcolor: alpha(theme.palette.common.black, 0.24),
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <Paper
+              role="dialog"
+              aria-label="AI assistant"
+              onClick={(event) => event.stopPropagation()}
+              elevation={0}
+              sx={{
+                height: "100%",
+                overflow: "hidden",
+                borderRadius: 5,
+                border: "1px solid",
+                borderColor: alpha(theme.palette.secondary.main, 0.18),
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.background.default, 0.96)
+                    : alpha(theme.palette.background.paper, 0.98),
+                backdropFilter: "blur(20px)",
+                boxShadow: `0 28px 72px ${alpha(theme.palette.common.black, 0.24)}`,
+              }}
+            >
+              {companionPanel}
+            </Paper>
+          </Box>
+        </Fade>
       ) : (
         <Fade in={open} mountOnEnter unmountOnExit>
           <Box
             sx={{
               position: "fixed",
-              right: 24,
+              ...(panelSide === "left" ? { left: 24 } : { right: 24 }),
               bottom: 96,
               zIndex: theme.zIndex.drawer + 1,
               width: `min(${panelWidth}px, calc(100vw - 32px))`,

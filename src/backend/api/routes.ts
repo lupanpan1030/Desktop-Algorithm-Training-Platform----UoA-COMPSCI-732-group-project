@@ -8,6 +8,8 @@ import { TestCaseController } from './testcase/testcase-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemSubmissionController } from './submission/submission-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { AiSettingsController } from './settings/ai-settings-controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProblemsController } from './problem/problem-controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LanguageController } from './language/language-controller';
@@ -155,6 +157,38 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AiSettingsDto": {
+        "dataType": "refObject",
+        "properties": {
+            "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}],"required":true},
+            "model": {"dataType":"string","required":true},
+            "baseUrl": {"dataType":"string","required":true},
+            "timeoutMs": {"dataType":"double","required":true},
+            "apiKeyConfigured": {"dataType":"boolean","required":true},
+            "apiKeySource": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["saved"]},{"dataType":"enum","enums":["environment"]},{"dataType":"enum","enums":["none"]}],"required":true},
+            "apiKeyPreview": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "status": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["preview"]},{"dataType":"enum","enums":["ready"]},{"dataType":"enum","enums":["misconfigured"]}],"required":true},
+            "statusLabel": {"dataType":"string","required":true},
+            "statusReason": {"dataType":"string","required":true},
+            "storagePath": {"dataType":"string","required":true},
+            "storageScope": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateAiSettingsRequestDto": {
+        "dataType": "refObject",
+        "properties": {
+            "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}]},
+            "apiKey": {"dataType":"string"},
+            "clearApiKey": {"dataType":"boolean"},
+            "model": {"dataType":"string"},
+            "baseUrl": {"dataType":"string"},
+            "timeoutMs": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "_36_Enums.Difficulty": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EASY"]},{"dataType":"enum","enums":["MEDIUM"]},{"dataType":"enum","enums":["HARD"]}],"validators":{}},
@@ -263,6 +297,17 @@ const models: TsoaRoute.Models = {
             "compile_command": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "run_command": {"dataType":"string"},
             "isDefault": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConflictError": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "message": {"dataType":"string","required":true},
+            "stack": {"dataType":"string"},
+            "statusCode": {"dataType":"double","default":409},
         },
         "additionalProperties": false,
     },
@@ -626,6 +671,65 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getSubmissionByProblem',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAiSettingsController_getAiSettings: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/settings/ai',
+            ...(fetchMiddlewares<RequestHandler>(AiSettingsController)),
+            ...(fetchMiddlewares<RequestHandler>(AiSettingsController.prototype.getAiSettings)),
+
+            async function AiSettingsController_getAiSettings(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAiSettingsController_getAiSettings, request, response });
+
+                const controller = new AiSettingsController();
+
+              await templateService.apiHandler({
+                methodName: 'getAiSettings',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAiSettingsController_updateAiSettings: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"UpdateAiSettingsRequestDto"},
+        };
+        app.put('/settings/ai',
+            ...(fetchMiddlewares<RequestHandler>(AiSettingsController)),
+            ...(fetchMiddlewares<RequestHandler>(AiSettingsController.prototype.updateAiSettings)),
+
+            async function AiSettingsController_updateAiSettings(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAiSettingsController_updateAiSettings, request, response });
+
+                const controller = new AiSettingsController();
+
+              await templateService.apiHandler({
+                methodName: 'updateAiSettings',
                 controller,
                 response,
                 next,

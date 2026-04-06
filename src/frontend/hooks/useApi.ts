@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import api from '../api/axiosInstance';
 
 // API Response Types
@@ -106,6 +106,30 @@ export interface TestCaseMutationPayload {
   isSample?: boolean;
 }
 
+export interface AiSettings {
+  provider: "mock" | "openai";
+  model: string;
+  baseUrl: string;
+  timeoutMs: number;
+  apiKeyConfigured: boolean;
+  apiKeySource: "saved" | "environment" | "none";
+  apiKeyPreview: string | null;
+  status: "preview" | "ready" | "misconfigured";
+  statusLabel: string;
+  statusReason: string;
+  storagePath: string;
+  storageScope: string;
+}
+
+export interface AiSettingsUpdatePayload {
+  provider: "mock" | "openai";
+  model: string;
+  baseUrl: string;
+  timeoutMs: number;
+  apiKey?: string;
+  clearApiKey?: boolean;
+}
+
 // API Request Options
 interface ApiOptions {
   url: string;
@@ -119,8 +143,11 @@ export const useApi = () => {
   const [activeRequestCount, setActiveRequestCount] = useState(0);
   const [error, setError] = useState<Error | null>(null);
   const loading = activeRequestCount > 0;
+  const latestRequestIdRef = useRef(0);
 
   const request = useCallback(async <T>({ url, method = 'GET', body, headers, params }: ApiOptions): Promise<T> => {
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
     setActiveRequestCount((count) => count + 1);
     setError(null);
     
@@ -135,10 +162,15 @@ export const useApi = () => {
           ...headers
         },
       });
+      if (latestRequestIdRef.current === requestId) {
+        setError(null);
+      }
       return response.data as T;
     } catch (err) {
       const normalizedError = err instanceof Error ? err : new Error('Request failed');
-      setError(normalizedError);
+      if (latestRequestIdRef.current === requestId) {
+        setError(normalizedError);
+      }
       throw normalizedError;
     } finally {
       setActiveRequestCount((count) => Math.max(0, count - 1));
@@ -149,17 +181,13 @@ export const useApi = () => {
     locale?: string,
     strictLocale = false
   ): Promise<ProblemSummary[]> => {
-    try {
-      return await request<ProblemSummary[]>({
-        url: '/problems',
-        params: {
-          locale,
-          strictLocale,
-        },
-      });
-    } catch {
-      return [];
-    }
+    return await request<ProblemSummary[]>({
+      url: '/problems',
+      params: {
+        locale,
+        strictLocale,
+      },
+    });
   }, [request]);
 
   const getProblem = useCallback(async (
@@ -167,17 +195,13 @@ export const useApi = () => {
     locale?: string,
     strictLocale = false
   ): Promise<ProblemDetails | null> => {
-    try {
-      return await request<ProblemDetails>({
-        url: `/problems/${id}`,
-        params: {
-          locale,
-          strictLocale,
-        },
-      });
-    } catch {
-      return null;
-    }
+    return await request<ProblemDetails>({
+      url: `/problems/${id}`,
+      params: {
+        locale,
+        strictLocale,
+      },
+    });
   }, [request]);
 
   const addProblem = useCallback(async (problem: ProblemMutationPayload): Promise<ProblemDetails | null> => {
@@ -205,11 +229,7 @@ export const useApi = () => {
   }, [request]);
 
   const getLanguages = useCallback(async (): Promise<Language[] | null> => {
-    try {
-      return await request<Language[]>({ url: '/languages' });
-    } catch {
-      return null;
-    }
+    return await request<Language[]>({ url: '/languages' });
   }, [request]);
 
   const addLanguage = useCallback(async (language: Omit<Language, 'languageId'>): Promise<Language | null> => {
@@ -253,33 +273,21 @@ export const useApi = () => {
   }, [request]);
 
   const getSubmissions = useCallback(async (problemId: number): Promise<SubmissionListItem[]> => {
-    try {
-      return await request<SubmissionListItem[]>({
-        url: `/problems/${problemId}/submissions`
-      });
-    } catch {
-      return [];
-    }
+    return await request<SubmissionListItem[]>({
+      url: `/problems/${problemId}/submissions`
+    });
   }, [request]);
 
   const getSubmission = useCallback(async (problemId: number, submissionId: number): Promise<SubmissionDetail | null> => {
-    try {
-      return await request<SubmissionDetail>({
-        url: `/problems/${problemId}/submissions/${submissionId}`
-      });
-    } catch {
-      return null;
-    }
+    return await request<SubmissionDetail>({
+      url: `/problems/${problemId}/submissions/${submissionId}`
+    });
   }, [request]);
 
   const getTestCases = useCallback(async (problemId: number): Promise<TestCase[]> => {
-    try {
-      return await request<TestCase[]>({
-        url: `/problems/${problemId}/testcases`,
-      });
-    } catch {
-      return [];
-    }
+    return await request<TestCase[]>({
+      url: `/problems/${problemId}/testcases`,
+    });
   }, [request]);
 
   const addTestCase = useCallback(async (
@@ -316,6 +324,22 @@ export const useApi = () => {
     return true;
   }, [request]);
 
+  const getAiSettings = useCallback(async (): Promise<AiSettings> => {
+    return await request<AiSettings>({
+      url: "/settings/ai",
+    });
+  }, [request]);
+
+  const updateAiSettings = useCallback(async (
+    settings: AiSettingsUpdatePayload
+  ): Promise<AiSettings> => {
+    return await request<AiSettings>({
+      url: "/settings/ai",
+      method: "PUT",
+      body: settings,
+    });
+  }, [request]);
+
   return {
     loading,
     error,
@@ -335,7 +359,9 @@ export const useApi = () => {
     getTestCases,
     addTestCase,
     updateTestCase,
-    deleteTestCase
+    deleteTestCase,
+    getAiSettings,
+    updateAiSettings,
   };
 };
 

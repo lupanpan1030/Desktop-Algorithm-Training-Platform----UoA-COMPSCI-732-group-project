@@ -2,7 +2,8 @@ export type AiPageKind =
   | "problem-list"
   | "problem-detail"
   | "problem-admin"
-  | "language-admin";
+  | "language-admin"
+  | "assistant-settings";
 
 export interface AiContextFact {
   key: string;
@@ -44,4 +45,12 @@ export interface AiConversationMessage extends AiConversationTurn {
   id: string;
   inferredIntent?: string;
   sourcesUsed?: string[];
+}
+
+export interface AiConversationThreadSummary {
+  route: string;
+  pageTitle: string;
+  updatedAt: number;
+  messageCount: number;
+  preview: string;
 }

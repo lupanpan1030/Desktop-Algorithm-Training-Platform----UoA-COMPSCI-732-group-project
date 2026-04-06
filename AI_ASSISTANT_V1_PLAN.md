@@ -4,6 +4,17 @@
 
 Build a global AI assistant for the desktop app instead of embedding AI into each page.
 
+## Direction Update
+
+This plan has been updated to match the current product decision:
+
+- do not use a drawer-style assistant surface
+- keep the assistant as a floating workspace companion
+- let the desktop launcher be draggable and snap to the left or right edge
+- remember the launcher position between sessions
+- do not reserve permanent page space just to "make room" for the assistant
+- on small screens, use a full-screen modal sheet rather than a side drawer
+
 The assistant should behave like:
 
 - a global floating entry point
@@ -39,13 +50,17 @@ Use one global floating button mounted at the app shell level.
 
 Recommended placement:
 
-- bottom-right floating action button
+- default to bottom-right on first launch
+- draggable on desktop
+- snap to the left or right edge after drag
+- remember the last desktop position
 - always visible above page content
-- same position across all routes
+- same component across all routes
 
 Recommended states:
 
 - idle
+- draggable
 - has suggestions ready
 - loading context
 - responding
@@ -57,14 +72,15 @@ When clicked, open a persistent assistant surface.
 
 Recommended V1 form:
 
-- right-side drawer on desktop
+- anchored floating panel on desktop
 - full-screen modal sheet on small screens
 
 Why this shape:
 
+- it avoids the pasted-on support-widget feeling of a drawer
 - it does not force each page to reserve space
-- it keeps the existing layout mostly intact
-- it works naturally with the current Electron + MUI shell
+- it feels closer to a desktop companion tool
+- it keeps the existing Electron shell intact while allowing richer motion and positioning
 
 ### Window Sections
 
@@ -266,7 +282,8 @@ This is a good place to add:
 
 - `GlobalAiAssistantProvider`
 - `GlobalAiAssistantLauncher`
-- `GlobalAiAssistantDrawer`
+- `GlobalAiAssistantShell`
+- `GlobalAiAssistantSurface`
 
 ## Backend Architecture
 
@@ -428,7 +445,7 @@ This means V1 does not require DOM scraping to be useful.
 ### Phase 1: Product Skeleton
 
 - add global floating launcher
-- add assistant drawer / modal shell
+- add assistant floating shell
 - add global conversation state
 - add page-context registry
 - hardcode page summaries and suggested prompts
@@ -465,18 +482,45 @@ Outcome:
 - optional proactive suggestion refresh
 - optional recent-session recall
 
+## Current Status
+
+Implemented:
+
+- global assistant provider mounted at app-shell level
+- route-aware page context registration for problem list, problem detail, problem admin, and language admin
+- floating launcher available from every route
+- desktop floating assistant panel
+- desktop draggable launcher with left/right edge snapping and position memory
+- launcher reset action and context freshness indicator
+- no dedicated page-space reservation for the desktop launcher
+- mobile full-screen modal sheet under the non-drawer direction
+- route-scoped conversation persistence
+- multi-route recent-thread management UI
+- context reliability status surface
+- structured assistant answer cards in the conversation surface
+- page-aware suggestions, conversation history, and composer
+- packaged-runtime assistant settings page for provider, model, and API key configuration
+- local persisted AI runtime settings so packaged builds no longer depend on `.env` alone
+
+Remaining or worth improving:
+
+- stronger provenance/source explanation beyond current route facts and summary
+- optional advanced positioning preferences beyond reset
+- optional OS-keychain-grade credential storage and connection test flow
+
 ## UI Direction
 
 The assistant should feel intentionally separate from the main content, not like another admin panel.
 
 Recommended direction:
 
-- compact floating launcher
-- rounded drawer with slightly elevated visual language
+- compact draggable launcher
+- anchored floating panel with slightly elevated visual language
 - clear contrast against page content
 - subtle motion on open/close
 - action chips for suggestions
 - visible context summary at top
+- no permanent empty content band reserved for the launcher
 
 Do not make it:
 
@@ -504,7 +548,7 @@ The first version is good enough when:
 
 2. Assistant surface:
 
-- right drawer
+- anchored floating panel
 - centered modal
 - detachable small window feeling
 
@@ -539,8 +583,8 @@ The first version is good enough when:
 
 If no further decision is made, the best implementation defaults are:
 
-- floating button plus short label
-- right-side drawer on desktop, full-screen sheet on small screens
+- floating draggable button plus short hover label
+- anchored floating panel on desktop, full-screen modal sheet on small screens
 - provider abstraction first
 - concise tutor tone
 - hints first, full solutions only on explicit request

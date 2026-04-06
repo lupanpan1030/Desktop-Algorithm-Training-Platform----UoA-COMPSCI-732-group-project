@@ -22,6 +22,11 @@ export const DEFAULT_SUGGESTIONS: Record<string, string[]> = {
     "What do compile and run commands do?",
     "How should Java be configured here?",
   ],
+  "assistant-settings": [
+    "What does preview mode mean here?",
+    "How do I switch this app to live OpenAI mode?",
+    "Where is this API key stored locally?",
+  ],
 };
 
 export function buildDefaultSuggestions(

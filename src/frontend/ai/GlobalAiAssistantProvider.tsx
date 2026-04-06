@@ -11,10 +11,17 @@ import api from "../api/axiosInstance";
 import type {
   AiConversationMessage,
   AiConversationTurn,
+  AiConversationThreadSummary,
   AiPageContextPayload,
   AiRespondResponse,
   AiSuggestion,
 } from "./types";
+import {
+  clearConversationForRoute,
+  listConversationThreads,
+  loadConversationForRoute,
+  saveConversationForRoute,
+} from "./conversationStorage";
 
 type AssistantRequestPayload = {
   action?: "suggest" | "answer";
@@ -30,9 +37,12 @@ type GlobalAiAssistantContextValue = {
   pageContext: AiPageContextPayload | null;
   suggestions: AiSuggestion[];
   messages: AiConversationMessage[];
+  threadSummaries: AiConversationThreadSummary[];
+  restoredConversation: boolean;
   openAssistant: () => void;
   closeAssistant: () => void;
   clearConversation: () => void;
+  forgetConversation: (route: string) => void;
   sendMessage: (message: string) => Promise<void>;
   applySuggestedPrompt: (prompt: string) => Promise<void>;
   registerPageContext: (context: AiPageContextPayload) => void;
@@ -68,7 +78,17 @@ export function GlobalAiAssistantProvider({
   const [pageContext, setPageContext] = useState<AiPageContextPayload | null>(null);
   const [suggestions, setSuggestions] = useState<AiSuggestion[]>([]);
   const [messages, setMessages] = useState<AiConversationMessage[]>([]);
+  const [threadSummaries, setThreadSummaries] = useState<AiConversationThreadSummary[]>([]);
+  const [restoredConversation, setRestoredConversation] = useState(false);
+  const [openSessionId, setOpenSessionId] = useState(0);
   const latestRequestIdRef = useRef(0);
+  const activeRouteRef = useRef<string | null>(null);
+  const hydratingRouteRef = useRef(false);
+  const lastAutoRefreshKeyRef = useRef<string | null>(null);
+
+  const refreshThreadSummaries = useCallback(() => {
+    setThreadSummaries(listConversationThreads());
+  }, []);
 
   const registerPageContext = useCallback((context: AiPageContextPayload) => {
     setPageContext((previous) => {
@@ -116,6 +136,8 @@ export function GlobalAiAssistantProvider({
     []
   );
 
+  const activeRoute = pageContext?.route ?? null;
+
   const refreshSuggestions = useCallback(async () => {
     if (!pageContext) {
       return;
@@ -139,13 +161,17 @@ export function GlobalAiAssistantProvider({
       }
 
       const trimmedMessage = message.trim();
+      const targetRoute = pageContext.route;
+      hydratingRouteRef.current = false;
+      setRestoredConversation(false);
+      const userMessage: AiConversationMessage = {
+        id: createMessageId("user"),
+        role: "user",
+        content: trimmedMessage,
+      };
       const nextMessages: AiConversationMessage[] = [
         ...messages,
-        {
-          id: createMessageId("user"),
-          role: "user",
-          content: trimmedMessage,
-        },
+        userMessage,
       ];
       setMessages(nextMessages);
 
@@ -162,19 +188,28 @@ export function GlobalAiAssistantProvider({
       }
 
       if (response) {
-        setMessages((previous) => [
-          ...previous,
-          {
-            id: createMessageId("assistant"),
-            role: "assistant",
-            content: response.answer,
-            inferredIntent: response.inferredIntent,
-            sourcesUsed: response.sourcesUsed,
-          },
-        ]);
+        const assistantMessage: AiConversationMessage = {
+          id: createMessageId("assistant"),
+          role: "assistant",
+          content: response.answer,
+          inferredIntent: response.inferredIntent,
+          sourcesUsed: response.sourcesUsed,
+        };
+
+        if (activeRouteRef.current !== targetRoute) {
+          saveConversationForRoute(
+            targetRoute,
+            pageContext.pageTitle,
+            [...nextMessages, assistantMessage]
+          );
+          refreshThreadSummaries();
+          return;
+        }
+
+        setMessages((previous) => [...previous, assistantMessage]);
       }
     },
-    [messages, pageContext, runRequest]
+    [messages, pageContext, refreshThreadSummaries, runRequest]
   );
 
   const applySuggestedPrompt = useCallback(
@@ -194,15 +229,89 @@ export function GlobalAiAssistantProvider({
 
   const clearConversation = useCallback(() => {
     setMessages([]);
-  }, []);
+    setRestoredConversation(false);
+    if (activeRouteRef.current) {
+      clearConversationForRoute(activeRouteRef.current);
+    }
+    refreshThreadSummaries();
+  }, [refreshThreadSummaries]);
+
+  const forgetConversation = useCallback(
+    (route: string) => {
+      clearConversationForRoute(route);
+      if (activeRouteRef.current === route) {
+        setMessages([]);
+        setRestoredConversation(false);
+      }
+      refreshThreadSummaries();
+    },
+    [refreshThreadSummaries]
+  );
 
   useEffect(() => {
-    if (!open || !pageContext) {
+    if (!open) {
       return;
     }
 
+    setOpenSessionId((current) => current + 1);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !pageContext || openSessionId === 0) {
+      return;
+    }
+
+    const autoRefreshKey = `${openSessionId}:${pageContext.route}`;
+    if (lastAutoRefreshKeyRef.current === autoRefreshKey) {
+      return;
+    }
+
+    lastAutoRefreshKeyRef.current = autoRefreshKey;
     void refreshSuggestions();
-  }, [open, pageContext, refreshSuggestions]);
+  }, [open, openSessionId, pageContext, refreshSuggestions]);
+
+  useEffect(() => {
+    refreshThreadSummaries();
+  }, [refreshThreadSummaries]);
+
+  useEffect(() => {
+    activeRouteRef.current = activeRoute;
+  }, [activeRoute]);
+
+  useEffect(() => {
+    if (!activeRoute) {
+      setMessages([]);
+      setSuggestions([]);
+      setError(null);
+      return;
+    }
+
+    const restoredMessages = loadConversationForRoute(activeRoute);
+    hydratingRouteRef.current = true;
+    setMessages(restoredMessages);
+    setRestoredConversation(restoredMessages.length > 0);
+    setSuggestions([]);
+    setError(null);
+    refreshThreadSummaries();
+  }, [activeRoute, refreshThreadSummaries]);
+
+  useEffect(() => {
+    if (!activeRoute) {
+      return;
+    }
+
+    if (hydratingRouteRef.current) {
+      hydratingRouteRef.current = false;
+      return;
+    }
+
+    saveConversationForRoute(
+      activeRoute,
+      pageContext?.pageTitle ?? activeRoute,
+      messages
+    );
+    refreshThreadSummaries();
+  }, [activeRoute, messages, pageContext?.pageTitle, refreshThreadSummaries]);
 
   const value = useMemo<GlobalAiAssistantContextValue>(
     () => ({
@@ -212,9 +321,12 @@ export function GlobalAiAssistantProvider({
       pageContext,
       suggestions,
       messages,
+      threadSummaries,
+      restoredConversation,
       openAssistant,
       closeAssistant,
       clearConversation,
+      forgetConversation,
       sendMessage,
       applySuggestedPrompt,
       registerPageContext,
@@ -227,9 +339,12 @@ export function GlobalAiAssistantProvider({
       pageContext,
       suggestions,
       messages,
+      threadSummaries,
+      restoredConversation,
       openAssistant,
       closeAssistant,
       clearConversation,
+      forgetConversation,
       sendMessage,
       applySuggestedPrompt,
       registerPageContext,
