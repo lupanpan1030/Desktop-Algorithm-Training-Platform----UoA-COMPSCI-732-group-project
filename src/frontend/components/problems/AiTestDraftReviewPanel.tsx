@@ -41,7 +41,7 @@ type Props = {
   onUpdateRequest: (patch: Partial<GenerateAiTestDraftsPayload>) => void;
   onSaveDraft: (draftId: string) => void;
   onSaveSelected: () => void;
-  onSaveHighConfidence: () => void;
+  onSaveBatchReady: () => void;
   onDiscardDraft: (draftId: string) => void;
   onDiscardSelected: () => void;
   onUpdateDraft: (
@@ -50,7 +50,7 @@ type Props = {
   ) => void;
   onToggleDraftSelection: (draftId: string) => void;
   onSelectAll: () => void;
-  onSelectHighConfidence: () => void;
+  onSelectBatchReady: () => void;
 };
 
 function confidenceColor(confidence: AiTestcaseDraft["confidence"]) {
@@ -109,6 +109,14 @@ function riskFlagLabel(riskFlag: string) {
   }
 }
 
+function canPersistDraft(draft: AiTestcaseDraft) {
+  return draft.input.trim().length > 0 && draft.expectedOutput.trim().length > 0;
+}
+
+function isBatchReadyDraft(draft: AiTestcaseDraft) {
+  return canPersistDraft(draft) && draft.confidence === "high" && draft.riskFlags.length === 0;
+}
+
 export default function AiTestDraftReviewPanel({
   selectedProblemTitle,
   disabled = false,
@@ -125,20 +133,25 @@ export default function AiTestDraftReviewPanel({
   onUpdateRequest,
   onSaveDraft,
   onSaveSelected,
-  onSaveHighConfidence,
+  onSaveBatchReady,
   onDiscardDraft,
   onDiscardSelected,
   onUpdateDraft,
   onToggleDraftSelection,
   onSelectAll,
-  onSelectHighConfidence,
+  onSelectBatchReady,
 }: Props) {
   const theme = useTheme();
   const highConfidenceCount = drafts.filter((draft) => draft.confidence === "high").length;
+  const batchReadyCount = drafts.filter(isBatchReadyDraft).length;
   const selectedCount = selectedIds.length;
   const selectedHighConfidenceCount = drafts.filter(
     (draft) => selectedIds.includes(draft.id) && draft.confidence === "high"
   ).length;
+  const selectedBatchReadyCount = drafts.filter(
+    (draft) => selectedIds.includes(draft.id) && isBatchReadyDraft(draft)
+  ).length;
+  const selectedReviewGateCount = Math.max(0, selectedCount - selectedBatchReadyCount);
   const canGenerate =
     Boolean(requestOptions.includeSampleDrafts) || Boolean(requestOptions.includeHiddenDrafts);
 
@@ -190,17 +203,17 @@ export default function AiTestDraftReviewPanel({
               variant="outlined"
               startIcon={<CheckCircleOutlineRoundedIcon />}
               onClick={onSaveSelected}
-              disabled={disabled || loading || selectedCount === 0}
+              disabled={disabled || loading || selectedBatchReadyCount === 0}
             >
               Save selected
             </Button>
             <Button
               variant="outlined"
               startIcon={<CheckCircleOutlineRoundedIcon />}
-              onClick={onSaveHighConfidence}
-              disabled={disabled || loading || highConfidenceCount === 0}
+              onClick={onSaveBatchReady}
+              disabled={disabled || loading || batchReadyCount === 0}
             >
-              Save high confidence
+              Save batch-ready
             </Button>
             <Button
               variant="text"
@@ -224,6 +237,11 @@ export default function AiTestDraftReviewPanel({
         <Alert severity="info">
           AI drafts are suggestions only. Review every expected output before saving it into judge
           coverage.
+        </Alert>
+
+        <Alert severity="warning">
+          Bulk save only accepts batch-ready drafts: high confidence, no risk flags, and non-empty
+          input/output. Low-confidence or flagged drafts must be reviewed and saved one by one.
         </Alert>
 
         <Paper
@@ -307,9 +325,13 @@ export default function AiTestDraftReviewPanel({
         <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
           <Chip label={`${drafts.length} drafts`} variant="outlined" />
           <Chip label={`${highConfidenceCount} high confidence`} variant="outlined" />
+          <Chip label={`${batchReadyCount} batch-ready`} variant="outlined" />
           <Chip label={`${selectedCount} selected`} variant="outlined" />
           {selectedCount > 0 && (
             <Chip label={`${selectedHighConfidenceCount} selected high confidence`} variant="outlined" />
+          )}
+          {selectedReviewGateCount > 0 && (
+            <Chip label={`${selectedReviewGateCount} need manual review`} variant="outlined" color="warning" />
           )}
           {provider && <Chip label={provider} variant="outlined" icon={<RefreshRoundedIcon />} />}
         </Stack>
@@ -323,19 +345,28 @@ export default function AiTestDraftReviewPanel({
           </Alert>
         ) : (
           <Stack spacing={1.2}>
+            {selectedReviewGateCount > 0 && (
+              <Alert severity="warning">
+                {selectedReviewGateCount} selected draft
+                {selectedReviewGateCount === 1 ? "" : "s"} still need manual review and will be
+                skipped by bulk save.
+              </Alert>
+            )}
+
             <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
               <Button variant="text" size="small" onClick={onSelectAll}>
                 {selectedCount === drafts.length ? "Clear selection" : "Select all"}
               </Button>
-              <Button variant="text" size="small" onClick={onSelectHighConfidence}>
-                Select high confidence
+              <Button variant="text" size="small" onClick={onSelectBatchReady}>
+                Select batch-ready
               </Button>
             </Stack>
 
             {drafts.map((draft) => {
               const saving = savingIds.includes(draft.id);
-              const canSave = draft.input.trim().length > 0 && draft.expectedOutput.trim().length > 0;
+              const canSave = canPersistDraft(draft);
               const selected = selectedIds.includes(draft.id);
+              const batchReady = isBatchReadyDraft(draft);
 
               return (
                 <Paper
@@ -371,6 +402,12 @@ export default function AiTestDraftReviewPanel({
                           color={confidenceColor(draft.confidence)}
                           variant={draft.confidence === "low" ? "outlined" : "filled"}
                           label={confidenceLabel(draft.confidence)}
+                        />
+                        <Chip
+                          size="small"
+                          color={batchReady ? "success" : "warning"}
+                          variant={batchReady ? "filled" : "outlined"}
+                          label={batchReady ? "Batch-ready" : "Manual review gate"}
                         />
                         {draft.sourceHints.map((sourceHint) => (
                           <Chip

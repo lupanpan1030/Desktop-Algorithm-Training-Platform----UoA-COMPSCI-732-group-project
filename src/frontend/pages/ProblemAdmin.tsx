@@ -140,6 +140,14 @@ function buildStarterCodePreview(template: string, lineLimit = 14) {
   };
 }
 
+function canPersistAiDraft(draft: AiTestcaseDraft) {
+  return draft.input.trim().length > 0 && draft.expectedOutput.trim().length > 0;
+}
+
+function isBatchReadyAiDraft(draft: AiTestcaseDraft) {
+  return canPersistAiDraft(draft) && draft.confidence === "high" && draft.riskFlags.length === 0;
+}
+
 export default function ProblemAdmin() {
   const theme = useTheme();
   const {
@@ -196,16 +204,19 @@ export default function ProblemAdmin() {
     severity: "info",
   });
 
-  const showSnackbar = (
-    message: string,
-    severity: "success" | "error" | "info" = "info"
-  ) => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
+  const showSnackbar = useCallback(
+    (
+      message: string,
+      severity: "success" | "error" | "info" = "info"
+    ) => {
+      setSnackbar({
+        open: true,
+        message,
+        severity,
+      });
+    },
+    []
+  );
 
   const loadProblems = useCallback(
     async (preferredProblemId?: number | null) => {
@@ -662,7 +673,7 @@ export default function ProblemAdmin() {
         error: buildErrorMessage("Failed to generate AI testcase drafts.", error),
       }));
     }
-  }, [aiDraftReview.lastRequest, generateAiTestDrafts, locale, selectedProblemId]);
+  }, [aiDraftReview.lastRequest, generateAiTestDrafts, locale, selectedProblemId, showSnackbar]);
 
   const handleClearAiDrafts = useCallback(() => {
     setAiDraftReview((previous) => ({
@@ -732,11 +743,11 @@ export default function ProblemAdmin() {
     }));
   }, []);
 
-  const handleSelectHighConfidenceAiDrafts = useCallback(() => {
+  const handleSelectBatchReadyAiDrafts = useCallback(() => {
     setAiDraftReview((previous) => ({
       ...previous,
       selectedIds: previous.drafts
-        .filter((draft) => draft.confidence === "high")
+        .filter(isBatchReadyAiDraft)
         .map((draft) => draft.id),
     }));
   }, []);
@@ -810,6 +821,7 @@ export default function ProblemAdmin() {
       loadProblemWorkspace,
       loadProblems,
       selectedProblemId,
+      showSnackbar,
       testcaseDraftDefaults.memoryLimitMb,
       testcaseDraftDefaults.timeLimitMs,
     ]
@@ -822,17 +834,45 @@ export default function ProblemAdmin() {
     [persistAiDrafts]
   );
 
-  const handleSaveHighConfidenceAiDrafts = useCallback(() => {
-    const highConfidenceDraftIds = aiDraftReview.drafts
-      .filter((draft) => draft.confidence === "high")
+  const handleSaveBatchReadyAiDrafts = useCallback(() => {
+    const batchReadyDraftIds = aiDraftReview.drafts
+      .filter(isBatchReadyAiDraft)
       .map((draft) => draft.id);
 
-    void persistAiDrafts(highConfidenceDraftIds);
-  }, [aiDraftReview.drafts, persistAiDrafts]);
+    if (batchReadyDraftIds.length === 0) {
+      showSnackbar("No batch-ready drafts are available to bulk save yet.", "info");
+      return;
+    }
+
+    void persistAiDrafts(batchReadyDraftIds);
+  }, [aiDraftReview.drafts, persistAiDrafts, showSnackbar]);
 
   const handleSaveSelectedAiDrafts = useCallback(() => {
-    void persistAiDrafts(aiDraftReview.selectedIds);
-  }, [aiDraftReview.selectedIds, persistAiDrafts]);
+    const selectedDrafts = aiDraftReview.drafts.filter((draft) =>
+      aiDraftReview.selectedIds.includes(draft.id)
+    );
+    const batchReadyDraftIds = selectedDrafts
+      .filter(isBatchReadyAiDraft)
+      .map((draft) => draft.id);
+    const skippedCount = selectedDrafts.length - batchReadyDraftIds.length;
+
+    if (batchReadyDraftIds.length === 0) {
+      showSnackbar(
+        "Selected drafts still need manual review before they can be bulk saved.",
+        "info"
+      );
+      return;
+    }
+
+    if (skippedCount > 0) {
+      showSnackbar(
+        `${skippedCount} selected draft${skippedCount === 1 ? "" : "s"} skipped because manual review is still required.`,
+        "info"
+      );
+    }
+
+    void persistAiDrafts(batchReadyDraftIds);
+  }, [aiDraftReview.drafts, aiDraftReview.selectedIds, persistAiDrafts, showSnackbar]);
 
   return (
     <Box sx={{ minHeight: "100%" }}>
@@ -1309,13 +1349,13 @@ export default function ProblemAdmin() {
                   onUpdateRequest={handleUpdateAiDraftRequest}
                   onSaveDraft={handleSaveAiDraft}
                   onSaveSelected={handleSaveSelectedAiDrafts}
-                  onSaveHighConfidence={handleSaveHighConfidenceAiDrafts}
+                  onSaveBatchReady={handleSaveBatchReadyAiDrafts}
                   onDiscardDraft={handleDiscardAiDraft}
                   onDiscardSelected={handleDiscardSelectedAiDrafts}
                   onUpdateDraft={handleUpdateAiDraft}
                   onToggleDraftSelection={handleToggleAiDraftSelection}
                   onSelectAll={handleSelectAllAiDrafts}
-                  onSelectHighConfidence={handleSelectHighConfidenceAiDrafts}
+                  onSelectBatchReady={handleSelectBatchReadyAiDrafts}
                 />
               </Stack>
             </Paper>
