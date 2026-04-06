@@ -22,15 +22,15 @@ import {
 import TestResultCard from "./TestResultCard";
 import SubmissionHistoryPanel from "./submissions/SubmissionHistoryPanel";
 import { ResponsiveButton } from "./common/ResponsiveComponents";
-import { clearProblemCode } from "../utils/localStorageHelper";
 
 interface CodeSubmissionProps {
   problemId: number;
   code: string;
-  languageId: number;
+  languageId: number | null;
   languageLabels?: Record<number, string>;
   onRestoreSubmission?: (submission: SubmissionDetail) => void;
   onAssistantSnapshotChange?: (snapshot: AssistantResultSnapshot) => void;
+  actionBlockedReason?: string | null;
 }
 
 type ResultView = "history" | "run" | "submit";
@@ -153,6 +153,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   languageLabels = EMPTY_LANGUAGE_LABELS,
   onRestoreSubmission,
   onAssistantSnapshotChange,
+  actionBlockedReason = null,
 }) => {
   const { runCode, submitCode, getSubmissions, getSubmission } = useApi();
   const [runResults, setRunResults] = useState<RunResponse | null>(null);
@@ -342,6 +343,14 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       return;
     }
 
+    if (languageId == null) {
+      const message =
+        actionBlockedReason ?? "Language configuration is still loading.";
+      setPanelError(message);
+      showSnackbar(message, "error");
+      return;
+    }
+
     setActionLoading(true);
     setPanelError(null);
     setActiveView("run");
@@ -367,6 +376,14 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       return;
     }
 
+    if (languageId == null) {
+      const message =
+        actionBlockedReason ?? "Language configuration is still loading.";
+      setPanelError(message);
+      showSnackbar(message, "error");
+      return;
+    }
+
     setActionLoading(true);
     setPanelError(null);
     setActiveView("submit");
@@ -375,7 +392,6 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       const response = await submitCode(problemId, code, languageId);
       if (response) {
         setSubmitResults(response);
-        clearProblemCode(problemId);
         await loadSubmissionHistory(response.submissionId);
         showSnackbar("Submitted successfully.", "success");
       }
@@ -474,48 +490,54 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-        <ResponsiveButton
-          variant="contained"
-          sx={{
-            minWidth: 118,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            "&:hover": {
-              background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-            },
-          }}
-          startIcon={<PlayArrowIcon />}
-          onClick={handleRunCode}
-          disabled={actionLoading}
-        >
-          {actionLoading && activeView === "run" ? (
-            <CircularProgress size={24} />
-          ) : (
-            "Run"
-          )}
-        </ResponsiveButton>
+          <ResponsiveButton
+            variant="contained"
+            sx={{
+              minWidth: 118,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              "&:hover": {
+                background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+              },
+            }}
+            startIcon={<PlayArrowIcon />}
+            onClick={handleRunCode}
+            disabled={actionLoading || languageId == null}
+          >
+            {actionLoading && activeView === "run" ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Run"
+            )}
+          </ResponsiveButton>
 
-        <ResponsiveButton
-          variant="contained"
-          startIcon={<SendIcon />}
-          onClick={handleSubmitCode}
-          disabled={actionLoading}
-          sx={{
-            minWidth: 118,
-            backgroundColor: alpha(theme.palette.warning.main, 0.92),
-            color: theme.palette.common.white,
-            "&:hover": {
-              backgroundColor: theme.palette.warning.main,
-            },
-          }}
-        >
-          {actionLoading && activeView === "submit" ? (
-            <CircularProgress size={24} />
-          ) : (
-            "Submit"
-          )}
-        </ResponsiveButton>
+          <ResponsiveButton
+            variant="contained"
+            startIcon={<SendIcon />}
+            onClick={handleSubmitCode}
+            disabled={actionLoading || languageId == null}
+            sx={{
+              minWidth: 118,
+              backgroundColor: alpha(theme.palette.warning.main, 0.92),
+              color: theme.palette.common.white,
+              "&:hover": {
+                backgroundColor: theme.palette.warning.main,
+              },
+            }}
+          >
+            {actionLoading && activeView === "submit" ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Submit"
+            )}
+          </ResponsiveButton>
         </Box>
       </Stack>
+
+      {languageId == null && (
+        <Alert severity="warning" sx={{ mb: 1.8 }}>
+          {actionBlockedReason ?? "Load the language configuration before running or submitting code."}
+        </Alert>
+      )}
 
       <Tabs
         value={activeView}

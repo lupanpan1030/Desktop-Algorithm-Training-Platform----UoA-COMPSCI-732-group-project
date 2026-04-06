@@ -85,6 +85,15 @@ export default function SubmissionHistoryPanel({
   const recordLabel = isFiltered
     ? `${submissions.length}/${totalSubmissionCount} shown`
     : `${totalSubmissionCount} record${totalSubmissionCount === 1 ? "" : "s"}`;
+  const handleSelectWithKeyboard = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    submissionId: number
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelectSubmission(submissionId);
+    }
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -99,7 +108,12 @@ export default function SubmissionHistoryPanel({
           <Chip size="small" label={recordLabel} />
           <Tooltip title="Refresh submission history">
             <span>
-              <IconButton size="small" onClick={onRefresh} disabled={listLoading}>
+              <IconButton
+                size="small"
+                aria-label="Refresh submission history"
+                onClick={onRefresh}
+                disabled={listLoading}
+              >
                 {listLoading ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
               </IconButton>
             </span>
@@ -143,7 +157,7 @@ export default function SubmissionHistoryPanel({
           </Typography>
         </Paper>
       ) : (
-        <Stack spacing={1.5}>
+        <Stack spacing={1.5} role="listbox" aria-label="Submission history list">
           {submissions.map((submission) => {
             const selected = submission.submissionId === selectedSubmissionId;
 
@@ -152,6 +166,10 @@ export default function SubmissionHistoryPanel({
                 key={submission.submissionId}
                 variant="outlined"
                 onClick={() => onSelectSubmission(submission.submissionId)}
+                role="option"
+                aria-selected={selected}
+                tabIndex={0}
+                onKeyDown={(event) => handleSelectWithKeyboard(event, submission.submissionId)}
                 sx={{
                   p: 1.5,
                   cursor: "pointer",

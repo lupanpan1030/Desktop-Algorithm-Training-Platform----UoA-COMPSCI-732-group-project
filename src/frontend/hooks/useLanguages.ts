@@ -59,6 +59,10 @@ const useLanguages = () => {
 
   const fetchLanguages = useCallback(async () => {
     const data = await getLanguages();
+    if (!data) {
+      return;
+    }
+
     setLanguages(data.map(normalizeLanguage));      
   }, [getLanguages]);
 

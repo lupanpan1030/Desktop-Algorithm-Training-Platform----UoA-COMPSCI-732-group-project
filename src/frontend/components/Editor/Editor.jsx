@@ -11,7 +11,10 @@ import {
     saveCodeToLocalStorage,
     saveEditorLanguagePreference,
 } from '../../utils/localStorageHelper';
-import { getStarterCodeForLanguage } from '../../utils/starterCode';
+import {
+    getStarterCodeForLanguage,
+    normalizeStarterLanguageKey,
+} from '../../utils/starterCode';
 
 
 const isPackaged = window.location.protocol === 'file:';
@@ -41,12 +44,18 @@ export default function CodeEditor({
     starterCodes = [],
 }) {
     const editorRef = useRef(null);
+    const hasUserInteractedRef = useRef(false);
     const lastAppliedDraftRef = useRef(null);
+    const pendingHydrationLanguageRef = useRef(null);
     const { getLanguages, loading: languagesLoading, error: languagesError } = useApi();
-    const [code, setCode] = useState('');
+    const [code, setCode] = useState(() => {
+        const savedLanguage = getEditorLanguagePreference(problemId) || 'python';
+        const draft = getCodeDraftFromLocalStorage(problemId, savedLanguage);
+        return draft.exists ? draft.code : '';
+    });
     const [language, setLanguage] = useState(() => {
         const savedLanguage = getEditorLanguagePreference(problemId);
-        return savedLanguage || 'python';
+        return normalizeStarterLanguageKey(savedLanguage || 'python') || 'python';
     });
     const [languageMap, setLanguageMap] = useState({});
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -62,48 +71,73 @@ export default function CodeEditor({
     }, [starterCodes]);
 
     const persistCode = useCallback((nextLanguage, nextCode) => {
-        if (Object.keys(languageMap).length > 0) {
-            saveCodeToLocalStorage(problemId, nextLanguage, nextCode, languageMap);
-        }
+        saveCodeToLocalStorage(problemId, nextLanguage, nextCode, languageMap);
     }, [languageMap, problemId]);
 
     // Fetch language list from backend using useApi
     useEffect(() => {
         const fetchLanguages = async () => {
             const data = await getLanguages();
-            if (data) {
-                setLanguages(data);
-                
-                // Create language mapping for localStorage
-                const mapping = {};
-                data.forEach(lang => {
-                    const key = lang.name.toLowerCase();
-                    mapping[key] = lang.languageId;
-                    // Handle C++ / CPP mapping
-                    if (key === 'c++') mapping['cpp'] = lang.languageId;
-                });
-                setLanguageMap(mapping);
+            if (data == null) {
+                return;
             }
+
+            setLanguages(data);
+            
+            // Create language mapping for localStorage
+            const mapping = {};
+            data.forEach(lang => {
+                const key = lang.name.toLowerCase();
+                mapping[key] = lang.languageId;
+                const normalizedKey = normalizeStarterLanguageKey(lang.name);
+                if (normalizedKey) {
+                    mapping[normalizedKey] = lang.languageId;
+                }
+            });
+            setLanguageMap(mapping);
         };
         fetchLanguages();
     }, [getLanguages]);
 
-    // Load saved code when component mounts or problem/language changes
+    // Reset editor state when the problem changes.
     useEffect(() => {
-        // Only try to load code once we have the language map
-        if (Object.keys(languageMap).length > 0) {
-            const savedLanguage = getEditorLanguagePreference(problemId) || 'python';
-            const draft = getCodeDraftFromLocalStorage(problemId, savedLanguage, languageMap);
-            const starterCode = draft.exists ? '' : resolveStarterCode(savedLanguage);
-            const nextCode = draft.exists ? draft.code : starterCode || '';
-            setLanguage(savedLanguage);
+        const savedLanguage =
+            normalizeStarterLanguageKey(getEditorLanguagePreference(problemId) || 'python') ||
+            'python';
+        const draft = getCodeDraftFromLocalStorage(problemId, savedLanguage);
 
-            setCode(nextCode);
-            if (!draft.exists && starterCode) {
-                persistCode(savedLanguage, starterCode);
-            }
+        hasUserInteractedRef.current = false;
+        pendingHydrationLanguageRef.current = savedLanguage;
+        lastAppliedDraftRef.current = null;
+
+        setLanguage(savedLanguage);
+        setCode(draft.exists ? draft.code : '');
+    }, [problemId]);
+
+    // Hydrate starter code or migrate older drafts without overwriting active edits.
+    useEffect(() => {
+        if (pendingHydrationLanguageRef.current && language !== pendingHydrationLanguageRef.current) {
+            return;
         }
-    }, [problemId, languageMap, persistCode, resolveStarterCode]);
+
+        if (hasUserInteractedRef.current) {
+            return;
+        }
+
+        const draft = getCodeDraftFromLocalStorage(problemId, language, languageMap);
+        const starterCode = draft.exists ? '' : resolveStarterCode(language);
+        const nextCode = draft.exists ? draft.code : starterCode || '';
+
+        if (nextCode !== code) {
+            setCode(nextCode);
+        }
+
+        if (!draft.exists && starterCode) {
+            persistCode(language, starterCode);
+        }
+
+        pendingHydrationLanguageRef.current = null;
+    }, [code, language, languageMap, persistCode, problemId, resolveStarterCode]);
 
     useEffect(() => {
         if (!loadedDraft?.revision) {
@@ -114,9 +148,11 @@ export default function CodeEditor({
             return;
         }
 
-        const nextLanguage = loadedDraft.language || 'python';
+        const nextLanguage = normalizeStarterLanguageKey(loadedDraft.language || 'python') || 'python';
         const nextCode = loadedDraft.code || '';
 
+        hasUserInteractedRef.current = true;
+        pendingHydrationLanguageRef.current = null;
         setLanguage(nextLanguage);
         setCode(nextCode);
         persistCode(nextLanguage, nextCode);
@@ -160,21 +196,19 @@ export default function CodeEditor({
 
     const handleEditorChange = useCallback((value) => {
         const newCode = value || '';
+        hasUserInteractedRef.current = true;
         setCode(newCode);
-        // Save code to localStorage using helper function
-        if (Object.keys(languageMap).length > 0) {
-            saveCodeToLocalStorage(problemId, language, newCode, languageMap);
-        }
+        saveCodeToLocalStorage(problemId, language, newCode, languageMap);
     }, [problemId, language, languageMap]);
 
     const handleLanguageChange = useCallback((event) => {
-        const newLanguage = event.target.value;
+        const newLanguage = normalizeStarterLanguageKey(event.target.value) || 'python';
+        hasUserInteractedRef.current = false;
+        pendingHydrationLanguageRef.current = newLanguage;
         setLanguage(newLanguage);
         saveEditorLanguagePreference(problemId, newLanguage);
         // Load saved code for the new language
-        const draft = Object.keys(languageMap).length > 0
-            ? getCodeDraftFromLocalStorage(problemId, newLanguage, languageMap)
-            : { exists: false, code: '' };
+        const draft = getCodeDraftFromLocalStorage(problemId, newLanguage, languageMap);
         const starterCode = draft.exists ? '' : resolveStarterCode(newLanguage);
         const nextCode = draft.exists ? draft.code : starterCode || '';
         setCode(nextCode);
@@ -192,6 +226,7 @@ export default function CodeEditor({
             return;
         }
 
+        hasUserInteractedRef.current = true;
         setCode(starterCode);
         persistCode(language, starterCode);
 

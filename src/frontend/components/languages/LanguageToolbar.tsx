@@ -81,14 +81,16 @@ export default function LanguageToolbar({
           },
         }}
       >
-        <ToggleButton value="browse">Browse</ToggleButton>
-        <ToggleButton value="edit">
+        <ToggleButton value="browse" aria-label="Browse mode">
+          Browse
+        </ToggleButton>
+        <ToggleButton value="edit" aria-label="Edit mode">
           <Stack direction="row" spacing={0.7} alignItems="center">
             <EditIcon fontSize="small" />
             <span>Edit</span>
           </Stack>
         </ToggleButton>
-        <ToggleButton value="delete" color="error">
+        <ToggleButton value="delete" color="error" aria-label="Delete mode">
           <Stack direction="row" spacing={0.7} alignItems="center">
             <DeleteIcon fontSize="small" />
             <span>Delete</span>

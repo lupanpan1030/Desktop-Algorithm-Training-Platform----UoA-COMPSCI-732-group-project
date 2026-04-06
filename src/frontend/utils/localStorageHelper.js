@@ -1,3 +1,5 @@
+import { normalizeStarterLanguageKey } from "./starterCode";
+
 // localStorageHelpers.js
 // Helper functions for localStorage operations
 
@@ -8,27 +10,54 @@ const LANGUAGE_DRAFT_KEY_PREFIX = "leetcode_clone_problem_";
 const getLegacyCodeKey = (problemId) => `${LEGACY_CODE_KEY_PREFIX}${problemId}`;
 const getLanguagePreferenceKey = (problemId) => `${LANGUAGE_KEY_PREFIX}${problemId}`;
 
-const normalizeStoredLanguage = (language) => {
-  const normalized = language?.trim().toLowerCase();
+const normalizeStoredLanguage = (language) => normalizeStarterLanguageKey(language);
 
-  switch (normalized) {
-    case "py":
-    case "python3":
-      return "python";
-    case "js":
-      return "javascript";
-    case "c++":
-      return "cpp";
-    case "c#":
-      return "csharp";
-    default:
-      return normalized || "";
+const resolveLanguageId = (langName, languageMap = {}) => {
+  if (!langName || !languageMap || Object.keys(languageMap).length === 0) {
+    return null;
   }
+
+  const normalizedName = normalizeStoredLanguage(langName);
+  if (!normalizedName) {
+    return null;
+  }
+
+  const candidateKeys = [normalizedName];
+
+  if (normalizedName === 'cpp') {
+    candidateKeys.push('c++');
+  } else if (normalizedName === 'csharp') {
+    candidateKeys.push('c#');
+  }
+
+  for (const candidateKey of candidateKeys) {
+    const languageId = languageMap[candidateKey];
+    if (languageId != null) {
+      return languageId;
+    }
+  }
+
+  return null;
 };
 
-const getLanguageDraftKey = (problemId, language, languageMap = {}) => {
-  const languageId = getLanguageIdFromName(language, languageMap);
-  return `${LANGUAGE_DRAFT_KEY_PREFIX}${problemId}_lang_${languageId}`;
+const getLanguageDraftKey = (problemId, language) => {
+  const normalizedLanguage = normalizeStoredLanguage(language);
+  if (!normalizedLanguage) {
+    return null;
+  }
+
+  return `${LANGUAGE_DRAFT_KEY_PREFIX}${problemId}_lang_${normalizedLanguage}`;
+};
+
+const getLegacyLanguageDraftKey = (problemId, language, languageMap = {}) => {
+  if (!languageMap || Object.keys(languageMap).length === 0) {
+    return null;
+  }
+
+  const languageId = resolveLanguageId(language, languageMap);
+  return languageId != null
+    ? `${LANGUAGE_DRAFT_KEY_PREFIX}${problemId}_lang_${languageId}`
+    : null;
 };
 
 export const getEditorLanguagePreference = (problemId) => {
@@ -54,7 +83,7 @@ export const saveEditorLanguagePreference = (problemId, language) => {
  * @param {string} code - The code to save
  * @param {Object} languageMap - Map of language name to languageId
  */
-export const saveCodeToLocalStorage = (problemId, language, code, languageMap = {}) => {
+export const saveCodeToLocalStorage = (problemId, language, code, _languageMap = {}) => {
   try {
     if (!problemId) {
       console.warn('Cannot save code: Problem ID is missing');
@@ -65,8 +94,10 @@ export const saveCodeToLocalStorage = (problemId, language, code, languageMap = 
 
     // Persist code only in the language-specific key. The legacy shared code key
     // is no longer written because it caused cross-language draft pollution.
-    const key = getLanguageDraftKey(problemId, language, languageMap);
-    localStorage.setItem(key, code);
+    const key = getLanguageDraftKey(problemId, language);
+    if (key) {
+      localStorage.setItem(key, code);
+    }
   } catch (error) {
     console.error('Error saving code to localStorage:', error);
   }
@@ -86,12 +117,25 @@ export const getCodeDraftFromLocalStorage = (problemId, language, languageMap = 
       return { exists: false, code: '' };
     }
 
-    // First try the language-specific draft.
-    const key = getLanguageDraftKey(problemId, language, languageMap);
-    const savedCode = localStorage.getItem(key);
+    // First try the canonical language-specific draft.
+    const key = getLanguageDraftKey(problemId, language);
+    const savedCode = key ? localStorage.getItem(key) : null;
 
     if (savedCode !== null) {
       return { exists: true, code: savedCode };
+    }
+
+    // Backward compatibility: migrate the older language-id-specific draft when
+    // the caller has enough language metadata to resolve the previous key.
+    const legacyLanguageKey = getLegacyLanguageDraftKey(problemId, language, languageMap);
+    const legacyLanguageCode =
+      legacyLanguageKey ? localStorage.getItem(legacyLanguageKey) : null;
+
+    if (legacyLanguageCode !== null) {
+      if (key) {
+        localStorage.setItem(key, legacyLanguageCode);
+      }
+      return { exists: true, code: legacyLanguageCode };
     }
 
     // Backward compatibility: migrate the old shared draft only when it belongs
@@ -104,7 +148,9 @@ export const getCodeDraftFromLocalStorage = (problemId, language, languageMap = 
       legacyLanguage &&
       normalizeStoredLanguage(legacyLanguage) === normalizeStoredLanguage(language)
     ) {
-      localStorage.setItem(key, legacyCode);
+      if (key) {
+        localStorage.setItem(key, legacyCode);
+      }
       return { exists: true, code: legacyCode };
     }
 
@@ -137,21 +183,8 @@ export const getLanguageIdFromName = (langName, languageMap = {}) => {
   if (!languageMap || Object.keys(languageMap).length === 0) {
     return 1; // Default to Python (ID: 1) as fallback
   }
-  
-  const normalizedName = langName.toLowerCase();
-  // Handle specific cases like 'c++' vs 'cpp'
-  if (normalizedName === 'c++' && languageMap['cpp']) {
-    return languageMap['cpp'];
-  } else if (normalizedName === 'cpp' && languageMap['c++']) {
-    return languageMap['c++'];
-  }
-  const resolvedId = (() => {
-    if (normalizedName === 'c++' && languageMap['cpp']) return languageMap['cpp'];
-    if (normalizedName === 'cpp' && languageMap['c++']) return languageMap['c++'];
-    return languageMap[normalizedName] || 1;
-  })();
 
-  return resolvedId;
+  return resolveLanguageId(langName, languageMap) ?? 1;
 };
 
 /**

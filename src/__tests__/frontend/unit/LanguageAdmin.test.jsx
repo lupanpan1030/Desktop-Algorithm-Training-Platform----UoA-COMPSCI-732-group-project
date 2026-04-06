@@ -62,8 +62,9 @@ describe('LanguageAdmin Component', () => {
     renderWithRouter(<LanguageAdmin />);
 
     await waitFor(() => {
-      expect(screen.getByText('Python')).toBeInTheDocument();
-      expect(screen.getByText('JavaScript')).toBeInTheDocument();
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).getByText('Python')).toBeInTheDocument();
+      expect(within(directory).getByText('JavaScript')).toBeInTheDocument();
     });
   });
 
@@ -106,21 +107,20 @@ describe('LanguageAdmin Component', () => {
 
     // Wait for languages to load
     await waitFor(() => {
-      expect(screen.getByText('Python')).toBeInTheDocument();
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).getByText('Python')).toBeInTheDocument();
     });
 
     // Enable edit mode and wait for it to take effect
     fireEvent.click(screen.getByRole('button', { name: /edit mode/i }));
     await waitFor(() => {
-      const table = screen.getByRole('table');
-      const editButtons = within(table).getAllByTestId('EditIcon');
-      expect(editButtons).toHaveLength(2);
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).getByRole('button', { name: /edit python/i })).toBeInTheDocument();
     });
 
     // Click edit button for Python
-    const table = screen.getByRole('table');
-    const editButtons = within(table).getAllByTestId('EditIcon');
-    fireEvent.click(editButtons[0]);
+    const directory = screen.getByRole('listbox', { name: /languages/i });
+    fireEvent.click(within(directory).getByRole('button', { name: /edit python/i }));
 
     // Wait for dialog to appear and update the form
     await waitFor(() => {
@@ -151,21 +151,24 @@ describe('LanguageAdmin Component', () => {
 
     // Wait for languages to load
     await waitFor(() => {
-      expect(screen.getByText('JavaScript')).toBeInTheDocument();
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).getByText('JavaScript')).toBeInTheDocument();
     });
 
     // Enable delete mode and wait for it to take effect
     fireEvent.click(screen.getByRole('button', { name: /delete mode/i }));
     await waitFor(() => {
-      const table = screen.getByRole('table');
-      const deleteButtons = within(table).getAllByTestId('DeleteIcon');
-      expect(deleteButtons).toHaveLength(1);
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).queryByRole('button', { name: /delete javascript/i })).toBeNull();
     });
 
-    // Click delete button for JavaScript (not Python because it's isDefault)
-    const table = screen.getByRole('table');
-    const deleteButtons = within(table).getAllByTestId('DeleteIcon');
-    fireEvent.click(deleteButtons[0]);
+    // Select JavaScript, then click its delete button.
+    const directory = screen.getByRole('listbox', { name: /languages/i });
+    fireEvent.click(within(directory).getByRole('option', { name: /javascript runtime/i }));
+    await waitFor(() => {
+      expect(within(directory).getByRole('button', { name: /delete javascript/i })).toBeInTheDocument();
+    });
+    fireEvent.click(within(directory).getByRole('button', { name: /delete javascript/i }));
 
     // Wait for dialog to appear and confirm deletion
     await waitFor(() => {
@@ -189,21 +192,22 @@ describe('LanguageAdmin Component', () => {
 
     // Wait for languages to load
     await waitFor(() => {
-      expect(screen.getByText('Python')).toBeInTheDocument();
+      const directory = screen.getByRole('listbox', { name: /languages/i });
+      expect(within(directory).getByText('Python')).toBeInTheDocument();
     });
 
     // Enable delete mode
     fireEvent.click(screen.getByRole('button', { name: /delete mode/i }));
 
-    // Find the JavaScript row and verify it has a delete button
-    const jsRow = screen.getByText('JavaScript').closest('tr');
-    const jsDeleteButton = within(jsRow).getByTestId('DeleteIcon');
-    expect(jsDeleteButton).toBeInTheDocument();
+    const directory = screen.getByRole('listbox', { name: /languages/i });
 
-    // Find the Python row and verify it doesn't have a delete button
-    const pythonRow = screen.getByText('Python').closest('tr');
-    const pythonDeleteButton = within(pythonRow).queryByTestId('DeleteIcon');
-    expect(pythonDeleteButton).toBeNull();
+    fireEvent.click(within(directory).getByRole('option', { name: /javascript runtime/i }));
+    await waitFor(() => {
+      expect(within(directory).getByRole('button', { name: /delete javascript/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(within(directory).getByRole('option', { name: /python runtime/i }));
+    expect(within(directory).queryByRole('button', { name: /delete python/i })).toBeNull();
   });
 
   test('handles API error gracefully', async () => {

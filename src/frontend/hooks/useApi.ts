@@ -116,11 +116,12 @@ interface ApiOptions {
 }
 
 export const useApi = () => {
-  const [loading, setLoading] = useState(false);
+  const [activeRequestCount, setActiveRequestCount] = useState(0);
   const [error, setError] = useState<Error | null>(null);
+  const loading = activeRequestCount > 0;
 
   const request = useCallback(async <T>({ url, method = 'GET', body, headers, params }: ApiOptions): Promise<T> => {
-    setLoading(true);
+    setActiveRequestCount((count) => count + 1);
     setError(null);
     
     try {
@@ -140,7 +141,7 @@ export const useApi = () => {
       setError(normalizedError);
       throw normalizedError;
     } finally {
-      setLoading(false);
+      setActiveRequestCount((count) => Math.max(0, count - 1));
     }
   }, []);
 
@@ -203,11 +204,11 @@ export const useApi = () => {
     return true;
   }, [request]);
 
-  const getLanguages = useCallback(async (): Promise<Language[]> => {
+  const getLanguages = useCallback(async (): Promise<Language[] | null> => {
     try {
       return await request<Language[]>({ url: '/languages' });
     } catch {
-      return [];
+      return null;
     }
   }, [request]);
 

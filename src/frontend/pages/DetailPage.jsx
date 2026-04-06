@@ -22,6 +22,7 @@ import CodeSubmission from "../components/Run&SubmitButton";
 import { useApi } from "../hooks/useApi";
 import { useProblemLocale } from "../problem-locale";
 import { useAiPageContext } from "../ai/useAiPageContext";
+import { normalizeStarterLanguageKey } from "../utils/starterCode";
 
 function truncateText(value, limit = 900) {
   if (!value) {
@@ -67,7 +68,13 @@ export default function DetailPage() {
     byName: {},
     byId: {},
   });
-  const { getProblem, getLanguages, loading, error } = useApi();
+  const [restoredUnavailableLanguage, setRestoredUnavailableLanguage] = useState(null);
+  const { getProblem, loading: problemLoading, error: problemError } = useApi();
+  const {
+    getLanguages,
+    loading: languageMapLoading,
+    error: languageMapError,
+  } = useApi();
   const { locale, setLocale } = useProblemLocale();
   const deferredCode = useDeferredValue(editorState.code);
 
@@ -86,38 +93,56 @@ export default function DetailPage() {
   useEffect(() => {
     async function fetchLanguages() {
       const data = await getLanguages();
-      if (data) {
-        const byName = {};
-        const byId = {};
-        data.forEach((lang) => {
-          const key = lang.name.toLowerCase();
-          byName[key] = lang.languageId;
-          byId[lang.languageId] = lang.name;
-          if (key === "c++") {
-            byName.cpp = lang.languageId;
-          }
-        });
-        setLanguageMaps({ byName, byId });
+      if (data == null) {
+        return;
       }
+
+      const byName = {};
+      const byId = {};
+      data.forEach((lang) => {
+        const key = lang.name.toLowerCase();
+        const normalizedKey = normalizeStarterLanguageKey(lang.name);
+        byName[key] = lang.languageId;
+        byId[lang.languageId] = lang.name;
+        if (normalizedKey) {
+          byName[normalizedKey] = lang.languageId;
+        }
+      });
+      setLanguageMaps({ byName, byId });
     }
     fetchLanguages();
   }, [getLanguages]);
 
   const handleCodeChange = useCallback((newState) => {
+    if (newState.language !== editorState.language) {
+      setRestoredUnavailableLanguage(null);
+    }
+
     setEditorState(newState);
-  }, []);
+  }, [editorState.language]);
 
   const handleRestoreSubmission = useCallback(
     (submission) => {
-      const restoredLanguage =
-        languageMaps.byId[submission.languageId]?.toLowerCase() ||
-        editorState.language ||
-        "python";
+      const restoredLanguageLabel =
+        languageMaps.byId[submission.languageId] ??
+        `language #${submission.languageId}`;
+      const restoredLanguage = normalizeStarterLanguageKey(
+        languageMaps.byId[submission.languageId]
+      );
+      const nextLanguage = restoredLanguage || editorState.language || "python";
       const nextState = {
         code: submission.code,
-        language: restoredLanguage,
+        language: nextLanguage,
       };
 
+      setRestoredUnavailableLanguage(
+        restoredLanguage
+          ? null
+          : {
+              languageId: submission.languageId,
+              label: restoredLanguageLabel,
+            }
+      );
       setEditorState(nextState);
       setEditorDraft({
         ...nextState,
@@ -253,9 +278,44 @@ export default function DetailPage() {
 
   useAiPageContext(detailPageContext);
 
-  const getLanguageId = () => {
-    return languageMaps.byName[editorState.language.toLowerCase()] || 1;
-  };
+  const currentLanguageId = useMemo(() => {
+    if (restoredUnavailableLanguage) {
+      return null;
+    }
+
+    const normalizedLanguage = normalizeStarterLanguageKey(editorState.language);
+    if (!normalizedLanguage) {
+      return null;
+    }
+
+    return languageMaps.byName[normalizedLanguage] ?? null;
+  }, [editorState.language, languageMaps.byName, restoredUnavailableLanguage]);
+
+  const submissionActionBlockedReason = useMemo(() => {
+    if (languageMapLoading) {
+      return "Language configuration is still loading.";
+    }
+
+    if (languageMapError) {
+      return `Failed to load language configuration: ${languageMapError.message}`;
+    }
+
+    if (restoredUnavailableLanguage) {
+      return `This code was restored from ${restoredUnavailableLanguage.label}, but that language is not available in the local judge configuration. Choose a supported language before running or submitting.`;
+    }
+
+    if (currentLanguageId == null) {
+      return `The current language "${editorState.language}" is not available in the local judge configuration.`;
+    }
+
+    return null;
+  }, [
+    currentLanguageId,
+    editorState.language,
+    languageMapError,
+    languageMapLoading,
+    restoredUnavailableLanguage,
+  ]);
 
   const workspaceFacts = useMemo(
     () =>
@@ -306,7 +366,7 @@ export default function DetailPage() {
         })}
       >
         <Box sx={{ height: "100%", overflowY: "auto" }}>
-          {loading ? (
+          {problemLoading ? (
             <Box
               sx={{
                 display: "flex",
@@ -317,9 +377,9 @@ export default function DetailPage() {
             >
               <CircularProgress />
             </Box>
-          ) : error ? (
+          ) : problemError ? (
             <Box sx={{ p: 3 }}>
-              <Alert severity="error">Error loading problem: {error.message}</Alert>
+              <Alert severity="error">Error loading problem: {problemError.message}</Alert>
             </Box>
           ) : problem ? (
             <ProblemContent problem={problem} onLocaleChange={setLocale} />
@@ -409,6 +469,7 @@ export default function DetailPage() {
             })}
           >
             <CodeEditor
+              key={problemId}
               onCodeChange={handleCodeChange}
               problemId={problemId}
               loadedDraft={editorDraft}
@@ -432,10 +493,11 @@ export default function DetailPage() {
               <CodeSubmission
                 problemId={problemId}
                 code={editorState.code}
-                languageId={getLanguageId()}
+                languageId={currentLanguageId}
                 languageLabels={languageMaps.byId}
                 onRestoreSubmission={handleRestoreSubmission}
                 onAssistantSnapshotChange={setAssistantResultSnapshot}
+                actionBlockedReason={submissionActionBlockedReason}
               />
             )}
           </Paper>

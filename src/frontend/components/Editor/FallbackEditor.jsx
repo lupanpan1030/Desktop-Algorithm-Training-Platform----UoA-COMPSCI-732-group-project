@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
+import { normalizeStarterLanguageKey } from '../../utils/starterCode';
 
 export default function FallbackEditor({ 
     code, 
@@ -40,7 +41,10 @@ export default function FallbackEditor({
                             sx={{ minWidth: 150 }}
                         >
                             {languages.map((lang) => (
-                                <MenuItem key={lang.language_id ?? lang.languageId} value={lang.name.toLowerCase()}>
+                                <MenuItem
+                                    key={lang.language_id ?? lang.languageId}
+                                    value={normalizeStarterLanguageKey(lang.name) || lang.name.toLowerCase()}
+                                >
                                     {lang.name}
                                 </MenuItem>
                             ))}

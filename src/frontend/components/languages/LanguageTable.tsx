@@ -34,9 +34,22 @@ export default function LanguageTable({
   onDelete,
 }: Props) {
   const theme = useTheme();
+  const handleSelectWithKeyboard = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    language: Language
+  ) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect?.(language);
+    }
+  };
 
   return (
-    <Stack spacing={1.1}>
+    <Stack spacing={1.1} role="listbox" aria-label="Languages">
       {languages.map((language) => {
         const canDelete = showDelete && !language.isDefault;
         const selected = language.languageId === selectedLanguageId;
@@ -46,6 +59,11 @@ export default function LanguageTable({
             key={language.languageId}
             variant="outlined"
             onClick={() => onSelect?.(language)}
+            role={onSelect ? "option" : undefined}
+            aria-selected={onSelect ? selected : undefined}
+            aria-label={`${language.name} runtime`}
+            tabIndex={onSelect ? 0 : undefined}
+            onKeyDown={(event) => handleSelectWithKeyboard(event, language)}
             sx={{
               p: 0.95,
               borderRadius: 3,
@@ -95,6 +113,7 @@ export default function LanguageTable({
                       <Tooltip title={`Edit ${language.name}`} arrow>
                         <IconButton
                           size="small"
+                          aria-label={`Edit ${language.name}`}
                           onClick={(event) => {
                             event.stopPropagation();
                             onEdit?.(language);
@@ -109,6 +128,7 @@ export default function LanguageTable({
                         <IconButton
                           size="small"
                           color="error"
+                          aria-label={`Delete ${language.name}`}
                           onClick={(event) => {
                             event.stopPropagation();
                             onDelete?.(language.languageId, language.name);

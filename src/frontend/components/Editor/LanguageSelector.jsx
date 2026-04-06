@@ -1,5 +1,6 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+import { normalizeStarterLanguageKey } from '../../utils/starterCode';
 
 
 export default function LanguageSelector({ 
@@ -19,7 +20,10 @@ export default function LanguageSelector({
                     sx={{ minWidth: 150 }}
                 >
                     {languages.map((lang) => (
-                        <MenuItem key={lang.language_id ?? lang.languageId} value={lang.name.toLowerCase()}>
+                        <MenuItem
+                            key={lang.language_id ?? lang.languageId}
+                            value={normalizeStarterLanguageKey(lang.name) || lang.name.toLowerCase()}
+                        >
                             {lang.name}
                         </MenuItem>
                     ))}
