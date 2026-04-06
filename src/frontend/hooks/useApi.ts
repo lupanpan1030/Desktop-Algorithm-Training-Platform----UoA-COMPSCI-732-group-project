@@ -130,6 +130,31 @@ export interface AiSettingsUpdatePayload {
   clearApiKey?: boolean;
 }
 
+export interface AiTestcaseDraft {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  isSample: boolean;
+  rationale: string;
+  confidence: "low" | "medium" | "high";
+  riskFlags: string[];
+  sourceHints: string[];
+}
+
+export interface GenerateAiTestDraftsPayload {
+  locale?: string;
+  targetCount?: number;
+  includeSampleDrafts?: boolean;
+  includeHiddenDrafts?: boolean;
+}
+
+export interface GenerateAiTestDraftsResponse {
+  problemId: number;
+  provider: string;
+  drafts: AiTestcaseDraft[];
+  warnings: string[];
+}
+
 // API Request Options
 interface ApiOptions {
   url: string;
@@ -340,6 +365,17 @@ export const useApi = () => {
     });
   }, [request]);
 
+  const generateAiTestDrafts = useCallback(async (
+    problemId: number,
+    payload: GenerateAiTestDraftsPayload
+  ): Promise<GenerateAiTestDraftsResponse> => {
+    return await request<GenerateAiTestDraftsResponse>({
+      url: `/problems/${problemId}/ai/test-drafts`,
+      method: "POST",
+      body: payload,
+    });
+  }, [request]);
+
   return {
     loading,
     error,
@@ -362,6 +398,7 @@ export const useApi = () => {
     deleteTestCase,
     getAiSettings,
     updateAiSettings,
+    generateAiTestDrafts,
   };
 };
 

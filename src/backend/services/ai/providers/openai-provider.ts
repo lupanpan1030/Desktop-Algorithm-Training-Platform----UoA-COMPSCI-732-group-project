@@ -1,6 +1,12 @@
 import axios from "axios";
 import { AiPageContextDto, AiSuggestionDto } from "../../../api/ai/ai";
-import { AiProvider, AiProviderInput, AiProviderOutput } from "./ai-provider";
+import {
+  AiProvider,
+  AiProviderInput,
+  AiProviderOutput,
+  AiTestDraftInput,
+  AiTestDraftOutput,
+} from "./ai-provider";
 import {
   DEFAULT_AI_MODEL,
   DEFAULT_OPENAI_BASE_URL,
@@ -9,12 +15,26 @@ import {
   resolveAiRuntimeSettings,
 } from "../ai-runtime-settings";
 import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
+import { AiTestcaseDraftDto } from "../../../api/problem-ai/problem-ai";
 
 type ParsedAssistantPayload = {
   answer?: string;
   inferredIntent?: string;
   suggestions?: string[];
   sourcesUsed?: string[];
+};
+
+type ParsedTestDraftPayload = {
+  drafts?: Array<{
+    input?: string;
+    expectedOutput?: string;
+    isSample?: boolean;
+    rationale?: string;
+    confidence?: string;
+    riskFlags?: string[];
+    sourceHints?: string[];
+  }>;
+  warnings?: string[];
 };
 
 type OpenAiResponseContentItem = {
@@ -68,6 +88,14 @@ function parseAssistantPayload(text: string): ParsedAssistantPayload | null {
   }
 }
 
+function parseTestDraftPayload(text: string): ParsedTestDraftPayload | null {
+  try {
+    return JSON.parse(extractJsonObject(text)) as ParsedTestDraftPayload;
+  } catch {
+    return null;
+  }
+}
+
 function buildPrompt(input: AiProviderInput) {
   const facts = (input.pageContext.facts ?? [])
     .map((fact) => `- ${fact.label}: ${fact.value}`)
@@ -110,6 +138,74 @@ function buildPrompt(input: AiProviderInput) {
   ].join("\n");
 }
 
+function truncateForPrompt(value: string, limit = 1400) {
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit)}\n...[truncated]`;
+}
+
+function buildTestDraftPrompt(input: AiTestDraftInput) {
+  const existingCoverage =
+    input.existingTestcases.length > 0
+      ? input.existingTestcases
+          .slice(0, 10)
+          .map(
+            (testcase, index) =>
+              `${index + 1}. ${testcase.isSample ? "sample" : "hidden"} | input=${truncateForPrompt(
+                testcase.input,
+                220
+              )} | output=${truncateForPrompt(testcase.expectedOutput, 220)}`
+          )
+          .join("\n")
+      : "none";
+  const starterLanguages =
+    input.problem.starterCodes.length > 0
+      ? input.problem.starterCodes.map((starterCode) => starterCode.languageName).join(", ")
+      : "none";
+
+  return [
+    `Problem ID: ${input.problemId}`,
+    `Title: ${input.problem.title}`,
+    `Difficulty: ${input.problem.difficulty}`,
+    `Locale: ${input.problem.locale}`,
+    `Source: ${input.problem.source}`,
+    `Source slug: ${input.problem.sourceSlug ?? "none"}`,
+    `Tags: ${input.problem.tags.join(", ") || "none"}`,
+    `Need sample drafts: ${input.includeSampleDrafts ? "yes" : "no"}`,
+    `Need hidden drafts: ${input.includeHiddenDrafts ? "yes" : "no"}`,
+    `Target draft count: ${input.targetCount}`,
+    `Current testcase coverage: ${input.problem.sampleCaseCount} sample / ${input.problem.hiddenCaseCount} hidden`,
+    `Existing testcase summary:\n${existingCoverage}`,
+    `Starter code languages: ${starterLanguages}`,
+    input.problem.sampleTestcase
+      ? `Imported sample reference:\n${truncateForPrompt(input.problem.sampleTestcase, 2200)}`
+      : "Imported sample reference: none",
+    `Problem description:\n${truncateForPrompt(input.problem.description, 5000)}`,
+    "",
+    "Return a JSON object with this exact shape:",
+    JSON.stringify(
+      {
+        drafts: [
+          {
+            input: "exact testcase input string",
+            expectedOutput: "exact expected output string",
+            isSample: true,
+            rationale: "why this testcase is useful",
+            confidence: "high",
+            riskFlags: ["only when needed"],
+            sourceHints: ["sample reference", "description example", "edge-case reasoning"],
+          },
+        ],
+        warnings: ["optional warning for manual review"],
+      },
+      null,
+      2
+    ),
+  ].join("\n");
+}
+
 function buildSystemInstructions() {
   return [
     "You are the global AI assistant inside an Electron algorithm practice app.",
@@ -122,6 +218,79 @@ function buildSystemInstructions() {
     "If context is missing, say exactly what is missing.",
     "Always return valid JSON only.",
   ].join("\n");
+}
+
+function buildTestDraftSystemInstructions() {
+  return [
+    "You are generating testcase drafts for a curated algorithm problem inside a local judge application.",
+    "Return JSON only. Do not wrap the response in Markdown.",
+    "Avoid duplicating existing testcase coverage.",
+    "Prefer concrete sample cases and meaningful edge cases.",
+    "Every draft must contain exact input and expectedOutput strings.",
+    "If expected output is uncertain, keep the best available guess but set confidence to low and include risk flag requires_manual_output_review.",
+    "Do not claim certainty when the problem statement is ambiguous.",
+    "Keep drafts concise and reviewable.",
+  ].join("\n");
+}
+
+function normalizeConfidence(value?: string): "low" | "medium" | "high" {
+  if (value === "low" || value === "medium" || value === "high") {
+    return value;
+  }
+
+  return "low";
+}
+
+function normalizeStringArray(value?: string[]) {
+  return value?.map((item) => item?.trim()).filter(Boolean) ?? [];
+}
+
+function normalizeDrafts(
+  input: AiTestDraftInput,
+  parsed?: ParsedTestDraftPayload
+): AiTestcaseDraftDto[] {
+  const seen = new Set(
+    input.existingTestcases.map(
+      (testcase) => `${testcase.isSample ? "sample" : "hidden"}:${testcase.input}::${testcase.expectedOutput}`
+    )
+  );
+  const drafts = parsed?.drafts ?? [];
+
+  return drafts
+    .map((draft, index) => {
+      const normalizedInput = draft.input?.trim() ?? "";
+      const normalizedOutput = draft.expectedOutput?.trim() ?? "";
+      const isSample = Boolean(draft.isSample);
+
+      if (!normalizedInput || !normalizedOutput) {
+        return null;
+      }
+      if (isSample && !input.includeSampleDrafts) {
+        return null;
+      }
+      if (!isSample && !input.includeHiddenDrafts) {
+        return null;
+      }
+
+      const signature = `${isSample ? "sample" : "hidden"}:${normalizedInput}::${normalizedOutput}`;
+      if (seen.has(signature)) {
+        return null;
+      }
+      seen.add(signature);
+
+      return {
+        id: `openai-${input.problemId}-${index + 1}`,
+        input: normalizedInput,
+        expectedOutput: normalizedOutput,
+        isSample,
+        rationale: draft.rationale?.trim() || "AI-generated testcase draft.",
+        confidence: normalizeConfidence(draft.confidence),
+        riskFlags: normalizeStringArray(draft.riskFlags),
+        sourceHints: normalizeStringArray(draft.sourceHints),
+      };
+    })
+    .filter((draft): draft is AiTestcaseDraftDto => Boolean(draft))
+    .slice(0, input.targetCount);
 }
 
 function toSuggestions(
@@ -193,6 +362,37 @@ export class OpenAiProvider implements AiProvider {
         parsed?.sourcesUsed?.filter(Boolean)?.slice(0, 5) ??
         buildDefaultSources(input.pageContext),
       provider: `openai:${this.model}`,
+    };
+  }
+
+  async generateTestDrafts(input: AiTestDraftInput): Promise<AiTestDraftOutput> {
+    const response = await axios.post<OpenAiResponse>(
+      `${this.baseUrl}/responses`,
+      {
+        model: this.model,
+        instructions: buildTestDraftSystemInstructions(),
+        input: buildTestDraftPrompt(input),
+      },
+      {
+        timeout: this.timeoutMs,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const outputText = extractOutputText(response.data);
+    const parsed = parseTestDraftPayload(outputText);
+
+    if (!parsed) {
+      throw new Error("AI provider returned an invalid testcase draft payload.");
+    }
+
+    return {
+      provider: `openai:${this.model}`,
+      drafts: normalizeDrafts(input, parsed),
+      warnings: normalizeStringArray(parsed.warnings),
     };
   }
 }

@@ -1,5 +1,12 @@
 import { AiPageContextDto, AiSuggestionDto } from "../../../api/ai/ai";
-import { AiProvider, AiProviderInput, AiProviderOutput } from "./ai-provider";
+import {
+  AiProvider,
+  AiProviderInput,
+  AiProviderOutput,
+  AiTestDraftInput,
+  AiTestDraftOutput,
+} from "./ai-provider";
+import { AiTestcaseDraftDto } from "../../../api/problem-ai/problem-ai";
 import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
 
 type InferredIntent =
@@ -85,10 +92,109 @@ function buildSuggestions(pageContext: AiPageContextDto): AiSuggestionDto[] {
   return buildDefaultSuggestions(pageContext);
 }
 
+type ExtractedExample = {
+  input: string;
+  expectedOutput: string;
+  sourceHint: string;
+};
+
 function factsToMap(pageContext: AiPageContextDto) {
   return Object.fromEntries(
     (pageContext.facts ?? []).map((fact) => [fact.key, fact.value])
   );
+}
+
+function extractExamplePairs(text: string, sourceHint: string): ExtractedExample[] {
+  const sanitized = text.replace(/\*\*/g, "");
+  const pattern =
+    /Input:\s*([\s\S]*?)\s*Output:\s*([\s\S]*?)(?=(?:\n\s*(?:Explanation|Note|Constraints?)\s*:)|(?:\n\s*Example\b)|$)/gi;
+  const results: ExtractedExample[] = [];
+  let match: RegExpExecArray | null = null;
+
+  while ((match = pattern.exec(sanitized)) !== null) {
+    const input = match[1]?.trim();
+    const expectedOutput = match[2]?.trim();
+
+    if (!input || !expectedOutput) {
+      continue;
+    }
+
+    results.push({
+      input,
+      expectedOutput,
+      sourceHint,
+    });
+  }
+
+  return results;
+}
+
+function buildMockDrafts(input: AiTestDraftInput): AiTestDraftOutput {
+  const warnings: string[] = [
+    "Preview mode only extracts explicit examples and does not infer hidden edge cases confidently.",
+  ];
+  const existingKeys = new Set(
+    input.existingTestcases.map(
+      (testcase) => `${testcase.isSample ? "sample" : "hidden"}:${testcase.input}::${testcase.expectedOutput}`
+    )
+  );
+  const combinedExamples = [
+    ...(input.problem.sampleTestcase
+      ? extractExamplePairs(input.problem.sampleTestcase, "sample reference")
+      : []),
+    ...extractExamplePairs(input.problem.description, "problem description"),
+  ];
+  const uniqueExamples = combinedExamples.filter((example, index, list) => {
+    const signature = `${example.input}::${example.expectedOutput}`;
+    return list.findIndex((candidate) => `${candidate.input}::${candidate.expectedOutput}` === signature) === index;
+  });
+
+  const drafts: AiTestcaseDraftDto[] = [];
+
+  if (input.includeSampleDrafts) {
+    uniqueExamples.forEach((example, index) => {
+      if (drafts.length >= input.targetCount) {
+        return;
+      }
+
+      const signature = `sample:${example.input}::${example.expectedOutput}`;
+      if (existingKeys.has(signature)) {
+        return;
+      }
+
+      drafts.push({
+        id: `mock-sample-${input.problemId}-${index + 1}`,
+        input: example.input,
+        expectedOutput: example.expectedOutput,
+        isSample: true,
+        rationale:
+          example.sourceHint === "sample reference"
+            ? "Extracted directly from the imported sample reference."
+            : "Extracted from an explicit Input/Output example in the current problem description.",
+        confidence: example.sourceHint === "sample reference" ? "high" : "medium",
+        riskFlags: [],
+        sourceHints: [example.sourceHint],
+      });
+    });
+  }
+
+  if (input.includeHiddenDrafts) {
+    warnings.push(
+      "Hidden testcase drafts are not generated in preview mode; switch the assistant to OpenAI for inferred edge-case suggestions."
+    );
+  }
+
+  if (!drafts.length) {
+    warnings.push(
+      "No explicit Input/Output examples were found in the current description or sample reference."
+    );
+  }
+
+  return {
+    provider: "mock-assistant-preview",
+    drafts: drafts.slice(0, input.targetCount),
+    warnings,
+  };
 }
 
 function buildAnswer(
@@ -194,5 +300,9 @@ export class MockAiProvider implements AiProvider {
       sourcesUsed: buildDefaultSources(input.pageContext),
       provider: "mock-assistant-preview",
     };
+  }
+
+  async generateTestDrafts(input: AiTestDraftInput): Promise<AiTestDraftOutput> {
+    return buildMockDrafts(input);
   }
 }

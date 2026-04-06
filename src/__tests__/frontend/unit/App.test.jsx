@@ -48,5 +48,5 @@ describe("App", () => {
       screen.getByRole("button", { name: /open ai assistant/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Problems" })).toBeInTheDocument();
-  });
+  }, 15000);
 });

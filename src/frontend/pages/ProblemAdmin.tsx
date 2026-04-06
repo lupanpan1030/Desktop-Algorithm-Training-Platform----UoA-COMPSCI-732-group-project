@@ -20,11 +20,14 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteConfirmDialog from "../components/languages/DeleteConfirmDialog";
 import ProblemAdminTable from "../components/problems/ProblemAdminTable";
+import AiTestDraftReviewPanel from "../components/problems/AiTestDraftReviewPanel";
 import ProblemFormDialog from "../components/problems/ProblemFormDialog";
 import TestCaseFormDialog from "../components/problems/TestCaseFormDialog";
 import TestCaseTable from "../components/problems/TestCaseTable";
 import DOMPurify from "../utils/dompurifyConfig";
 import {
+  AiTestcaseDraft,
+  GenerateAiTestDraftsPayload,
   ProblemDetails,
   ProblemMutationPayload,
   ProblemSummary,
@@ -64,6 +67,34 @@ type TestCaseDialogState = {
   testcaseId: number | null;
   values: TestCaseMutationPayload;
 };
+
+type AiDraftReviewState = {
+  loading: boolean;
+  savingIds: string[];
+  error: string | null;
+  warnings: string[];
+  provider: string | null;
+  drafts: AiTestcaseDraft[];
+  lastRequest: GenerateAiTestDraftsPayload;
+};
+
+const defaultAiDraftRequest: GenerateAiTestDraftsPayload = {
+  targetCount: 5,
+  includeSampleDrafts: true,
+  includeHiddenDrafts: true,
+};
+
+function createInitialAiDraftReviewState(): AiDraftReviewState {
+  return {
+    loading: false,
+    savingIds: [],
+    error: null,
+    warnings: [],
+    provider: null,
+    drafts: [],
+    lastRequest: { ...defaultAiDraftRequest },
+  };
+}
 
 function buildErrorMessage(fallback: string, error: unknown) {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -119,6 +150,7 @@ export default function ProblemAdmin() {
     addTestCase,
     updateTestCase,
     deleteTestCase,
+    generateAiTestDrafts,
   } = useApi();
   const { locale, setLocale } = useProblemLocale();
 
@@ -149,6 +181,9 @@ export default function ProblemAdmin() {
   });
   const [problemDeleteTarget, setProblemDeleteTarget] = useState<ProblemSummary | null>(null);
   const [testcaseDeleteTarget, setTestcaseDeleteTarget] = useState<TestCase | null>(null);
+  const [aiDraftReview, setAiDraftReview] = useState<AiDraftReviewState>(
+    createInitialAiDraftReviewState
+  );
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -231,11 +266,19 @@ export default function ProblemAdmin() {
     if (selectedProblemId == null) {
       setSelectedProblem(null);
       setTestcases([]);
+      setAiDraftReview(createInitialAiDraftReviewState());
       return;
     }
 
     void loadProblemWorkspace(selectedProblemId);
   }, [loadProblemWorkspace, selectedProblemId]);
+
+  useEffect(() => {
+    setAiDraftReview((previous) => ({
+      ...createInitialAiDraftReviewState(),
+      lastRequest: previous.lastRequest,
+    }));
+  }, [selectedProblemId]);
 
   const visibleProblems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -561,6 +604,174 @@ export default function ProblemAdmin() {
       showSnackbar(buildErrorMessage("Failed to delete test case.", error), "error");
     }
   };
+
+  const testcaseDraftDefaults = useMemo(
+    () => ({
+      timeLimitMs: testcases[0]?.timeLimitMs ?? blankTestCaseForm.timeLimitMs,
+      memoryLimitMb: testcases[0]?.memoryLimitMb ?? blankTestCaseForm.memoryLimitMb,
+    }),
+    [testcases]
+  );
+
+  const handleGenerateAiDrafts = useCallback(async () => {
+    if (selectedProblemId == null) {
+      return;
+    }
+
+    const requestBody = {
+      ...aiDraftReview.lastRequest,
+      locale,
+    };
+
+    setAiDraftReview((previous) => ({
+      ...previous,
+      loading: true,
+      error: null,
+      savingIds: [],
+    }));
+
+    try {
+      const response = await generateAiTestDrafts(selectedProblemId, requestBody);
+      setAiDraftReview((previous) => ({
+        ...previous,
+        loading: false,
+        provider: response.provider,
+        warnings: response.warnings,
+        drafts: response.drafts,
+        error: null,
+        lastRequest: {
+          ...previous.lastRequest,
+          ...requestBody,
+        },
+      }));
+
+      showSnackbar(
+        response.drafts.length > 0
+          ? `Generated ${response.drafts.length} AI testcase drafts.`
+          : "No AI testcase drafts were generated for this problem.",
+        "info"
+      );
+    } catch (error) {
+      setAiDraftReview((previous) => ({
+        ...previous,
+        loading: false,
+        error: buildErrorMessage("Failed to generate AI testcase drafts.", error),
+      }));
+    }
+  }, [aiDraftReview.lastRequest, generateAiTestDrafts, locale, selectedProblemId]);
+
+  const handleClearAiDrafts = useCallback(() => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      drafts: [],
+      warnings: [],
+      error: null,
+      provider: previous.provider,
+      savingIds: [],
+    }));
+  }, []);
+
+  const handleUpdateAiDraft = useCallback(
+    (
+      draftId: string,
+      patch: Partial<Pick<AiTestcaseDraft, "input" | "expectedOutput" | "isSample">>
+    ) => {
+      setAiDraftReview((previous) => ({
+        ...previous,
+        drafts: previous.drafts.map((draft) =>
+          draft.id === draftId ? { ...draft, ...patch } : draft
+        ),
+      }));
+    },
+    []
+  );
+
+  const handleDiscardAiDraft = useCallback((draftId: string) => {
+    setAiDraftReview((previous) => ({
+      ...previous,
+      drafts: previous.drafts.filter((draft) => draft.id !== draftId),
+      savingIds: previous.savingIds.filter((id) => id !== draftId),
+    }));
+  }, []);
+
+  const persistAiDrafts = useCallback(
+    async (draftIds: string[]) => {
+      if (selectedProblemId == null || draftIds.length === 0) {
+        return;
+      }
+
+      const draftsToPersist = aiDraftReview.drafts.filter((draft) => draftIds.includes(draft.id));
+      if (!draftsToPersist.length) {
+        return;
+      }
+
+      setAiDraftReview((previous) => ({
+        ...previous,
+        savingIds: [...new Set([...previous.savingIds, ...draftIds])],
+        error: null,
+      }));
+
+      try {
+        for (const draft of draftsToPersist) {
+          await addTestCase(selectedProblemId, {
+            input: draft.input.trim(),
+            expectedOutput: draft.expectedOutput.trim(),
+            isSample: draft.isSample,
+            timeLimitMs: testcaseDraftDefaults.timeLimitMs,
+            memoryLimitMb: testcaseDraftDefaults.memoryLimitMb,
+          });
+        }
+
+        await loadProblems(selectedProblemId);
+        await loadProblemWorkspace(selectedProblemId);
+
+        setAiDraftReview((previous) => ({
+          ...previous,
+          drafts: previous.drafts.filter((draft) => !draftIds.includes(draft.id)),
+          savingIds: previous.savingIds.filter((id) => !draftIds.includes(id)),
+        }));
+
+        showSnackbar(
+          draftsToPersist.length === 1
+            ? "AI testcase draft saved."
+            : `${draftsToPersist.length} AI testcase drafts saved.`,
+          "success"
+        );
+      } catch (error) {
+        const message = buildErrorMessage("Failed to save AI testcase drafts.", error);
+        setAiDraftReview((previous) => ({
+          ...previous,
+          savingIds: previous.savingIds.filter((id) => !draftIds.includes(id)),
+          error: message,
+        }));
+        showSnackbar(message, "error");
+      }
+    },
+    [
+      addTestCase,
+      aiDraftReview.drafts,
+      loadProblemWorkspace,
+      loadProblems,
+      selectedProblemId,
+      testcaseDraftDefaults.memoryLimitMb,
+      testcaseDraftDefaults.timeLimitMs,
+    ]
+  );
+
+  const handleSaveAiDraft = useCallback(
+    (draftId: string) => {
+      void persistAiDrafts([draftId]);
+    },
+    [persistAiDrafts]
+  );
+
+  const handleSaveHighConfidenceAiDrafts = useCallback(() => {
+    const highConfidenceDraftIds = aiDraftReview.drafts
+      .filter((draft) => draft.confidence === "high")
+      .map((draft) => draft.id);
+
+    void persistAiDrafts(highConfidenceDraftIds);
+  }, [aiDraftReview.drafts, persistAiDrafts]);
 
   return (
     <Box sx={{ minHeight: "100%" }}>
@@ -1020,6 +1231,23 @@ export default function ProblemAdmin() {
                     No testcases are configured yet. Add at least one testcase to make the problem judge-ready.
                   </Alert>
                 )}
+
+                <AiTestDraftReviewPanel
+                  selectedProblemTitle={selectedProblem?.title}
+                  disabled={selectedProblemId == null}
+                  loading={aiDraftReview.loading}
+                  savingIds={aiDraftReview.savingIds}
+                  provider={aiDraftReview.provider}
+                  warnings={aiDraftReview.warnings}
+                  error={aiDraftReview.error}
+                  drafts={aiDraftReview.drafts}
+                  onGenerate={() => void handleGenerateAiDrafts()}
+                  onClear={handleClearAiDrafts}
+                  onSaveDraft={handleSaveAiDraft}
+                  onSaveHighConfidence={handleSaveHighConfidenceAiDrafts}
+                  onDiscardDraft={handleDiscardAiDraft}
+                  onUpdateDraft={handleUpdateAiDraft}
+                />
               </Stack>
             </Paper>
 

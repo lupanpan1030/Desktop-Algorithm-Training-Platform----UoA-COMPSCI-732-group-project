@@ -440,6 +440,111 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"AiTestcaseDraftDto": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"input": {
+						"type": "string"
+					},
+					"expectedOutput": {
+						"type": "string"
+					},
+					"isSample": {
+						"type": "boolean"
+					},
+					"rationale": {
+						"type": "string"
+					},
+					"confidence": {
+						"type": "string",
+						"enum": [
+							"low",
+							"medium",
+							"high"
+						]
+					},
+					"riskFlags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"sourceHints": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"input",
+					"expectedOutput",
+					"isSample",
+					"rationale",
+					"confidence",
+					"riskFlags",
+					"sourceHints"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GenerateAiTestDraftsResponseDto": {
+				"properties": {
+					"problemId": {
+						"type": "number",
+						"format": "double"
+					},
+					"provider": {
+						"type": "string"
+					},
+					"drafts": {
+						"items": {
+							"$ref": "#/components/schemas/AiTestcaseDraftDto"
+						},
+						"type": "array"
+					},
+					"warnings": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"problemId",
+					"provider",
+					"drafts",
+					"warnings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GenerateAiTestDraftsRequestDto": {
+				"properties": {
+					"locale": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 16
+					},
+					"targetCount": {
+						"type": "number",
+						"format": "double",
+						"minimum": 1,
+						"maximum": 8
+					},
+					"includeSampleDrafts": {
+						"type": "boolean"
+					},
+					"includeHiddenDrafts": {
+						"type": "boolean"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"_36_Enums.Difficulty": {
 				"type": "string",
 				"enum": [
@@ -1592,6 +1697,69 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/UpdateAiSettingsRequestDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/problems/{problemId}/ai/test-drafts": {
+			"post": {
+				"operationId": "GenerateTestDrafts",
+				"responses": {
+					"200": {
+						"description": "AI testcase drafts generated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GenerateAiTestDraftsResponseDto"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Problem not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/NotFoundError"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"description": "Generate reviewable AI testcase drafts for a curated problem.",
+				"tags": [
+					"Problem AI"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "problemId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/GenerateAiTestDraftsRequestDto"
 							}
 						}
 					}
