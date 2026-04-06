@@ -63,7 +63,7 @@ const useLanguages = () => {
       return;
     }
 
-    setLanguages(data.map(normalizeLanguage));      
+    setLanguages(data.map(normalizeLanguage));
   }, [getLanguages]);
 
   const addLanguage = useCallback(async (lang: LanguageInput) => {
@@ -105,7 +105,7 @@ const useLanguages = () => {
 
   // Auto‑load languages once on mount
   useEffect(() => {
-    fetchLanguages();
+    void fetchLanguages().catch((): void => undefined);
   }, [fetchLanguages]);
 
   return {

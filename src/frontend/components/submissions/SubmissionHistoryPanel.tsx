@@ -55,6 +55,7 @@ const getStatusColor = (status: string): ChipProps["color"] => {
   switch (status) {
     case "ACCEPTED":
       return "success";
+    case "REJECTED":
     case "WRONG_ANSWER":
     case "RUNTIME_ERROR":
     case "COMPILE_ERROR":

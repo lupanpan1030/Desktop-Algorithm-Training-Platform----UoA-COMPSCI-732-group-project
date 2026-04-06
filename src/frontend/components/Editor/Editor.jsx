@@ -77,24 +77,28 @@ export default function CodeEditor({
     // Fetch language list from backend using useApi
     useEffect(() => {
         const fetchLanguages = async () => {
-            const data = await getLanguages();
-            if (data == null) {
-                return;
-            }
-
-            setLanguages(data);
-            
-            // Create language mapping for localStorage
-            const mapping = {};
-            data.forEach(lang => {
-                const key = lang.name.toLowerCase();
-                mapping[key] = lang.languageId;
-                const normalizedKey = normalizeStarterLanguageKey(lang.name);
-                if (normalizedKey) {
-                    mapping[normalizedKey] = lang.languageId;
+            try {
+                const data = await getLanguages();
+                if (!data) {
+                    return;
                 }
-            });
-            setLanguageMap(mapping);
+
+                setLanguages(data);
+
+                // Create language mapping for localStorage
+                const mapping = {};
+                data.forEach(lang => {
+                    const key = lang.name.toLowerCase();
+                    mapping[key] = lang.languageId;
+                    const normalizedKey = normalizeStarterLanguageKey(lang.name);
+                    if (normalizedKey) {
+                        mapping[normalizedKey] = lang.languageId;
+                    }
+                });
+                setLanguageMap(mapping);
+            } catch {
+                setLanguageMap({});
+            }
         };
         fetchLanguages();
     }, [getLanguages]);

@@ -239,16 +239,17 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   const fetchSubmissionDetail = useCallback(
     async (submissionId: number) => {
       setDetailLoading(true);
-      const detail = await getSubmission(problemId, submissionId);
-      if (!detail) {
-        setPanelError("Failed to load submission details.");
-        setSelectedSubmission(null);
-      } else {
+      try {
+        const detail = await getSubmission(problemId, submissionId);
         setPanelError(null);
         setSelectedSubmissionId(submissionId);
         setSelectedSubmission(detail);
+      } catch (error) {
+        setPanelError(buildFailureMessage("Failed to load submission details.", error));
+        setSelectedSubmission(null);
+      } finally {
+        setDetailLoading(false);
       }
-      setDetailLoading(false);
     },
     [getSubmission, problemId]
   );
@@ -256,7 +257,15 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   const loadSubmissionHistory = useCallback(
     async (preferredSubmissionId?: number) => {
       setHistoryLoading(true);
-      const list = await getSubmissions(problemId);
+      let list: SubmissionListItem[];
+      try {
+        list = await getSubmissions(problemId);
+      } catch (error) {
+        setHistoryLoading(false);
+        setPanelError(buildFailureMessage("Failed to load submission history.", error));
+        return;
+      }
+
       setSubmissions(list);
       setHistoryLoading(false);
       setPanelError(null);
@@ -305,7 +314,15 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
 
   const initializeHistory = useCallback(async () => {
     setHistoryLoading(true);
-    const list = await getSubmissions(problemId);
+    let list: SubmissionListItem[];
+    try {
+      list = await getSubmissions(problemId);
+    } catch (error) {
+      setHistoryLoading(false);
+      setPanelError(buildFailureMessage("Failed to load submission history.", error));
+      return;
+    }
+
     setSubmissions(list);
     setHistoryLoading(false);
     setPanelError(null);

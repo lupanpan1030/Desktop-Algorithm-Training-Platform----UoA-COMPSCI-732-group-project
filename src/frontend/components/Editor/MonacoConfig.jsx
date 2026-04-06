@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
-import { useTheme } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 
 // Some default settings for the editor
 const editorOptions = {
@@ -26,10 +26,20 @@ export default function MonacoConfig({
     return (
         <Box sx={{ 
             flex: 1, 
+            minHeight: 0,
             overflow: 'hidden', 
-            border: '1px solid rgba(0, 0, 0, 0.12)', 
-            borderRadius: 1,
-            position: 'relative'
+            border: '1px solid',
+            borderColor: alpha(muiTheme.palette.divider, muiTheme.palette.mode === 'dark' ? 0.46 : 0.7),
+            borderRadius: 3,
+            position: 'relative',
+            bgcolor: alpha(
+                muiTheme.palette.background.default,
+                muiTheme.palette.mode === 'dark' ? 0.74 : 0.88
+            ),
+            boxShadow: `inset 0 1px 0 ${alpha(
+                muiTheme.palette.common.white,
+                muiTheme.palette.mode === 'dark' ? 0.04 : 0.68
+            )}`
         }}>
             <Editor
                 height="100%"

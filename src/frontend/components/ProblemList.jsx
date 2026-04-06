@@ -54,7 +54,14 @@ export default function ProblemList({ problems }) {
   const theme = useTheme();
 
   return (
-    <List disablePadding sx={{ flexGrow: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.9 }}>
+    <List
+      disablePadding
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.9,
+      }}
+    >
       {problems.map((problem) => {
         const completion = completionDescriptor(problem);
         const secondaryMeta = [];

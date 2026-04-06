@@ -429,24 +429,25 @@ export default function ProblemAdmin() {
   };
 
   const handleOpenEditProblem = async (problem: ProblemSummary) => {
-    const detail = await getProblem(problem.problemId, locale, true);
-    if (!detail) {
-      showSnackbar("Failed to load the selected problem.", "error");
-      return;
-    }
+    try {
+      const detail = await getProblem(problem.problemId, locale, true);
 
-    setSelectedProblemId(problem.problemId);
-    setProblemDialog({
-      open: true,
-      mode: "edit",
-      problemId: problem.problemId,
-      values: {
-        title: detail.title,
-        description: detail.description,
-        difficulty: detail.difficulty,
-        locale: detail.locale,
-      },
-    });
+      setSelectedProblemId(problem.problemId);
+      setProblemDialog({
+        open: true,
+        mode: "edit",
+        problemId: problem.problemId,
+        values: {
+          title: detail.title,
+          description: detail.description,
+          difficulty: detail.difficulty,
+          locale: detail.locale,
+        },
+      });
+    } catch (error) {
+      setPageError(buildErrorMessage("Failed to load the selected problem.", error));
+      showSnackbar("Failed to load the selected problem.", "error");
+    }
   };
 
   const handleSubmitProblem = async (values: ProblemMutationPayload) => {

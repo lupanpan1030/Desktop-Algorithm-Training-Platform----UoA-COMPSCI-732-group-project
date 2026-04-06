@@ -68,9 +68,11 @@ export default function ListPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const data = await getProblems(locale, true);
-      if (data) {
+      try {
+        const data = await getProblems(locale, true);
         setProblems(data);
+      } catch {
+        setProblems([]);
       }
     }
     fetchData();
@@ -145,10 +147,10 @@ export default function ListPage() {
 
   useAiPageContext(pageContext);
 
-  if (error) {
+  if (error && problems.length === 0) {
     return (
       <Alert severity="error" sx={{ borderRadius: 4 }}>
-        Error loading problems
+        Error loading problems: {error.message}
       </Alert>
     );
   }
@@ -156,18 +158,25 @@ export default function ListPage() {
   return (
     <Box
       sx={{
-        height: "100%",
-        minHeight: 0,
         display: "grid",
         gap: 1.6,
+        alignItems: "start",
         gridTemplateColumns: {
           xs: "1fr",
-          lg: filtersOpen ? "minmax(220px, 248px) minmax(0, 1fr)" : "1fr",
+          lg: filtersOpen ? "minmax(0, 1fr) minmax(220px, 248px)" : "1fr",
         },
       }}
     >
       {filtersOpen && (
-        <Box sx={{ minHeight: 0 }}>
+        <Box
+          sx={{
+            minHeight: 0,
+            order: { xs: 0, lg: 2 },
+            alignSelf: "start",
+            position: { lg: "sticky" },
+            top: { lg: 0 },
+          }}
+        >
           <FiltersPanel
             difficultyFilter={difficultyFilter}
             statusFilter={statusFilter}
@@ -180,10 +189,9 @@ export default function ListPage() {
       <Paper
         elevation={0}
         sx={(theme) => ({
-          height: "100%",
-          minHeight: 0,
           display: "flex",
           flexDirection: "column",
+          order: 1,
           borderRadius: 6,
           border: "1px solid",
           borderColor: alpha(theme.palette.divider, 0.46),
@@ -285,15 +293,12 @@ export default function ListPage() {
           sx={{
             px: { xs: 1.7, md: 2.1 },
             pb: 1.8,
-            flex: 1,
-            minHeight: 0,
-            overflow: "hidden",
           }}
         >
           {loading ? (
             <Box
               sx={{
-                height: "100%",
+                minHeight: 320,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -311,7 +316,7 @@ export default function ListPage() {
           ) : (
             <Box
               sx={{
-                height: "100%",
+                minHeight: 320,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
