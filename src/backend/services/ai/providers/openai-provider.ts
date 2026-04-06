@@ -6,6 +6,7 @@ import {
   AiProviderOutput,
   AiTestDraftInput,
   AiTestDraftOutput,
+  AiTestDraftGenerationStrategy,
 } from "./ai-provider";
 import {
   DEFAULT_AI_MODEL,
@@ -176,6 +177,7 @@ function buildTestDraftPrompt(input: AiTestDraftInput) {
     `Need sample drafts: ${input.includeSampleDrafts ? "yes" : "no"}`,
     `Need hidden drafts: ${input.includeHiddenDrafts ? "yes" : "no"}`,
     `Target draft count: ${input.targetCount}`,
+    `Generation strategy: ${input.generationStrategy}`,
     `Current testcase coverage: ${input.problem.sampleCaseCount} sample / ${input.problem.hiddenCaseCount} hidden`,
     `Existing testcase summary:\n${existingCoverage}`,
     `Starter code languages: ${starterLanguages}`,
@@ -226,11 +228,31 @@ function buildTestDraftSystemInstructions() {
     "Return JSON only. Do not wrap the response in Markdown.",
     "Avoid duplicating existing testcase coverage.",
     "Prefer concrete sample cases and meaningful edge cases.",
+    "Respect generation strategy exactly: balanced = mixed coverage, sample-first = prioritize runnable sample-style cases, hidden-first = prioritize judge-only hidden cases, edge-case-bias = prioritize corner cases and tricky boundaries.",
     "Every draft must contain exact input and expectedOutput strings.",
     "If expected output is uncertain, keep the best available guess but set confidence to low and include risk flag requires_manual_output_review.",
     "Do not claim certainty when the problem statement is ambiguous.",
     "Keep drafts concise and reviewable.",
   ].join("\n");
+}
+
+function rankStrategyDraft(
+  draft: AiTestcaseDraftDto,
+  strategy: AiTestDraftGenerationStrategy
+) {
+  const hasEdgeCaseSignal = draft.sourceHints.includes("edge-case reasoning");
+  const riskPenalty = draft.riskFlags.length > 0 ? 1 : 0;
+
+  switch (strategy) {
+    case "sample-first":
+      return [draft.isSample ? 0 : 1, riskPenalty];
+    case "hidden-first":
+      return [draft.isSample ? 1 : 0, riskPenalty];
+    case "edge-case-bias":
+      return [hasEdgeCaseSignal ? 0 : 1, draft.isSample ? 1 : 0, riskPenalty];
+    default:
+      return [draft.isSample ? 0 : 1, riskPenalty];
+  }
 }
 
 function normalizeConfidence(value?: string): "low" | "medium" | "high" {
@@ -324,6 +346,21 @@ function normalizeDrafts(
       };
     })
     .filter((draft): draft is AiTestcaseDraftDto => Boolean(draft))
+    .map((draft, index) => ({ draft, index }))
+    .sort((left, right) => {
+      const leftRank = rankStrategyDraft(left.draft, input.generationStrategy);
+      const rightRank = rankStrategyDraft(right.draft, input.generationStrategy);
+
+      for (let position = 0; position < Math.max(leftRank.length, rightRank.length); position += 1) {
+        const diff = (leftRank[position] ?? 0) - (rightRank[position] ?? 0);
+        if (diff !== 0) {
+          return diff;
+        }
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ draft }) => draft)
     .slice(0, input.targetCount);
 }
 

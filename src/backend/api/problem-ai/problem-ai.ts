@@ -13,6 +13,7 @@ export class GenerateAiTestDraftsRequestDto {
 
   public includeSampleDrafts?: boolean;
   public includeHiddenDrafts?: boolean;
+  public generationStrategy?: "balanced" | "sample-first" | "hidden-first" | "edge-case-bias";
 }
 
 export class AiTestcaseDraftDto {

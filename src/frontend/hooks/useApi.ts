@@ -141,11 +141,18 @@ export interface AiTestcaseDraft {
   sourceHints: string[];
 }
 
+export type AiDraftGenerationStrategy =
+  | "balanced"
+  | "sample-first"
+  | "hidden-first"
+  | "edge-case-bias";
+
 export interface GenerateAiTestDraftsPayload {
   locale?: string;
   targetCount?: number;
   includeSampleDrafts?: boolean;
   includeHiddenDrafts?: boolean;
+  generationStrategy?: AiDraftGenerationStrategy;
 }
 
 export interface GenerateAiTestDraftsResponse {

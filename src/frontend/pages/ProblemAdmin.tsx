@@ -83,6 +83,7 @@ const defaultAiDraftRequest: GenerateAiTestDraftsPayload = {
   targetCount: 5,
   includeSampleDrafts: true,
   includeHiddenDrafts: true,
+  generationStrategy: "balanced",
 };
 
 function createInitialAiDraftReviewState(): AiDraftReviewState {

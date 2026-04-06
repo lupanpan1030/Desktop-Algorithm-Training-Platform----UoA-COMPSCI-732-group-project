@@ -133,6 +133,16 @@ function buildMockDrafts(input: AiTestDraftInput): AiTestDraftOutput {
   const warnings: string[] = [
     "Preview mode only extracts explicit examples and does not infer hidden edge cases confidently.",
   ];
+  if (input.generationStrategy === "hidden-first") {
+    warnings.push(
+      "Preview mode cannot truly prioritize hidden-first drafts because it does not infer judge-only cases."
+    );
+  }
+  if (input.generationStrategy === "edge-case-bias") {
+    warnings.push(
+      "Preview mode cannot fully honor edge-case bias without inferred reasoning; it will fall back to explicit examples."
+    );
+  }
   const existingKeys = new Set(
     input.existingTestcases.map(
       (testcase) => `${testcase.isSample ? "sample" : "hidden"}:${testcase.input}::${testcase.expectedOutput}`

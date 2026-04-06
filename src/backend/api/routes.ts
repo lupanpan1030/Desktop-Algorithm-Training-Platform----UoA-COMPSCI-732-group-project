@@ -224,6 +224,7 @@ const models: TsoaRoute.Models = {
             "targetCount": {"dataType":"double","validators":{"minimum":{"value":1},"maximum":{"value":8}}},
             "includeSampleDrafts": {"dataType":"boolean"},
             "includeHiddenDrafts": {"dataType":"boolean"},
+            "generationStrategy": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["balanced"]},{"dataType":"enum","enums":["sample-first"]},{"dataType":"enum","enums":["hidden-first"]},{"dataType":"enum","enums":["edge-case-bias"]}]},
         },
         "additionalProperties": false,
     },

@@ -5,7 +5,10 @@ import {
   GenerateAiTestDraftsResponseDto,
 } from "./problem-ai";
 import { createAiProvider } from "../../services/ai/providers/create-ai-provider";
-import { AiProvider } from "../../services/ai/providers/ai-provider";
+import {
+  AiProvider,
+  AiTestDraftGenerationStrategy,
+} from "../../services/ai/providers/ai-provider";
 
 function clampTargetCount(value?: number) {
   if (!Number.isFinite(value)) {
@@ -13,6 +16,19 @@ function clampTargetCount(value?: number) {
   }
 
   return Math.max(1, Math.min(8, Math.trunc(value ?? 5)));
+}
+
+function normalizeGenerationStrategy(
+  value?: string
+): AiTestDraftGenerationStrategy {
+  switch (value) {
+    case "sample-first":
+    case "hidden-first":
+    case "edge-case-bias":
+      return value;
+    default:
+      return "balanced";
+  }
 }
 
 export class ProblemAiService {
@@ -28,6 +44,7 @@ export class ProblemAiService {
   ): Promise<GenerateAiTestDraftsResponseDto> {
     const includeSampleDrafts = dto.includeSampleDrafts ?? true;
     const includeHiddenDrafts = dto.includeHiddenDrafts ?? true;
+    const generationStrategy = normalizeGenerationStrategy(dto.generationStrategy);
 
     const problem = await this.problemsService.getProblem(
       problemId,
@@ -43,6 +60,7 @@ export class ProblemAiService {
       targetCount: clampTargetCount(dto.targetCount),
       includeSampleDrafts,
       includeHiddenDrafts,
+      generationStrategy,
     });
 
     return {

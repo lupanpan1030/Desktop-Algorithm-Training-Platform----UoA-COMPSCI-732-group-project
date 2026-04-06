@@ -540,6 +540,15 @@
 					},
 					"includeHiddenDrafts": {
 						"type": "boolean"
+					},
+					"generationStrategy": {
+						"type": "string",
+						"enum": [
+							"balanced",
+							"sample-first",
+							"hidden-first",
+							"edge-case-bias"
+						]
 					}
 				},
 				"type": "object",

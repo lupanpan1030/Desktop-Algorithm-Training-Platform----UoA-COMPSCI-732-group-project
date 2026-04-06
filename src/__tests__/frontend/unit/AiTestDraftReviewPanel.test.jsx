@@ -29,6 +29,7 @@ function buildProps(overrides = {}) {
       targetCount: 5,
       includeSampleDrafts: true,
       includeHiddenDrafts: true,
+      generationStrategy: "balanced",
     },
     onGenerate: vi.fn(),
     onClear: vi.fn(),
@@ -53,6 +54,7 @@ describe("AiTestDraftReviewPanel", () => {
     expect(screen.getByText("From sample reference")).toBeInTheDocument();
     expect(screen.getByText("Manual review required")).toBeInTheDocument();
     expect(screen.getByText("Manual review gate")).toBeInTheDocument();
+    expect(screen.getByText(/mixed batch of sample and hidden drafts/i)).toBeInTheDocument();
     expect(screen.getAllByText("Review output manually").length).toBeGreaterThan(0);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByText("1 need manual review")).toBeInTheDocument();

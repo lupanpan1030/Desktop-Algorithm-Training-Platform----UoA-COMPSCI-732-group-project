@@ -141,6 +141,7 @@ type GenerateAiTestDraftsRequestDto = {
   targetCount?: number;
   includeSampleDrafts?: boolean;
   includeHiddenDrafts?: boolean;
+  generationStrategy?: "balanced" | "sample-first" | "hidden-first" | "edge-case-bias";
 };
 ```
 
@@ -261,10 +262,11 @@ Implemented so far:
 - draft review panel inside `Problem Admin`
 - editable draft input / expected output / sample toggle
 - save single draft into the existing testcase APIs
-- save all high-confidence drafts
-- generation controls for draft count, sample drafts, and hidden drafts
+- save all batch-ready drafts
+- generation controls for draft count, sample drafts, hidden drafts, and generation strategy
 - batch selection, save selected, and discard selected
 - clearer provenance and review-risk labels in the UI
+- bulk-save review gate so only batch-ready drafts are persisted together
 
 Still pending for later:
 

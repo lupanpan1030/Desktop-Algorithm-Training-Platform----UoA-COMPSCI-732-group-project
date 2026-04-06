@@ -72,6 +72,7 @@ describe("Problem AI routes", () => {
         targetCount: 4,
         includeSampleDrafts: true,
         includeHiddenDrafts: true,
+        generationStrategy: "hidden-first",
       })
       .expect(200);
 
@@ -81,6 +82,7 @@ describe("Problem AI routes", () => {
       expect.arrayContaining([
         expect.stringContaining("Preview mode"),
         expect.stringContaining("Hidden testcase drafts are not generated"),
+        expect.stringContaining("hidden-first"),
       ])
     );
     expect(response.body.drafts).toEqual(

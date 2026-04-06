@@ -3,6 +3,12 @@ import { ProblemDetails } from "../../../api/problem/problem";
 import { TestCase } from "../../../api/testcase/testcase";
 import { AiTestcaseDraftDto } from "../../../api/problem-ai/problem-ai";
 
+export type AiTestDraftGenerationStrategy =
+  | "balanced"
+  | "sample-first"
+  | "hidden-first"
+  | "edge-case-bias";
+
 export interface AiProviderInput {
   action: "suggest" | "answer";
   userMessage?: string;
@@ -24,6 +30,7 @@ export interface AiTestDraftInput {
   targetCount: number;
   includeSampleDrafts: boolean;
   includeHiddenDrafts: boolean;
+  generationStrategy: AiTestDraftGenerationStrategy;
 }
 
 export interface AiTestDraftOutput {

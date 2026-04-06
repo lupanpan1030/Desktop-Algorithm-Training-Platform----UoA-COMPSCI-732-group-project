@@ -21,6 +21,7 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import type {
+  AiDraftGenerationStrategy,
   AiTestcaseDraft,
   GenerateAiTestDraftsPayload,
 } from "../../hooks/useApi";
@@ -109,6 +110,32 @@ function riskFlagLabel(riskFlag: string) {
   }
 }
 
+function strategyLabel(strategy: AiDraftGenerationStrategy) {
+  switch (strategy) {
+    case "sample-first":
+      return "Sample-first";
+    case "hidden-first":
+      return "Hidden-first";
+    case "edge-case-bias":
+      return "Edge-case bias";
+    default:
+      return "Balanced";
+  }
+}
+
+function strategyHelper(strategy: AiDraftGenerationStrategy) {
+  switch (strategy) {
+    case "sample-first":
+      return "Prefer explicit sample-style cases first, then fill the rest if budget remains.";
+    case "hidden-first":
+      return "Prefer judge-only hidden cases first, then add samples only if there is room.";
+    case "edge-case-bias":
+      return "Push the model toward boundary conditions, tricky branches, and failure-prone edges.";
+    default:
+      return "Aim for a mixed batch of sample and hidden drafts based on current coverage gaps.";
+  }
+}
+
 function canPersistDraft(draft: AiTestcaseDraft) {
   return draft.input.trim().length > 0 && draft.expectedOutput.trim().length > 0;
 }
@@ -154,6 +181,7 @@ export default function AiTestDraftReviewPanel({
   const selectedReviewGateCount = Math.max(0, selectedCount - selectedBatchReadyCount);
   const canGenerate =
     Boolean(requestOptions.includeSampleDrafts) || Boolean(requestOptions.includeHiddenDrafts);
+  const generationStrategy = requestOptions.generationStrategy ?? "balanced";
 
   return (
     <Paper
@@ -277,6 +305,32 @@ export default function AiTestDraftReviewPanel({
                 ))}
               </TextField>
 
+              <TextField
+                select
+                label="Generation strategy"
+                size="small"
+                value={generationStrategy}
+                onChange={(event) =>
+                  onUpdateRequest({
+                    generationStrategy: event.target.value as AiDraftGenerationStrategy,
+                  })
+                }
+                sx={{ minWidth: 182 }}
+              >
+                {(
+                  [
+                    "balanced",
+                    "sample-first",
+                    "hidden-first",
+                    "edge-case-bias",
+                  ] as AiDraftGenerationStrategy[]
+                ).map((strategy) => (
+                  <MenuItem key={strategy} value={strategy}>
+                    {strategyLabel(strategy)}
+                  </MenuItem>
+                ))}
+              </TextField>
+
               <FormControlLabel
                 control={
                   <Switch
@@ -305,6 +359,26 @@ export default function AiTestDraftReviewPanel({
               <Typography variant="caption" color="warning.main">
                 Select at least one draft type before generating.
               </Typography>
+            )}
+            {canGenerate && (
+              <Stack spacing={0.3}>
+                <Typography variant="caption" color="text.secondary">
+                  {strategyHelper(generationStrategy)}
+                </Typography>
+                {generationStrategy === "sample-first" &&
+                  !requestOptions.includeSampleDrafts && (
+                    <Typography variant="caption" color="warning.main">
+                      Sample-first works best when sample drafts are enabled.
+                    </Typography>
+                  )}
+                {(generationStrategy === "hidden-first" ||
+                  generationStrategy === "edge-case-bias") &&
+                  !requestOptions.includeHiddenDrafts && (
+                    <Typography variant="caption" color="warning.main">
+                      This strategy works best when hidden drafts are enabled.
+                    </Typography>
+                  )}
+              </Stack>
             )}
           </Stack>
         </Paper>
