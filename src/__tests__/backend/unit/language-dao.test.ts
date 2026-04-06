@@ -86,19 +86,27 @@ describe("LanguageDao", () => {
       });
       expect(fromDb).not.toBeNull();
       expect((fromDb as ProgrammingLanguage).suffix).toBe("go");
+      expect((fromDb as ProgrammingLanguage).normalized_name).toBe("go");
+      expect((fromDb as ProgrammingLanguage).normalized_suffix).toBe("go");
     });
   });
 
   /* ---------- Update ---------- */
   describe("updateLanguage()", () => {
     it("updates an existing language and returns the updated row", async () => {
-      const updated = await LanguageDao.updateLanguage(1, { version: "3.10" });
+      const updated = await LanguageDao.updateLanguage(1, {
+        name: "PyPy",
+        version: "3.10",
+      });
       expect(updated.version).toBe("3.10");
+      expect(updated.name).toBe("PyPy");
 
       const check = await testPrisma.programmingLanguage.findUnique({
         where: { language_id: 1 },
       });
       expect((check as ProgrammingLanguage).version).toBe("3.10");
+      expect((check as ProgrammingLanguage).normalized_name).toBe("pypy");
+      expect((check as ProgrammingLanguage).normalized_suffix).toBe("py");
     });
 
     it("throws when updating a non‑existent ID", async () => {

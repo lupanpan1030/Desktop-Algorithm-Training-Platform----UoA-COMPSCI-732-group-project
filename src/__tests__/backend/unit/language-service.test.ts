@@ -3,6 +3,7 @@ import { LanguageService } from "../../../backend/api/language/language-service"
 import { LanguageDao } from "../../../backend/api/language/language-dao";
 import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 import { ForbiddenError } from "../../../backend/utils/errors/forbidden-error";
+import { ConflictError } from "../../../backend/utils/errors/conflict-error";
 
 // --- vi.mock 必须放在 import 语句之后，*但* 在执行代码之前 ------------------
 // Mock the entire LanguageDao module so that all calls are intercepted.
@@ -76,6 +77,8 @@ describe("LanguageService", () => {
   beforeEach(() => {
     // 保证每个测试开始前 mock 都是干净的
     vi.clearAllMocks();
+    mockedDao.getAllLanguages.mockResolvedValue([]);
+    mockedDao.findLanguageById.mockResolvedValue(fakeRow);
   });
 
   it("getAllLanguages → maps rows to DTOs", async () => {
@@ -103,7 +106,7 @@ describe("LanguageService", () => {
   });
 
   it("createLanguage → passes data through to DAO and maps result", async () => {
-    mockedDao.createLanguage.mockResolvedValue(fakeRow);
+    mockedDao.createLanguage.mockResolvedValue({ ...fakeRow, name: "Go", suffix: "go" });
 
     const body: {
       name: string;
@@ -112,8 +115,8 @@ describe("LanguageService", () => {
       compilerCmd: string | null;
       runtimeCmd: string;
     } = {
-      name: "Python",
-      suffix: "py",
+      name: "Go",
+      suffix: "go",
       version: "3.12",
       compilerCmd: null,
       runtimeCmd: "python",
@@ -122,7 +125,11 @@ describe("LanguageService", () => {
     const created = await service.createLanguage(body);
 
     expect(mockedDao.createLanguage).toHaveBeenCalledWith(body);
-    expect(created).toEqual(expectedDto);
+    expect(created).toEqual({
+      ...expectedDto,
+      name: "Go",
+      suffix: "go",
+    });
   });
 
   it("updateLanguage → returns updated DTO", async () => {
@@ -136,10 +143,44 @@ describe("LanguageService", () => {
   });
 
   it("updateLanguage → throws NotFoundError when DAO rejects with P2025", async () => {
+    mockedDao.findLanguageById.mockResolvedValue(fakeRow);
     const err = Object.assign(new Error("not found"), { code: "P2025" });
     mockedDao.updateLanguage.mockRejectedValue(err);
 
     await expect(service.updateLanguage(99, {})).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("createLanguage → throws ConflictError when the normalized name already exists", async () => {
+    mockedDao.getAllLanguages.mockResolvedValue([fakeRow]);
+
+    await expect(
+      service.createLanguage({
+        name: " python ",
+        suffix: "py3",
+        version: "3.12",
+        compilerCmd: null,
+        runtimeCmd: "python3",
+      })
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(mockedDao.createLanguage).not.toHaveBeenCalled();
+  });
+
+  it("updateLanguage → throws ConflictError when another language already uses the suffix", async () => {
+    mockedDao.getAllLanguages.mockResolvedValue([
+      fakeRow,
+      {
+        ...fakeRow,
+        language_id: 2,
+        name: "JavaScript",
+        suffix: "js",
+        run_command: "node",
+      },
+    ]);
+
+    await expect(service.updateLanguage(1, { suffix: "JS" })).rejects.toBeInstanceOf(
+      ConflictError
+    );
+    expect(mockedDao.updateLanguage).not.toHaveBeenCalled();
   });
 
   it("deleteLanguage → forbids deleting default language", async () => {

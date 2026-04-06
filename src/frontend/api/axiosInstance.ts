@@ -1,7 +1,23 @@
 import axios from 'axios';
+import { buildBackendBaseUrl, DEFAULT_BACKEND_PORT } from '../../shared/backendConfig';
+
+type ElectronApiBridge = {
+  backendBaseUrl?: string;
+};
+
+function resolveBackendBaseUrl() {
+  if (typeof window !== 'undefined') {
+    const electronAPI = (window as Window & { electronAPI?: ElectronApiBridge }).electronAPI;
+    if (electronAPI?.backendBaseUrl) {
+      return electronAPI.backendBaseUrl;
+    }
+  }
+
+  return buildBackendBaseUrl(DEFAULT_BACKEND_PORT);
+}
 
 const api = axios.create({
-  baseURL: 'http://localhost:6785',
+  baseURL: resolveBackendBaseUrl(),
   timeout: 10_000,
 });
 api.interceptors.response.use(

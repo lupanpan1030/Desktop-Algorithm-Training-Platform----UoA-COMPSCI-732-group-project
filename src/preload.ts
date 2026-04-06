@@ -2,10 +2,16 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
+import { buildBackendBaseUrl, normalizeBackendPort } from './shared/backendConfig';
+
+const backendPort = normalizeBackendPort(process.env.PORT);
+const backendBaseUrl = buildBackendBaseUrl(backendPort);
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
+  backendPort,
+  backendBaseUrl,
   send: (channel: string, data: any) => {
     // whitelist channels
     const validChannels = ['toMain'];

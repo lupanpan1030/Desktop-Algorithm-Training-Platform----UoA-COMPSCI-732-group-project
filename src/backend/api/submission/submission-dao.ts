@@ -116,6 +116,46 @@ export class SubmissionDao {
     return createdResults;
   }
 
+  static async finalizeSubmission(
+    submissionId: number,
+    status: SubmissionStatus,
+    results: {
+      status: SubmissionStatus,
+      output?: string,
+      stdout?: string,
+      stderr?: string,
+      exitCode?: number | null,
+      phase?: string,
+      timedOut?: boolean,
+      runtimeMs: number,
+      memoryKb: number
+    }[]
+  ): Promise<void> {
+    await this.db.$transaction(async (tx) => {
+      await tx.submission.update({
+        where: { submission_id: submissionId },
+        data: { status },
+      });
+
+      for (const result of results) {
+        await tx.submissionResult.create({
+          data: {
+            submission_id: submissionId,
+            status: result.status,
+            output: result.output,
+            stdout: result.stdout,
+            stderr: result.stderr,
+            exit_code: result.exitCode ?? null,
+            phase: result.phase,
+            timed_out: result.timedOut ?? false,
+            runtime_ms: result.runtimeMs,
+            memory_kb: result.memoryKb,
+          },
+        });
+      }
+    });
+  }
+
   /**
    * Update submission status
    */

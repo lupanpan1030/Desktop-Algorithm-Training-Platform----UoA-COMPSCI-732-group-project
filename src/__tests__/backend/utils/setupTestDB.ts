@@ -136,6 +136,8 @@ export async function dropAndSeedLanguage() {
       {
         language_id: 1,
         name: 'Python',
+        normalized_name: 'python',
+        normalized_suffix: 'py',
         suffix: 'py',
         version: '3.12',
         compile_command: null,  
@@ -145,6 +147,8 @@ export async function dropAndSeedLanguage() {
         {
         language_id: 2,
         name: 'JavaScript',
+        normalized_name: 'javascript',
+        normalized_suffix: 'js',
         suffix: 'js',
         version: '20',
         compile_command: null,  

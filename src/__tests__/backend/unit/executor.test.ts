@@ -147,4 +147,32 @@ print("done")
 		expect(result.timedOut).toBe(true);
 		expect(result.stderr).toBe('time limit exceeded');
 	});
+
+	it('enforces testcase memory limits for interpreter runs', async () => {
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		const pythonCode = `
+import time
+data = bytearray(64 * 1024 * 1024)
+time.sleep(0.3)
+print(len(data))
+		`.trim();
+		const options = {
+			code: pythonCode,
+			fileSuffix: 'py',
+			interpretCmd: 'python3',
+			testCases: [{ input: '', timeLimitMs: 1000, memoryLimitMb: 16 }],
+		};
+
+		const results = await judgeSolution(ExecutionMode.Interprete, options);
+		expect(results).toHaveLength(1);
+		const result = results[0];
+		expect(result.succeeded).toBe(false);
+		expect(result.status).toBe(SubmissionStatus.RUNTIME_ERROR);
+		expect(result.phase).toBe('run');
+		expect(result.stderr).toContain('memory limit exceeded');
+		expect(result.executionMemoryKb).toBeGreaterThan(16 * 1024);
+	}, 15000);
 });

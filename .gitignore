@@ -5,3 +5,4 @@ dev.db
 node_modules/
 .webpack/
 out/
+backups/

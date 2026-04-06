@@ -107,6 +107,21 @@ export function isEmptyMigrationSql(sql: string) {
   return sql.trim() === "" || sql.includes("-- This is an empty migration.");
 }
 
+function buildBackupPath(dbPath: string) {
+  const extension = path.extname(dbPath) || ".db";
+  const basename = path.basename(dbPath, extension);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  return path.join(path.dirname(dbPath), "backups", `${basename}-${timestamp}${extension}.bak`);
+}
+
+export async function backupSqliteDatabase(dbPath: string) {
+  const backupPath = buildBackupPath(dbPath);
+  await fs.mkdir(path.dirname(backupPath), { recursive: true });
+  await fs.copyFile(dbPath, backupPath);
+  return backupPath;
+}
+
 export async function bootstrapSqliteDatabase(
   dbPath: string,
   schemaPath = getSchemaPath()
@@ -125,14 +140,15 @@ export async function syncSqliteDatabase(
     await fs.access(dbPath);
   } catch {
     await bootstrapSqliteDatabase(dbPath, schemaPath);
-    return { created: true, changed: true };
+    return { created: true, changed: true, backupPath: null };
   }
 
   const diffSql = generateSchemaDiffSql(toSqliteFileUrl(dbPath), schemaPath);
   if (isEmptyMigrationSql(diffSql)) {
-    return { created: false, changed: false };
+    return { created: false, changed: false, backupPath: null };
   }
 
+  const backupPath = await backupSqliteDatabase(dbPath);
   await applySqlToSqlite(dbPath, diffSql);
-  return { created: false, changed: true };
+  return { created: false, changed: true, backupPath };
 }

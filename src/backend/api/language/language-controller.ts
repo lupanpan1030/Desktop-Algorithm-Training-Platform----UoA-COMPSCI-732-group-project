@@ -25,6 +25,7 @@ import {
 import { ValidateError } from '../../utils/errors/validation-error';
 import { NotFoundError } from '../../utils/errors/not-found-error';
 import { ForbiddenError } from '../../utils/errors/forbidden-error';
+import { ConflictError } from '../../utils/errors/conflict-error';
 
 @Route('languages')
 @Tags('ProgrammingLanguage')
@@ -58,6 +59,7 @@ export class LanguageController extends Controller {
    * @param body Language information
    */
   @Response<ValidateError>(422, 'Validation Failed')
+  @Response<ConflictError>(409, 'Language name or suffix already exists')
   @SuccessResponse('201', 'Created')
   @Post()
   public async create(
@@ -83,18 +85,23 @@ export class LanguageController extends Controller {
    */
   @Response<NotFoundError>(404, 'Language not found')
   @Response<ValidateError>(422, 'Validation Failed')
+  @Response<ConflictError>(409, 'Language name or suffix already exists')
   @SuccessResponse('200', 'OK')
   @Put('{id}')
   public async update(
     @Path() id: number,
     @Body() body: UpdateLanguageRequestDto,
   ): Promise<LanguageDto> {
+    const compilerCmd =
+      body.compilerCmd !== undefined ? body.compilerCmd : body.compile_command;
+    const runtimeCmd =
+      body.runtimeCmd !== undefined ? body.runtimeCmd : body.run_command;
     const data = {
-      name:        body.name,
-      suffix:      body.suffix,
-      version:     body.version,
-      compilerCmd: body.compilerCmd ?? body.compile_command ?? null,
-      runtimeCmd:  body.runtimeCmd  ?? body.run_command,
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.suffix !== undefined ? { suffix: body.suffix } : {}),
+      ...(body.version !== undefined ? { version: body.version } : {}),
+      ...(compilerCmd !== undefined ? { compilerCmd } : {}),
+      ...(runtimeCmd !== undefined ? { runtimeCmd } : {}),
     };
     return this.service.updateLanguage(id, data);
   }

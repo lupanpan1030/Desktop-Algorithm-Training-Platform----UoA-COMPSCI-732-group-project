@@ -7,6 +7,7 @@
 import type { ProgrammingLanguage } from '@prisma/client';
 import { getPrisma } from '../../db/prisma/prisma';
 import { CreateLanguageDto } from './language';
+import { normalizeLanguageName, normalizeLanguageSuffix } from './language-normalization';
 
 export class LanguageDao {
   /** Always returns the current Prisma Client */
@@ -36,6 +37,8 @@ export class LanguageDao {
     return this.db.programmingLanguage.create({
       data: {
         ...rest,
+        normalized_name: normalizeLanguageName(data.name),
+        normalized_suffix: normalizeLanguageSuffix(data.suffix),
         compile_command: compilerCmd ?? null, // Map camelCase → snake_case
         run_command: runtimeCmd ?? null,
       },
@@ -52,6 +55,12 @@ export class LanguageDao {
       where: { language_id: id },
       data: {
         ...rest,
+        ...(data.name !== undefined && {
+          normalized_name: normalizeLanguageName(data.name),
+        }),
+        ...(data.suffix !== undefined && {
+          normalized_suffix: normalizeLanguageSuffix(data.suffix),
+        }),
         ...(compilerCmd !== undefined && { compile_command: compilerCmd }),
         ...(runtimeCmd  !== undefined && { run_command:  runtimeCmd }),
       },

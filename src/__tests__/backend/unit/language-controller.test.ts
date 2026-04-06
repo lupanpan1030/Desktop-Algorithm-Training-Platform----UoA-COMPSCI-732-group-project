@@ -138,22 +138,23 @@ describe("LanguageController", () => {
       expect(res).toEqual(fakeResp);
     });
 
+    it("does not clear omitted command fields during partial updates", async () => {
+      const body = {
+        name: "Renamed Python",
+      };
+      serviceMock.updateLanguage.mockResolvedValue({ languageId: 1, ...body });
+
+      await controller.update(1, body as any);
+
+      expect(serviceMock.updateLanguage).toHaveBeenCalledWith(1, {
+        name: "Renamed Python",
+      });
+    });
+
     it("propagates NotFoundError from service.updateLanguage", async () => {
       serviceMock.updateLanguage.mockRejectedValue(new NotFoundError("Nope"));
-      await expect(controller.update(404, {
-      "compilerCmd": null,
-      "name": undefined,
-      "runtimeCmd": undefined,
-      "suffix": undefined,
-      "version": undefined,
-    } as any)).rejects.toBeInstanceOf(NotFoundError);
-      expect(serviceMock.updateLanguage).toHaveBeenCalledWith(404, {
-      "compilerCmd": null,
-      "name": undefined,
-      "runtimeCmd": undefined,
-      "suffix": undefined,
-      "version": undefined,
-    });
+      await expect(controller.update(404, {} as any)).rejects.toBeInstanceOf(NotFoundError);
+      expect(serviceMock.updateLanguage).toHaveBeenCalledWith(404, {});
     });
   });
 

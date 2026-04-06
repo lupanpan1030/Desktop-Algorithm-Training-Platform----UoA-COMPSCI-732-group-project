@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { SubmissionStatus } from '@prisma/client';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -35,6 +35,7 @@ export interface ExecutionResult {
 export interface JudgeTestCase {
     input: string;
     timeLimitMs?: number;
+    memoryLimitMb?: number;
 }
 
 interface JudgeOptions {
@@ -51,6 +52,20 @@ interface CommandSpec {
     command: string;
     args: string[];
     includesSource: boolean;
+}
+
+const MEMORY_POLL_INTERVAL_MS = 50;
+
+export class JudgeExecutionSetupError extends Error {
+    readonly phase: ExecutionPhase;
+    readonly status: SubmissionStatus;
+
+    constructor(message: string, phase: ExecutionPhase, status: SubmissionStatus) {
+        super(message);
+        this.phase = phase;
+        this.status = status;
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
 }
 
 function normalizeSuffix(fileSuffix: string) {
@@ -108,6 +123,38 @@ function formatOutput(stdout: string, stderr: string) {
     return normalizedStdout.length > 0 ? normalizedStdout : normalizedStderr;
 }
 
+function readCommandOutput(command: string, args: string[]) {
+    return new Promise<string>((resolve, reject) => {
+        execFile(command, args, { encoding: "utf8" }, (error, stdout, stderr) => {
+            if (error) {
+                reject(stderr ? new Error(stderr.trim()) : error);
+                return;
+            }
+            resolve(stdout);
+        });
+    });
+}
+
+async function sampleProcessMemoryKb(pid: number) {
+    try {
+        if (process.platform === "win32") {
+            const output = await readCommandOutput("powershell", [
+                "-NoProfile",
+                "-Command",
+                `(Get-Process -Id ${pid}).WorkingSet64`,
+            ]);
+            const bytes = Number.parseInt(output.trim(), 10);
+            return Number.isFinite(bytes) ? Math.ceil(bytes / 1024) : null;
+        }
+
+        const output = await readCommandOutput("ps", ["-o", "rss=", "-p", String(pid)]);
+        const rssKb = Number.parseInt(output.trim(), 10);
+        return Number.isFinite(rssKb) ? rssKb : null;
+    } catch {
+        return null;
+    }
+}
+
 async function runProcess(
     command: string,
     args: string[],
@@ -115,12 +162,15 @@ async function runProcess(
         cwd: string;
         input?: string;
         timeoutMs?: number;
+        memoryLimitMb?: number;
         failureStatus: SubmissionStatus;
         phase: ExecutionPhase;
     }
 ): Promise<ExecutionResult> {
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIME_LIMIT;
     const startTime = Date.now();
+    const memoryLimitKb =
+        options.memoryLimitMb != null ? options.memoryLimitMb * 1024 : null;
 
     return await new Promise<ExecutionResult>((resolve) => {
         const child = spawn(command, args, {
@@ -131,6 +181,8 @@ async function runProcess(
         let stdout = "";
         let stderr = "";
         let finished = false;
+        let peakMemoryKb = 0;
+        let memoryTimer: NodeJS.Timeout | undefined;
 
         const finish = (result: ExecutionResult) => {
             if (finished) {
@@ -138,6 +190,9 @@ async function runProcess(
             }
             finished = true;
             clearTimeout(timer);
+            if (memoryTimer) {
+                clearInterval(memoryTimer);
+            }
             resolve(result);
         };
 
@@ -147,7 +202,7 @@ async function runProcess(
             finish({
                 succeeded: false,
                 executionTime: timeoutMs,
-                executionMemoryKb: 0,
+                executionMemoryKb: peakMemoryKb,
                 output: formatOutput(stdout, timeoutMessage),
                 stdout: normalizeStreamOutput(stdout),
                 stderr: timeoutMessage,
@@ -157,6 +212,43 @@ async function runProcess(
                 status: SubmissionStatus.TIME_LIMIT_EXCEEDED
             });
         }, timeoutMs);
+
+        const monitorMemory = async () => {
+            if (finished || memoryLimitKb == null || child.pid == null) {
+                return;
+            }
+
+            const currentMemoryKb = await sampleProcessMemoryKb(child.pid);
+            if (currentMemoryKb == null) {
+                return;
+            }
+
+            peakMemoryKb = Math.max(peakMemoryKb, currentMemoryKb);
+
+            if (currentMemoryKb > memoryLimitKb) {
+                const memoryMessage = `memory limit exceeded (${options.memoryLimitMb} MB)`;
+                child.kill("SIGKILL");
+                finish({
+                    succeeded: false,
+                    executionTime: Date.now() - startTime,
+                    executionMemoryKb: currentMemoryKb,
+                    output: formatOutput(stdout, memoryMessage),
+                    stdout: normalizeStreamOutput(stdout),
+                    stderr: memoryMessage,
+                    exitCode: null,
+                    timedOut: false,
+                    phase: options.phase,
+                    status: options.failureStatus,
+                });
+            }
+        };
+
+        if (memoryLimitKb != null) {
+            memoryTimer = setInterval(() => {
+                void monitorMemory();
+            }, MEMORY_POLL_INTERVAL_MS);
+            void monitorMemory();
+        }
 
         child.stdout.on("data", (chunk) => {
             stdout += chunk.toString();
@@ -171,7 +263,7 @@ async function runProcess(
             finish({
                 succeeded: false,
                 executionTime: Date.now() - startTime,
-                executionMemoryKb: 0,
+                executionMemoryKb: peakMemoryKb,
                 output: errorMessage,
                 stdout: normalizeStreamOutput(stdout),
                 stderr: errorMessage,
@@ -188,7 +280,7 @@ async function runProcess(
                 finish({
                     succeeded: false,
                     executionTime: timeoutMs,
-                    executionMemoryKb: 0,
+                    executionMemoryKb: peakMemoryKb,
                     output: formatOutput(stdout, timeoutMessage),
                     stdout: normalizeStreamOutput(stdout),
                     stderr: timeoutMessage,
@@ -207,7 +299,7 @@ async function runProcess(
                 finish({
                     succeeded: true,
                     executionTime: Date.now() - startTime,
-                    executionMemoryKb: 0,
+                    executionMemoryKb: peakMemoryKb,
                     output,
                     stdout: normalizedStdout,
                     stderr: normalizedStderr,
@@ -222,7 +314,7 @@ async function runProcess(
             finish({
                 succeeded: false,
                 executionTime: Date.now() - startTime,
-                executionMemoryKb: 0,
+                executionMemoryKb: peakMemoryKb,
                 output: output || `Process exited with code ${code ?? "unknown"}`,
                 stdout: normalizedStdout,
                 stderr: normalizedStderr,
@@ -247,7 +339,18 @@ async function interprete(
     testCase: JudgeTestCase,
     replacements: Record<string, string>
 ): Promise<ExecutionResult> {
-    const spec = buildCommand(interpretCmd, replacements);
+    let spec: CommandSpec;
+    try {
+        spec = buildCommand(interpretCmd, replacements);
+    } catch (error) {
+        const message =
+            error instanceof Error ? error.message : "Interpreter command could not be resolved.";
+        throw new JudgeExecutionSetupError(
+            message,
+            "run",
+            SubmissionStatus.RUNTIME_ERROR
+        );
+    }
     if (!spec.includesSource) {
         spec.args.push(codeFile);
     }
@@ -256,6 +359,7 @@ async function interprete(
         cwd,
         input: testCase.input,
         timeoutMs: testCase.timeLimitMs,
+        memoryLimitMb: testCase.memoryLimitMb,
         failureStatus: SubmissionStatus.RUNTIME_ERROR,
         phase: "run",
     });
@@ -267,7 +371,18 @@ async function compile(
     codeFile: string,
     replacements: Record<string, string>
 ): Promise<ExecutionResult> {
-    const spec = buildCommand(compileCmd, replacements);
+    let spec: CommandSpec;
+    try {
+        spec = buildCommand(compileCmd, replacements);
+    } catch (error) {
+        const message =
+            error instanceof Error ? error.message : "Compile command could not be resolved.";
+        throw new JudgeExecutionSetupError(
+            message,
+            "compile",
+            SubmissionStatus.COMPILE_ERROR
+        );
+    }
     if (!spec.includesSource) {
         spec.args.push(codeFile);
     }
@@ -291,16 +406,29 @@ async function runExecutable(
             cwd,
             input: testCase.input,
             timeoutMs: testCase.timeLimitMs,
+            memoryLimitMb: testCase.memoryLimitMb,
             failureStatus: SubmissionStatus.RUNTIME_ERROR,
             phase: "run",
         });
     }
 
-    const spec = buildCommand(runCmd, replacements);
+    let spec: CommandSpec;
+    try {
+        spec = buildCommand(runCmd, replacements);
+    } catch (error) {
+        const message =
+            error instanceof Error ? error.message : "Run command could not be resolved.";
+        throw new JudgeExecutionSetupError(
+            message,
+            "run",
+            SubmissionStatus.RUNTIME_ERROR
+        );
+    }
     return runProcess(spec.command, spec.args, {
         cwd,
         input: testCase.input,
         timeoutMs: testCase.timeLimitMs,
+        memoryLimitMb: testCase.memoryLimitMb,
         failureStatus: SubmissionStatus.RUNTIME_ERROR,
         phase: "run",
     });
@@ -333,7 +461,11 @@ export async function judgeSolution(
     try {
         if (mode === ExecutionMode.Interprete) {
             if (!options.interpretCmd) 
-                throw new Error("interpretCmd is required for interprete mode.");
+                throw new JudgeExecutionSetupError(
+                    "interpretCmd is required for interprete mode.",
+                    "run",
+                    SubmissionStatus.RUNTIME_ERROR
+                );
             for (const testCase of options.testCases) {
                 const output = await interprete(
                     options.interpretCmd,
@@ -346,7 +478,11 @@ export async function judgeSolution(
             }
         } else if (mode === ExecutionMode.Compiled) {
             if (!options.compileCmd) {
-                throw new Error("compileCmd is required for compiled mode.");
+                throw new JudgeExecutionSetupError(
+                    "compileCmd is required for compiled mode.",
+                    "compile",
+                    SubmissionStatus.COMPILE_ERROR
+                );
             }
 
             const compileResult = await compile(

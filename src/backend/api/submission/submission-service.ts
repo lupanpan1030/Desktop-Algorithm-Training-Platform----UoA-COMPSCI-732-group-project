@@ -4,15 +4,21 @@ import { ProblemsDao } from '../problem/problem-dao';
 import { TestCaseService } from '../testcase/testcase-service';
 import { SubmissionDao } from './submission-dao';
 import { 
-  RunCodeDto, 
-  SubmitCodeDto, 
-  RunCodeResponseDto, 
-  SubmissionResultDto, 
+  RunCodeDto,
+  SubmitCodeDto,
+  RunCodeResponseDto,
+  SubmissionResultDto,
   SubmitCodeResponseDto,
   SubmissionListItemDto,
   SubmissionDetailDto
 } from './submission';
-import { ExecutionMode, judgeSolution, EXECUTABLE_NAME, ExecutionResult } from '../../services/judge/executor';
+import {
+  ExecutionMode,
+  judgeSolution,
+  EXECUTABLE_NAME,
+  ExecutionResult,
+  JudgeExecutionSetupError,
+} from '../../services/judge/executor';
 import { NotFoundError } from "../../utils/errors/not-found-error";
 
 export class SubmissionService {
@@ -69,18 +75,29 @@ export class SubmissionService {
     const limitedTestCases = runnableTestCases.slice(0, testCaseLimit);
     
     const mode = language.compilerCmd ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    const executionResults = await judgeSolution(mode, {
-      code: dto.code,
-      fileSuffix: language.suffix,
-      interpretCmd: language.runtimeCmd,
-      compileCmd: language.compilerCmd ?? undefined,
-      runCmd: language.runtimeCmd,
-      executable: EXECUTABLE_NAME,
-      testCases: limitedTestCases.map((tc) => ({
-        input: tc.input,
-        timeLimitMs: tc.timeLimitMs,
-      })),
-    });
+    let executionResults: ExecutionResult[];
+
+    try {
+      executionResults = await judgeSolution(mode, {
+        code: dto.code,
+        fileSuffix: language.suffix,
+        interpretCmd: language.runtimeCmd,
+        compileCmd: language.compilerCmd ?? undefined,
+        runCmd: language.runtimeCmd,
+        executable: EXECUTABLE_NAME,
+        testCases: limitedTestCases.map((tc) => ({
+          input: tc.input,
+          timeLimitMs: tc.timeLimitMs,
+          memoryLimitMb: tc.memoryLimitMb,
+        })),
+      });
+    } catch (error) {
+      const failure = this.buildUnexpectedExecutionFailure(Boolean(language.compilerCmd), error);
+      return {
+        status: failure.overallStatus,
+        results: [failure.result],
+      };
+    }
 
     const results = executionResults.map((result, index) =>
       this.toSubmissionResultDto(result, limitedTestCases[index]?.expectedOutput)
@@ -113,28 +130,37 @@ export class SubmissionService {
     );
 
     const mode = language.compilerCmd ? ExecutionMode.Compiled : ExecutionMode.Interprete;
-    const executionResults = await judgeSolution(mode, {
-      code: dto.code,
-      fileSuffix: language.suffix,
-      interpretCmd: language.runtimeCmd,
-      compileCmd: language.compilerCmd ?? undefined,
-      runCmd: language.runtimeCmd,
-      executable: EXECUTABLE_NAME,
-      testCases: testCases.map((tc) => ({
-        input: tc.input,
-        timeLimitMs: tc.timeLimitMs,
-      })),
-    });
+    let results: SubmissionResultDto[];
+    let overallStatus: SubmissionStatus;
 
-    const results = executionResults.map((result, index) =>
-      this.toSubmissionResultDto(result, testCases[index]?.expectedOutput)
-    );
+    try {
+      const executionResults = await judgeSolution(mode, {
+        code: dto.code,
+        fileSuffix: language.suffix,
+        interpretCmd: language.runtimeCmd,
+        compileCmd: language.compilerCmd ?? undefined,
+        runCmd: language.runtimeCmd,
+        executable: EXECUTABLE_NAME,
+        testCases: testCases.map((tc) => ({
+          input: tc.input,
+          timeLimitMs: tc.timeLimitMs,
+          memoryLimitMb: tc.memoryLimitMb,
+        })),
+      });
 
-    const overallStatus = this.determineOverallStatus(results);
+      results = executionResults.map((result, index) =>
+        this.toSubmissionResultDto(result, testCases[index]?.expectedOutput)
+      );
+      overallStatus = this.determineOverallStatus(results);
+    } catch (error) {
+      const failure = this.buildUnexpectedExecutionFailure(Boolean(language.compilerCmd), error);
+      results = [failure.result];
+      overallStatus = failure.overallStatus;
+    }
 
-    await SubmissionDao.updateSubmissionStatus(submission.submission_id, overallStatus);
-    await SubmissionDao.createSubmissionResults(
+    await SubmissionDao.finalizeSubmission(
       submission.submission_id,
+      overallStatus,
       results.map(r => ({
         status: r.status as SubmissionStatus,
         output: r.output,
@@ -150,8 +176,8 @@ export class SubmissionService {
     
     return {
       submissionId: submission.submission_id,
-      overallStatus: overallStatus,
-      results: results
+      overallStatus,
+      results
     };
   }
 
@@ -202,6 +228,44 @@ export class SubmissionService {
       expectedOutput: normalizedExpectedOutput,
       runtimeMs: result.executionTime,
       memoryKb: result.executionMemoryKb
+    };
+  }
+
+  private buildUnexpectedExecutionFailure(
+    usesCompiler: boolean,
+    error: unknown
+  ): {
+    overallStatus: SubmissionStatus;
+    result: SubmissionResultDto;
+  } {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Execution failed unexpectedly.";
+    const phase =
+      error instanceof JudgeExecutionSetupError
+        ? error.phase
+        : usesCompiler
+          ? "compile"
+          : "run";
+    const status =
+      error instanceof JudgeExecutionSetupError
+        ? error.status
+        : usesCompiler
+          ? SubmissionStatus.COMPILE_ERROR
+          : SubmissionStatus.RUNTIME_ERROR;
+
+    return {
+      overallStatus: status,
+      result: {
+        status,
+        output: message,
+        stderr: message,
+        phase,
+        timedOut: false,
+        runtimeMs: 0,
+        memoryKb: 0,
+      },
     };
   }
 }

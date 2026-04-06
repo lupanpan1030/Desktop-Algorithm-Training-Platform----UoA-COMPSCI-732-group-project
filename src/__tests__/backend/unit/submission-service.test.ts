@@ -11,6 +11,7 @@ vi.mock("../../../backend/api/submission/submission-dao", () => ({
     getSubmissionsByProblemId: vi.fn(),
     getSubmissionByProblemId: vi.fn(),
     createSubmission: vi.fn(),
+    finalizeSubmission: vi.fn(),
     updateSubmissionStatus: vi.fn(),
     createSubmissionResults: vi.fn(),
   },
@@ -37,6 +38,7 @@ const mockedJudgeSolution = vi.mocked(judgeSolution);
 const mockedSubmissionDao = SubmissionDao as unknown as {
   getSubmissionsByProblemId: ReturnType<typeof vi.fn>;
   createSubmission: ReturnType<typeof vi.fn>;
+  finalizeSubmission: ReturnType<typeof vi.fn>;
   updateSubmissionStatus: ReturnType<typeof vi.fn>;
   createSubmissionResults: ReturnType<typeof vi.fn>;
 };
@@ -50,6 +52,7 @@ describe("SubmissionService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedSubmissionDao.getSubmissionsByProblemId.mockResolvedValue([]);
+    mockedSubmissionDao.finalizeSubmission.mockResolvedValue(undefined);
     mockedProblemsDao.getProblemById.mockResolvedValue(null);
     service.languageService = {
       getLanguageById: vi.fn().mockResolvedValue({
@@ -133,8 +136,6 @@ describe("SubmissionService", () => {
       status: SubmissionStatus.PENDING,
       submitted_at: new Date("2026-04-04T00:00:00.000Z"),
     });
-    mockedSubmissionDao.updateSubmissionStatus.mockResolvedValue(undefined);
-    mockedSubmissionDao.createSubmissionResults.mockResolvedValue([]);
 
     mockedJudgeSolution.mockResolvedValueOnce([
       {
@@ -158,13 +159,88 @@ describe("SubmissionService", () => {
 
     expect(response.overallStatus).toBe(SubmissionStatus.COMPILE_ERROR);
     expect(response.results[0].expectedOutput).toBeUndefined();
-    expect(mockedSubmissionDao.createSubmissionResults).toHaveBeenCalledWith(
+    expect(mockedSubmissionDao.finalizeSubmission).toHaveBeenCalledWith(
       9,
+      SubmissionStatus.COMPILE_ERROR,
       [
         expect.objectContaining({
           status: SubmissionStatus.COMPILE_ERROR,
           phase: "compile",
           output: "compile failed",
+        }),
+      ]
+    );
+  });
+
+  it("passes testcase memory limits through to the judge", async () => {
+    mockedJudgeSolution.mockResolvedValueOnce([
+      {
+        succeeded: true,
+        executionTime: 10,
+        executionMemoryKb: 2048,
+        output: "2",
+        stdout: "2",
+        stderr: "",
+        exitCode: 0,
+        timedOut: false,
+        phase: "run",
+        status: SubmissionStatus.ACCEPTED,
+      },
+    ]);
+
+    await service.runCode(1, {
+      code: "print(2)",
+      languageId: 1,
+    });
+
+    expect(mockedJudgeSolution).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        testCases: [
+          expect.objectContaining({
+            input: "1",
+            timeLimitMs: 1000,
+            memoryLimitMb: 128,
+          }),
+        ],
+      })
+    );
+  });
+
+  it("finalizes unexpected judge failures instead of leaving submissions pending", async () => {
+    mockedSubmissionDao.createSubmission.mockResolvedValue({
+      submission_id: 10,
+      problem_id: 1,
+      language_id: 1,
+      code: "bad config",
+      status: SubmissionStatus.PENDING,
+      submitted_at: new Date("2026-04-04T00:00:00.000Z"),
+    });
+    mockedJudgeSolution.mockRejectedValueOnce(
+      new Error("Execution command cannot be empty.")
+    );
+
+    const response = await service.submitCode(1, {
+      code: "bad config",
+      languageId: 1,
+    });
+
+    expect(response.overallStatus).toBe(SubmissionStatus.COMPILE_ERROR);
+    expect(response.results).toEqual([
+      expect.objectContaining({
+        status: SubmissionStatus.COMPILE_ERROR,
+        phase: "compile",
+        stderr: "Execution command cannot be empty.",
+      }),
+    ]);
+    expect(mockedSubmissionDao.finalizeSubmission).toHaveBeenCalledWith(
+      10,
+      SubmissionStatus.COMPILE_ERROR,
+      [
+        expect.objectContaining({
+          status: SubmissionStatus.COMPILE_ERROR,
+          phase: "compile",
+          stderr: "Execution command cannot be empty.",
         }),
       ]
     );

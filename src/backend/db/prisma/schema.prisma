@@ -55,6 +55,8 @@ model TestCase {
 model ProgrammingLanguage {
     language_id     Int         @id @default(autoincrement())
     name            String
+    normalized_name String?     @unique
+    normalized_suffix String?   @unique
     suffix          String
     version         String?
     compile_command String?
