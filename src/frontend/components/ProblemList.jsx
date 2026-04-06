@@ -159,11 +159,6 @@ export default function ProblemList({ problems }) {
                       color={getDifficultyColor(problem.difficulty)}
                     />
                     <Chip size="small" label={completion.label} variant="outlined" />
-                    <Chip
-                      size="small"
-                      label={problem.judgeReady ? "Judge ready" : "Needs tests"}
-                      variant="outlined"
-                    />
                   </Stack>
                 </Stack>
 

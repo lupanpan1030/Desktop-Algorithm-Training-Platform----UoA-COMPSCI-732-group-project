@@ -105,6 +105,17 @@ describe('ListPage Component', () => {
     });
   });
 
+  test('does not expose internal judge readiness labels in the problem list', async () => {
+    renderWithRouter(<ListPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Two Sum')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/judge ready/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs tests/i)).not.toBeInTheDocument();
+  });
+
   test('handles API error gracefully', async () => {
     // Mock useApi to return an error
     const mockError = new Error('API Error');
