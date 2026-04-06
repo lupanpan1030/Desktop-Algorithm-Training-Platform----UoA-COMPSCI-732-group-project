@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import api from '../api/axiosInstance';
+import api, { type ApiClientError } from '../api/axiosInstance';
 
 // API Response Types
 export interface ProblemSummary {
@@ -164,6 +164,38 @@ interface ApiOptions {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
+const RETRYABLE_GET_DELAYS_MS = [250, 750];
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function shouldRetryRequest(method: ApiOptions["method"], error: ApiClientError) {
+  if (method !== "GET") {
+    return false;
+  }
+
+  return Boolean(
+    error.isNetworkError ||
+      error.code === "ECONNABORTED" ||
+      error.code === "ECONNREFUSED" ||
+      error.code === "ECONNRESET"
+  );
+}
+
+function logFinalApiFailure(error: ApiClientError, method: string, url: string) {
+  const methodLabel = error.method ?? method;
+  const requestUrl = error.requestUrl ?? url;
+  const logger =
+    error.isNetworkError && typeof process !== "undefined" && process.env?.NODE_ENV === "development"
+      ? console.warn
+      : console.error;
+
+  logger(`[api:error] ${methodLabel} ${requestUrl} -> ${error.message}`);
+}
+
 export const useApi = () => {
   const [activeRequestCount, setActiveRequestCount] = useState(0);
   const [error, setError] = useState<Error | null>(null);
@@ -177,26 +209,48 @@ export const useApi = () => {
     setError(null);
     
     try {
-      const response = await api({
-        url,
-        method,
-        data: body,
-        params,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        },
-      });
-      if (latestRequestIdRef.current === requestId) {
-        setError(null);
+      for (let attempt = 0; attempt <= RETRYABLE_GET_DELAYS_MS.length; attempt += 1) {
+        try {
+          const response = await api({
+            url,
+            method,
+            data: body,
+            params,
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers
+            },
+          });
+          if (latestRequestIdRef.current === requestId) {
+            setError(null);
+          }
+          return response.data as T;
+        } catch (err) {
+          const normalizedError = err instanceof Error
+            ? err as ApiClientError
+            : new Error('Request failed');
+
+          const requestIsStale = latestRequestIdRef.current !== requestId;
+          const canRetry =
+            !requestIsStale &&
+            shouldRetryRequest(method, normalizedError) &&
+            attempt < RETRYABLE_GET_DELAYS_MS.length;
+
+          if (canRetry) {
+            await delay(RETRYABLE_GET_DELAYS_MS[attempt]);
+            continue;
+          }
+
+          if (!requestIsStale) {
+            setError(normalizedError);
+            logFinalApiFailure(normalizedError, method, url);
+          }
+
+          throw normalizedError;
+        }
       }
-      return response.data as T;
-    } catch (err) {
-      const normalizedError = err instanceof Error ? err : new Error('Request failed');
-      if (latestRequestIdRef.current === requestId) {
-        setError(normalizedError);
-      }
-      throw normalizedError;
+
+      throw new Error('Request failed');
     } finally {
       setActiveRequestCount((count) => Math.max(0, count - 1));
     }

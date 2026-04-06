@@ -21,6 +21,14 @@ const api = axios.create({
   timeout: 10_000,
 });
 
+export type ApiClientError = Error & {
+  status?: number;
+  code?: string;
+  method?: string;
+  requestUrl?: string;
+  isNetworkError?: boolean;
+};
+
 function readRendererEnv(name: string) {
   if (typeof process === "undefined" || !process.env) {
     return undefined;
@@ -45,15 +53,25 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    const baseUrl = err.config?.baseURL ?? "";
-    const url = err.config?.url ?? "";
-    console.error(
-      `[api:error] ${String(err.config?.method ?? "GET").toUpperCase()} ${baseUrl}${url} -> ${err.message}`
-    );
-    // ✨ unify error shape
-    return Promise.reject(
-      new Error(err.response?.data?.message || err.message),
-    );
+    if (axios.isAxiosError(err)) {
+      const normalizedError = new Error(
+        err.response?.data?.message || err.message || "Request failed"
+      ) as ApiClientError;
+
+      normalizedError.status = err.response?.status;
+      normalizedError.code = err.code;
+      normalizedError.method = String(err.config?.method ?? "GET").toUpperCase();
+      normalizedError.requestUrl = `${err.config?.baseURL ?? ""}${err.config?.url ?? ""}`;
+      normalizedError.isNetworkError =
+        !err.response &&
+        (err.message === "Network Error" ||
+          err.code === "ERR_NETWORK" ||
+          err.code === "ECONNABORTED");
+
+      return Promise.reject(normalizedError);
+    }
+
+    return Promise.reject(err instanceof Error ? err : new Error("Request failed"));
   }
 );
 export default api;
