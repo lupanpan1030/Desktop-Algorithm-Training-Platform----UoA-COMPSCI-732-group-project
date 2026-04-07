@@ -491,6 +491,7 @@ Implemented:
 - floating launcher available from every route
 - desktop floating assistant panel
 - desktop draggable launcher with left/right edge snapping and position memory
+- launcher placement preferences for side locking, remembered height, and top/middle/bottom docking
 - launcher reset action and context freshness indicator
 - no dedicated page-space reservation for the desktop launcher
 - mobile full-screen modal sheet under the non-drawer direction
@@ -507,7 +508,6 @@ Implemented:
 Remaining or worth improving:
 
 - stronger provenance/source explanation beyond current route facts and summary
-- optional advanced positioning preferences beyond reset
 
 ## UI Direction
 

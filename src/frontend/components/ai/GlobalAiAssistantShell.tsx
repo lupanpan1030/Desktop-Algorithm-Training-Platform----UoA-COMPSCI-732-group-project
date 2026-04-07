@@ -4,7 +4,6 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SendIcon from "@mui/icons-material/Send";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import {
   Alert,
   Box,
@@ -16,6 +15,8 @@ import {
   Paper,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -24,21 +25,23 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useGlobalAiAssistant } from "../../ai/GlobalAiAssistantProvider";
 import { buildAssistantCards } from "../../ai/assistantCards";
 import { buildContextReliability } from "../../ai/contextReliability";
+import {
+  clamp,
+  clampLauncherY,
+  desktopLauncherInset,
+  getDefaultLauncherState,
+  LauncherAnchor,
+  LauncherPreferences,
+  persistLauncherState,
+  readStoredLauncherState,
+  resolveLauncherAnchor,
+  launcherSize,
+} from "../../ai/assistantLauncherPreferences";
 
 const panelWidth = 432;
-const launcherStorageKey = "global-ai-assistant-launcher-v1";
-const launcherSize = 64;
 const launcherCollapsedWidth = 58;
-const desktopLauncherInset = 24;
 const mobileLauncherInset = 14;
 const launcherDragThreshold = 6;
-
-type LauncherSide = "left" | "right";
-
-type LauncherAnchor = {
-  side: LauncherSide;
-  y: number;
-};
 
 type DragState = {
   pointerId: number;
@@ -51,63 +54,6 @@ type DragState = {
   width: number;
   moved: boolean;
 };
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function clampLauncherY(y: number, viewportHeight: number) {
-  return clamp(
-    y,
-    desktopLauncherInset,
-    Math.max(desktopLauncherInset, viewportHeight - launcherSize - desktopLauncherInset)
-  );
-}
-
-function readStoredLauncherAnchor() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(launcherStorageKey);
-    if (!rawValue) {
-      return null;
-    }
-
-    const parsed = JSON.parse(rawValue) as Partial<LauncherAnchor>;
-    if (
-      (parsed.side !== "left" && parsed.side !== "right") ||
-      typeof parsed.y !== "number"
-    ) {
-      return null;
-    }
-
-    return {
-      side: parsed.side,
-      y: clampLauncherY(parsed.y, window.innerHeight),
-    } satisfies LauncherAnchor;
-  } catch {
-    return null;
-  }
-}
-
-function getDefaultLauncherAnchor(): LauncherAnchor {
-  if (typeof window === "undefined") {
-    return {
-      side: "right",
-      y: 120,
-    };
-  }
-
-  return {
-    side: "right",
-    y: clampLauncherY(
-      window.innerHeight - launcherSize - desktopLauncherInset,
-      window.innerHeight
-    ),
-  };
-}
 
 function buildAssistantStateLabel(
   pending: boolean,
@@ -154,14 +100,53 @@ function buildContextFreshnessLabel(updatedAt: number | null) {
   return `Updated ${elapsedMinutes}m ago`;
 }
 
+function buildLauncherSideSummary(
+  sidePreference: LauncherPreferences["sidePreference"]
+) {
+  switch (sidePreference) {
+    case "left":
+      return "Locked to the left edge";
+    case "right":
+      return "Locked to the right edge";
+    default:
+      return "Follows your last drag";
+  }
+}
+
+function buildLauncherHeightSummary(
+  verticalPreference: LauncherPreferences["verticalPreference"]
+) {
+  switch (verticalPreference) {
+    case "top":
+      return "Pinned near the top";
+    case "middle":
+      return "Pinned near the middle";
+    case "bottom":
+      return "Pinned near the bottom";
+    default:
+      return "Keeps the last vertical drop point";
+  }
+}
+
 export default function GlobalAiAssistantShell() {
   const theme = useTheme();
   const compact = useMediaQuery(theme.breakpoints.down("md"));
+  const [viewportHeight, setViewportHeight] = useState(() =>
+    typeof window === "undefined" ? 900 : window.innerHeight
+  );
+  const initialLauncherState = useMemo(
+    () =>
+      readStoredLauncherState(viewportHeight) ??
+      getDefaultLauncherState(viewportHeight),
+    [viewportHeight]
+  );
   const [hovered, setHovered] = useState(false);
   const [input, setInput] = useState("");
   const [launcherAnchor, setLauncherAnchor] = useState<LauncherAnchor>(
-    () => readStoredLauncherAnchor() ?? getDefaultLauncherAnchor()
+    () => initialLauncherState.anchor
   );
+  const [launcherPreferences, setLauncherPreferences] =
+    useState<LauncherPreferences>(() => initialLauncherState.preferences);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [pageContextUpdatedAt, setPageContextUpdatedAt] = useState<number | null>(null);
   const [, setFreshnessTick] = useState(0);
@@ -224,7 +209,20 @@ export default function GlobalAiAssistantShell() {
         : launcherCollapsedWidth;
   const launcherCtaLabel =
     isProblemListPage || isDenseAdminPage ? "Quick help" : launcherLabel;
-  const panelSide = launcherAnchor.side;
+  const resolvedLauncherAnchor = useMemo(
+    () => resolveLauncherAnchor(launcherAnchor, launcherPreferences, viewportHeight),
+    [launcherAnchor, launcherPreferences, viewportHeight]
+  );
+  const panelSide = resolvedLauncherAnchor.side;
+  const canDragHorizontally = launcherPreferences.sidePreference === "follow";
+  const canDragVertically = launcherPreferences.verticalPreference === "remember";
+  const canDragLauncher = !compact && !open && (canDragHorizontally || canDragVertically);
+  const launcherSideSummary = buildLauncherSideSummary(
+    launcherPreferences.sidePreference
+  );
+  const launcherHeightSummary = buildLauncherHeightSummary(
+    launcherPreferences.verticalPreference
+  );
 
   const commitDragState = (nextState: DragState | null) => {
     dragStateRef.current = nextState;
@@ -270,7 +268,9 @@ export default function GlobalAiAssistantShell() {
       return;
     }
 
-    setLauncherAnchor(getDefaultLauncherAnchor());
+    const nextState = getDefaultLauncherState(viewportHeight);
+    setLauncherAnchor(nextState.anchor);
+    setLauncherPreferences(nextState.preferences);
     commitDragState(null);
     setHovered(false);
   };
@@ -286,23 +286,44 @@ export default function GlobalAiAssistantShell() {
       return;
     }
 
-    const snappedSide: LauncherSide =
-      activeDragState.x + activeDragState.width / 2 >= window.innerWidth / 2
-        ? "right"
-        : "left";
-
     setLauncherAnchor({
-      side: snappedSide,
-      y: clampLauncherY(activeDragState.y, window.innerHeight),
+      side:
+        launcherPreferences.sidePreference === "follow"
+          ? (activeDragState.x + activeDragState.width / 2 >= window.innerWidth / 2
+              ? "right"
+              : "left")
+          : launcherAnchor.side,
+      y:
+        launcherPreferences.verticalPreference === "remember"
+          ? clampLauncherY(activeDragState.y, window.innerHeight)
+          : launcherAnchor.y,
     });
     suppressClickRef.current = activeDragState.moved;
     commitDragState(null);
   };
 
+  const handleLauncherPreferenceChange =
+    <T extends keyof LauncherPreferences>(field: T) =>
+    (
+      _event: React.MouseEvent<HTMLElement>,
+      nextValue: LauncherPreferences[T] | null
+    ) => {
+      if (!nextValue) {
+        return;
+      }
+
+      setLauncherPreferences((current) => ({
+        ...current,
+        [field]: nextValue,
+      }));
+      commitDragState(null);
+      setHovered(false);
+    };
+
   const handleLauncherPointerDown = (
     event: React.PointerEvent<HTMLButtonElement>
   ) => {
-    if (compact || open) {
+    if (!canDragLauncher) {
       return;
     }
 
@@ -328,7 +349,7 @@ export default function GlobalAiAssistantShell() {
     event: React.PointerEvent<HTMLButtonElement>
   ) => {
     const activeDragState = dragStateRef.current;
-    if (!activeDragState || compact || open || typeof window === "undefined") {
+    if (!activeDragState || !canDragLauncher || typeof window === "undefined") {
       return;
     }
 
@@ -338,22 +359,28 @@ export default function GlobalAiAssistantShell() {
 
     const nextState: DragState = {
       ...activeDragState,
-      x: clamp(
-        event.clientX - activeDragState.offsetX,
-        desktopLauncherInset,
-        Math.max(
-          desktopLauncherInset,
-          window.innerWidth - activeDragState.width - desktopLauncherInset
-        )
-      ),
-      y: clampLauncherY(
-        event.clientY - activeDragState.offsetY,
-        window.innerHeight
-      ),
+      x: canDragHorizontally
+        ? clamp(
+            event.clientX - activeDragState.offsetX,
+            desktopLauncherInset,
+            Math.max(
+              desktopLauncherInset,
+              window.innerWidth - activeDragState.width - desktopLauncherInset
+            )
+          )
+        : activeDragState.x,
+      y: canDragVertically
+        ? clampLauncherY(
+            event.clientY - activeDragState.offsetY,
+            window.innerHeight
+          )
+        : activeDragState.y,
       moved:
         activeDragState.moved ||
-        Math.abs(event.clientX - activeDragState.startX) > launcherDragThreshold ||
-        Math.abs(event.clientY - activeDragState.startY) > launcherDragThreshold,
+        (canDragHorizontally &&
+          Math.abs(event.clientX - activeDragState.startX) > launcherDragThreshold) ||
+        (canDragVertically &&
+          Math.abs(event.clientY - activeDragState.startY) > launcherDragThreshold),
     };
 
     commitDragState(nextState);
@@ -405,11 +432,11 @@ export default function GlobalAiAssistantShell() {
       return;
     }
 
-    window.localStorage.setItem(
-      launcherStorageKey,
-      JSON.stringify(launcherAnchor)
-    );
-  }, [compact, launcherAnchor]);
+    persistLauncherState({
+      anchor: launcherAnchor,
+      preferences: launcherPreferences,
+    });
+  }, [compact, launcherAnchor, launcherPreferences]);
 
   useEffect(() => {
     if (compact || typeof window === "undefined") {
@@ -417,6 +444,7 @@ export default function GlobalAiAssistantShell() {
     }
 
     const handleResize = () => {
+      setViewportHeight(window.innerHeight);
       setLauncherAnchor((currentAnchor) => ({
         ...currentAnchor,
         y: clampLauncherY(currentAnchor.y, window.innerHeight),
@@ -441,6 +469,7 @@ export default function GlobalAiAssistantShell() {
       });
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [compact]);
@@ -533,14 +562,6 @@ export default function GlobalAiAssistantShell() {
           </Stack>
 
           <Stack direction="row" spacing={0.5}>
-            {!compact && (
-              <IconButton
-                aria-label="reset ai assistant launcher position"
-                onClick={handleResetLauncherPosition}
-              >
-                <RestartAltRoundedIcon fontSize="small" />
-              </IconButton>
-            )}
             <IconButton
               aria-label="clear assistant conversation"
               onClick={clearConversation}
@@ -636,6 +657,101 @@ export default function GlobalAiAssistantShell() {
             {contextReliability.detail}
           </Typography>
         </Paper>
+
+        {!compact && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mt: 1.15,
+              p: 1.15,
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.paper, 0.54),
+              borderColor: alpha(theme.palette.divider, 0.24),
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              spacing={1}
+            >
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                  Launcher placement
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 700 }}>
+                  Tune where the desktop helper lives
+                </Typography>
+              </Box>
+              <ButtonBase
+                onClick={handleResetLauncherPosition}
+                sx={{
+                  px: 1,
+                  py: 0.55,
+                  borderRadius: 999,
+                  border: "1px solid",
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                  cursor: "pointer",
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  Reset
+                </Typography>
+              </ButtonBase>
+            </Stack>
+
+            <Stack spacing={1} sx={{ mt: 1.1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Side
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={launcherPreferences.sidePreference}
+                  onChange={handleLauncherPreferenceChange("sidePreference")}
+                  sx={{ mt: 0.6, display: "flex", flexWrap: "wrap", gap: 0.6 }}
+                >
+                  <ToggleButton value="follow">Follow</ToggleButton>
+                  <ToggleButton value="left">Left</ToggleButton>
+                  <ToggleButton value="right">Right</ToggleButton>
+                </ToggleButtonGroup>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.55, display: "block", lineHeight: 1.4 }}
+                >
+                  {launcherSideSummary}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Height
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={launcherPreferences.verticalPreference}
+                  onChange={handleLauncherPreferenceChange("verticalPreference")}
+                  sx={{ mt: 0.6, display: "flex", flexWrap: "wrap", gap: 0.6 }}
+                >
+                  <ToggleButton value="remember">Remember</ToggleButton>
+                  <ToggleButton value="top">Top</ToggleButton>
+                  <ToggleButton value="middle">Middle</ToggleButton>
+                  <ToggleButton value="bottom">Bottom</ToggleButton>
+                </ToggleButtonGroup>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.55, display: "block", lineHeight: 1.4 }}
+                >
+                  {launcherHeightSummary}
+                </Typography>
+              </Box>
+            </Stack>
+          </Paper>
+        )}
 
         {visibleThreads.length > 1 && (
           <Paper
@@ -954,11 +1070,11 @@ export default function GlobalAiAssistantShell() {
               : panelSide === "left"
                 ? {
                     left: desktopLauncherInset,
-                    top: launcherAnchor.y,
+                    top: resolvedLauncherAnchor.y,
                   }
                 : {
                     right: desktopLauncherInset,
-                    top: launcherAnchor.y,
+                    top: resolvedLauncherAnchor.y,
                   }),
           zIndex: theme.zIndex.drawer + 2,
           display: "flex",
@@ -999,9 +1115,17 @@ export default function GlobalAiAssistantShell() {
             bgcolor: alpha(theme.palette.background.paper, 0.9),
             backdropFilter: "blur(16px)",
             boxShadow: `0 18px 46px ${alpha(theme.palette.common.black, 0.18)}`,
-            cursor: compact ? "pointer" : dragState ? "grabbing" : open ? "default" : "grab",
+            cursor: compact
+              ? "pointer"
+              : dragState
+                ? "grabbing"
+                : canDragLauncher
+                  ? "grab"
+                  : open
+                    ? "default"
+                    : "pointer",
             overflow: "hidden",
-            touchAction: compact ? "auto" : "none",
+            touchAction: compact || !canDragLauncher ? "auto" : "none",
             pointerEvents: open ? "none" : "auto",
             opacity: open ? 0 : compact ? 1 : 0.94,
             transform: open ? "scale(0.94)" : "translateY(0)",
