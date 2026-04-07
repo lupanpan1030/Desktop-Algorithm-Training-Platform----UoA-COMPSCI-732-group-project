@@ -501,12 +501,13 @@ Implemented:
 - page-aware suggestions, conversation history, and composer
 - packaged-runtime assistant settings page for provider, model, and API key configuration
 - local persisted AI runtime settings so packaged builds no longer depend on `.env` alone
+- system-keychain-backed API key storage with migration away from legacy local-file secrets
+- assistant settings connection-test flow for preview and live OpenAI validation
 
 Remaining or worth improving:
 
 - stronger provenance/source explanation beyond current route facts and summary
 - optional advanced positioning preferences beyond reset
-- optional OS-keychain-grade credential storage and connection test flow
 
 ## UI Direction
 

@@ -22,6 +22,7 @@ import { useTheme } from "@mui/material/styles";
 import { useAiPageContext } from "../ai/useAiPageContext";
 import {
   AiSettings as AiSettingsSnapshot,
+  AiConnectionTestResult,
   useApi,
 } from "../hooks/useApi";
 
@@ -48,22 +49,31 @@ function buildCredentialSummary(settings: AiSettingsSnapshot | null) {
     return "No API key configured";
   }
 
-  if (settings.apiKeySource === "environment") {
-    return `Using environment key ${settings.apiKeyPreview ?? ""}`.trim();
+  switch (settings.apiKeySource) {
+    case "environment":
+      return `Using environment key ${settings.apiKeyPreview ?? ""}`.trim();
+    case "system-keychain":
+      return `Using system keychain key ${settings.apiKeyPreview ?? ""}`.trim();
+    case "legacy-file":
+      return `Using legacy local key ${settings.apiKeyPreview ?? ""}`.trim();
+    case "provided":
+      return `Testing unsaved key ${settings.apiKeyPreview ?? ""}`.trim();
+    default:
+      return `Using saved key ${settings.apiKeyPreview ?? ""}`.trim();
   }
-
-  return `Using saved key ${settings.apiKeyPreview ?? ""}`.trim();
 }
 
 export default function AiSettings() {
   const theme = useTheme();
-  const { getAiSettings, updateAiSettings } = useApi();
+  const { getAiSettings, updateAiSettings, testAiSettings } = useApi();
   const [settings, setSettings] = useState<AiSettingsSnapshot | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<AiConnectionTestResult | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -128,7 +138,7 @@ export default function AiSettings() {
       suggestedPrompts: [
         "What does preview mode mean here?",
         "How do I switch this app to live OpenAI mode?",
-        "Where is this key stored locally?",
+        "How do I test whether this OpenAI setup works?",
       ],
     }),
     [form?.provider, settings]
@@ -159,6 +169,7 @@ export default function AiSettings() {
       nextValue?: string
     ) => {
       setFeedback(null);
+      setTestResult(null);
       setForm((current) => {
         if (!current) {
           return current;
@@ -190,6 +201,7 @@ export default function AiSettings() {
     setSaving(true);
     setLoadError(null);
     setFeedback(null);
+    setTestResult(null);
 
     try {
       const nextSettings = await updateAiSettings({
@@ -220,6 +232,7 @@ export default function AiSettings() {
     setSaving(true);
     setLoadError(null);
     setFeedback(null);
+    setTestResult(null);
 
     try {
       const nextSettings = await updateAiSettings({
@@ -232,13 +245,42 @@ export default function AiSettings() {
 
       setSettings(nextSettings);
       setForm(buildInitialFormState(nextSettings));
-      setFeedback("Saved API key removed from local app settings.");
+      setFeedback("Saved API key removed from local storage.");
     } catch (error) {
       setLoadError(
         error instanceof Error ? error.message : "Failed to clear the saved API key."
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!form || !timeoutValid) {
+      return;
+    }
+
+    setTesting(true);
+    setLoadError(null);
+    setFeedback(null);
+    setTestResult(null);
+
+    try {
+      const result = await testAiSettings({
+        provider: form.provider,
+        model: form.model.trim(),
+        baseUrl: form.baseUrl.trim(),
+        timeoutMs: timeoutValue,
+        ...(form.apiKey.trim() ? { apiKey: form.apiKey.trim() } : {}),
+      });
+
+      setTestResult(result);
+    } catch (error) {
+      setLoadError(
+        error instanceof Error ? error.message : "Failed to test the AI connection."
+      );
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -296,8 +338,8 @@ export default function AiSettings() {
                 AI provider and credentials
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.7, maxWidth: 660 }}>
-                This screen replaces the old `.env`-only setup. Packaged builds can store the assistant
-                provider, model, and API key locally on the device.
+                This screen replaces the old `.env`-only setup. Packaged builds can save the assistant
+                provider and model locally, while API keys are stored in the system keychain.
               </Typography>
             </Box>
 
@@ -324,6 +366,30 @@ export default function AiSettings() {
 
           {loadError ? <Alert severity="error">{loadError}</Alert> : null}
           {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+          {testResult ? (
+            <Alert
+              severity={
+                testResult.status === "success"
+                  ? "success"
+                  : testResult.status === "preview"
+                    ? "info"
+                    : "warning"
+              }
+              sx={{ borderRadius: 3 }}
+            >
+              {testResult.message}
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{ display: "block", mt: 0.5, opacity: 0.84 }}
+              >
+                Credential source: {testResult.credentialSource}
+                {typeof testResult.latencyMs === "number"
+                  ? ` · ${testResult.latencyMs} ms`
+                  : ""}
+              </Typography>
+            </Alert>
+          ) : null}
 
           <Alert
             severity={
@@ -449,10 +515,12 @@ export default function AiSettings() {
                   : "sk-..."
               }
               helperText={
-                settings.apiKeySource === "saved"
-                  ? "Leave this blank to keep the saved key. Use the remove action below to delete it."
+                settings.apiKeySource === "system-keychain"
+                  ? "Leave this blank to keep the saved system keychain entry. Use the remove action below to delete it."
+                  : settings.apiKeySource === "legacy-file"
+                    ? "A legacy local key is active right now. Saving again will migrate it into the system keychain."
                   : settings.apiKeySource === "environment"
-                    ? "An environment key is currently active. Saving a key here will override that for this app."
+                    ? "An environment key is currently active. Saving a key here will override it for this app."
                     : "No API key is configured yet. Add one to enable live OpenAI responses."
               }
               fullWidth
@@ -461,21 +529,32 @@ export default function AiSettings() {
 
           <Stack direction="row" spacing={1.1} useFlexGap flexWrap="wrap">
             <Button
+              variant="outlined"
+              startIcon={<CloudDoneRoundedIcon />}
+              onClick={handleTestConnection}
+              disabled={saving || testing || !timeoutValid}
+            >
+              {testing ? "Testing..." : "Test connection"}
+            </Button>
+
+            <Button
               variant="contained"
               startIcon={<SaveRoundedIcon />}
               onClick={handleSave}
-              disabled={saving || !dirty || !timeoutValid}
+              disabled={saving || testing || !dirty || !timeoutValid}
             >
               {saving ? "Saving..." : "Save settings"}
             </Button>
 
-            {settings.apiKeySource === "saved" && settings.apiKeyConfigured ? (
+            {settings.apiKeyConfigured &&
+            (settings.apiKeySource === "system-keychain" ||
+              settings.apiKeySource === "legacy-file") ? (
               <Button
                 variant="outlined"
                 color="warning"
                 startIcon={<VpnKeyRoundedIcon />}
                 onClick={handleClearSavedKey}
-                disabled={saving}
+                disabled={saving || testing}
               >
                 Remove saved key
               </Button>
@@ -505,6 +584,10 @@ export default function AiSettings() {
             <Typography variant="body2" color="text.secondary">
               Saved changes apply to the assistant immediately. You do not need to restart the app
               after changing provider, model, base URL, or API key.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Use <strong>Test connection</strong> before saving when you want to validate a new
+              key, model, or base URL without changing the stored runtime yet.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Storage path:

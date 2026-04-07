@@ -364,7 +364,9 @@
 					"apiKeySource": {
 						"type": "string",
 						"enum": [
-							"saved",
+							"provided",
+							"system-keychain",
+							"legacy-file",
 							"environment",
 							"none"
 						]
@@ -412,6 +414,91 @@
 				"additionalProperties": false
 			},
 			"UpdateAiSettingsRequestDto": {
+				"properties": {
+					"provider": {
+						"type": "string",
+						"enum": [
+							"mock",
+							"openai"
+						]
+					},
+					"apiKey": {
+						"type": "string"
+					},
+					"clearApiKey": {
+						"type": "boolean"
+					},
+					"model": {
+						"type": "string"
+					},
+					"baseUrl": {
+						"type": "string"
+					},
+					"timeoutMs": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AiConnectionTestDto": {
+				"properties": {
+					"ok": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"preview",
+							"success",
+							"error"
+						]
+					},
+					"message": {
+						"type": "string"
+					},
+					"provider": {
+						"type": "string",
+						"enum": [
+							"mock",
+							"openai"
+						]
+					},
+					"model": {
+						"type": "string"
+					},
+					"baseUrl": {
+						"type": "string"
+					},
+					"credentialSource": {
+						"type": "string",
+						"enum": [
+							"provided",
+							"system-keychain",
+							"legacy-file",
+							"environment",
+							"none"
+						]
+					},
+					"latencyMs": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"ok",
+					"status",
+					"message",
+					"provider",
+					"model",
+					"baseUrl",
+					"credentialSource"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TestAiSettingsRequestDto": {
 				"properties": {
 					"provider": {
 						"type": "string",
@@ -1706,6 +1793,48 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/UpdateAiSettingsRequestDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/settings/ai/test": {
+			"post": {
+				"operationId": "TestAiSettings",
+				"responses": {
+					"200": {
+						"description": "AI connection tested",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AiConnectionTestDto"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TestAiSettingsRequestDto"
 							}
 						}
 					}

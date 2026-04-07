@@ -13,7 +13,6 @@ import {
   DEFAULT_OPENAI_BASE_URL,
   DEFAULT_OPENAI_TIMEOUT_MS,
   ResolvedAiRuntimeSettings,
-  resolveAiRuntimeSettings,
 } from "../ai-runtime-settings";
 import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
 import { AiTestcaseDraftDto } from "../../../api/problem-ai/problem-ai";
@@ -389,7 +388,7 @@ export class OpenAiProvider implements AiProvider {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
 
-  constructor(settings: ResolvedAiRuntimeSettings = resolveAiRuntimeSettings()) {
+  constructor(settings: ResolvedAiRuntimeSettings) {
     this.apiKey = settings.apiKey.trim();
     this.model = settings.model.trim() || DEFAULT_AI_MODEL;
     this.baseUrl = settings.baseUrl.trim() || DEFAULT_OPENAI_BASE_URL;

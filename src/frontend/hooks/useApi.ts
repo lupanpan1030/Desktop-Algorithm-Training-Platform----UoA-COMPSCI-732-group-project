@@ -112,7 +112,7 @@ export interface AiSettings {
   baseUrl: string;
   timeoutMs: number;
   apiKeyConfigured: boolean;
-  apiKeySource: "saved" | "environment" | "none";
+  apiKeySource: "provided" | "system-keychain" | "legacy-file" | "environment" | "none";
   apiKeyPreview: string | null;
   status: "preview" | "ready" | "misconfigured";
   statusLabel: string;
@@ -128,6 +128,17 @@ export interface AiSettingsUpdatePayload {
   timeoutMs: number;
   apiKey?: string;
   clearApiKey?: boolean;
+}
+
+export interface AiConnectionTestResult {
+  ok: boolean;
+  status: "preview" | "success" | "error";
+  message: string;
+  provider: "mock" | "openai";
+  model: string;
+  baseUrl: string;
+  credentialSource: "provided" | "system-keychain" | "legacy-file" | "environment" | "none";
+  latencyMs?: number;
 }
 
 export interface AiTestcaseDraft {
@@ -426,6 +437,16 @@ export const useApi = () => {
     });
   }, [request]);
 
+  const testAiSettings = useCallback(async (
+    settings: AiSettingsUpdatePayload
+  ): Promise<AiConnectionTestResult> => {
+    return await request<AiConnectionTestResult>({
+      url: "/settings/ai/test",
+      method: "POST",
+      body: settings,
+    });
+  }, [request]);
+
   const generateAiTestDrafts = useCallback(async (
     problemId: number,
     payload: GenerateAiTestDraftsPayload
@@ -459,6 +480,7 @@ export const useApi = () => {
     deleteTestCase,
     getAiSettings,
     updateAiSettings,
+    testAiSettings,
     generateAiTestDrafts,
   };
 };

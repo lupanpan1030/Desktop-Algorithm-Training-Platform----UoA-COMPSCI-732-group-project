@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Post,
   Put,
   Response,
   Route,
@@ -9,7 +10,12 @@ import {
   Tags,
 } from "tsoa";
 import { ValidateError } from "../../utils/errors/validation-error";
-import { AiSettingsDto, UpdateAiSettingsRequestDto } from "./ai-settings";
+import {
+  AiConnectionTestDto,
+  AiSettingsDto,
+  TestAiSettingsRequestDto,
+  UpdateAiSettingsRequestDto,
+} from "./ai-settings";
 import { AiSettingsService } from "./ai-settings-service";
 
 @Route("settings")
@@ -30,5 +36,14 @@ export class AiSettingsController extends Controller {
     @Body() body: UpdateAiSettingsRequestDto
   ): Promise<AiSettingsDto> {
     return this.service.updateSettings(body);
+  }
+
+  @Response<ValidateError>(422, "Validation Failed")
+  @SuccessResponse("200", "AI connection tested")
+  @Post("ai/test")
+  public async testAiSettings(
+    @Body() body: TestAiSettingsRequestDto
+  ): Promise<AiConnectionTestDto> {
+    return this.service.testSettings(body);
   }
 }

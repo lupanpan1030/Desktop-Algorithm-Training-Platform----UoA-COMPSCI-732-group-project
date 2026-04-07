@@ -1,10 +1,20 @@
 import fs from "fs";
 import fsp from "fs/promises";
 import path from "path";
+import {
+  clearAiCredential,
+  readAiCredential,
+  writeAiCredential,
+} from "./ai-credential-store";
 
 export type AiProviderKind = "mock" | "openai";
 export type AiSettingsStatus = "preview" | "ready" | "misconfigured";
-export type AiApiKeySource = "saved" | "environment" | "none";
+export type AiApiKeySource =
+  | "provided"
+  | "system-keychain"
+  | "legacy-file"
+  | "environment"
+  | "none";
 
 type StoredAiSettings = {
   provider?: AiProviderKind;
@@ -21,6 +31,15 @@ export type AiSettingsUpdateInput = {
   model?: string | null;
   baseUrl?: string | null;
   timeoutMs?: number | null;
+};
+
+type ResolveOptions = {
+  allowTransientApiKey?: boolean;
+};
+
+type PersistedCredentialState = {
+  apiKey: string;
+  source: Extract<AiApiKeySource, "system-keychain" | "legacy-file" | "none">;
 };
 
 export type ResolvedAiRuntimeSettings = {
@@ -144,28 +163,135 @@ function pruneStoredSettings(settings: StoredAiSettings): StoredAiSettings {
   ) as StoredAiSettings;
 }
 
-export function resolveAiRuntimeSettings(): ResolvedAiRuntimeSettings {
+async function writeStoredAiSettings(settings: StoredAiSettings) {
+  const storagePath = getAiSettingsStoragePath();
+  await fsp.mkdir(path.dirname(storagePath), { recursive: true });
+  await fsp.writeFile(storagePath, JSON.stringify(pruneStoredSettings(settings), null, 2), "utf8");
+}
+
+function buildStorageScope(source: AiApiKeySource) {
+  const settingsScope = process.env.APP_CONFIG_DIR?.trim()
+    ? "Non-secret assistant settings are stored in this app's local data directory on this device."
+    : "Non-secret assistant settings are stored in this project's local config directory.";
+
+  switch (source) {
+    case "system-keychain":
+      return `${settingsScope} The API key is stored in the system keychain.`;
+    case "legacy-file":
+      return `${settingsScope} A legacy API key is still being read from the local settings file until it can be migrated into the system keychain.`;
+    case "environment":
+      return `${settingsScope} The API key currently comes from the OPENAI_API_KEY environment variable.`;
+    case "provided":
+      return `${settingsScope} The API key is being used only for this connection test and has not been saved yet.`;
+    default:
+      return `${settingsScope} Saving a key from this screen stores it in the system keychain.`;
+  }
+}
+
+async function resolvePersistedCredentialState(
+  storedSettings: StoredAiSettings,
+  storagePath: string
+): Promise<PersistedCredentialState> {
+  const legacyApiKey = normalizeNonEmptyString(storedSettings.apiKey);
+  const credential = await readAiCredential(storagePath);
+
+  if (legacyApiKey && credential.available) {
+    if (!credential.apiKey) {
+      await writeAiCredential(storagePath, legacyApiKey);
+    }
+
+    try {
+      await writeStoredAiSettings({
+        ...storedSettings,
+        apiKey: undefined,
+      });
+    } catch {
+      // Ignore cleanup failure here. The runtime still prefers the keychain copy.
+    }
+
+    return {
+      apiKey: credential.apiKey ?? legacyApiKey,
+      source: "system-keychain",
+    };
+  }
+
+  if (credential.apiKey) {
+    if (legacyApiKey) {
+      try {
+        await writeStoredAiSettings({
+          ...storedSettings,
+          apiKey: undefined,
+        });
+      } catch {
+        // Ignore cleanup failure here. The runtime still prefers the keychain copy.
+      }
+    }
+
+    return {
+      apiKey: credential.apiKey,
+      source: "system-keychain",
+    };
+  }
+
+  if (legacyApiKey) {
+    return {
+      apiKey: legacyApiKey,
+      source: "legacy-file",
+    };
+  }
+
+  return {
+    apiKey: "",
+    source: "none",
+  };
+}
+
+export async function resolveAiRuntimeSettings(
+  input?: AiSettingsUpdateInput,
+  options: ResolveOptions = {}
+): Promise<ResolvedAiRuntimeSettings> {
   const storedSettings = readStoredAiSettingsSync();
-  const provider = normalizeProvider(storedSettings.provider ?? process.env.AI_PROVIDER);
+  const storagePath = getAiSettingsStoragePath();
+  const persistedCredential = await resolvePersistedCredentialState(storedSettings, storagePath);
+  const envApiKey = normalizeNonEmptyString(process.env.OPENAI_API_KEY);
+  const transientApiKey = options.allowTransientApiKey
+    ? normalizeNonEmptyString(input?.apiKey)
+    : undefined;
+
+  const provider = normalizeProvider(
+    input?.provider ?? storedSettings.provider ?? process.env.AI_PROVIDER
+  );
   const model =
+    normalizeNonEmptyString(input?.model) ??
     normalizeNonEmptyString(storedSettings.model) ??
     normalizeNonEmptyString(process.env.AI_MODEL) ??
     DEFAULT_AI_MODEL;
   const baseUrl =
+    normalizeNonEmptyString(input?.baseUrl) ??
     normalizeNonEmptyString(storedSettings.baseUrl) ??
     normalizeNonEmptyString(process.env.OPENAI_BASE_URL) ??
     DEFAULT_OPENAI_BASE_URL;
   const timeoutMs = normalizeTimeoutMs(
-    storedSettings.timeoutMs ?? process.env.OPENAI_TIMEOUT_MS
+    input?.timeoutMs ?? storedSettings.timeoutMs ?? process.env.OPENAI_TIMEOUT_MS
   );
-  const savedApiKey = normalizeNonEmptyString(storedSettings.apiKey);
-  const envApiKey = normalizeNonEmptyString(process.env.OPENAI_API_KEY);
-  const apiKey = savedApiKey ?? envApiKey ?? "";
-  const apiKeySource: AiApiKeySource = savedApiKey
-    ? "saved"
-    : envApiKey
-      ? "environment"
-      : "none";
+
+  let apiKey = "";
+  let apiKeySource: AiApiKeySource = "none";
+
+  if (transientApiKey) {
+    apiKey = transientApiKey;
+    apiKeySource = "provided";
+  } else if (input?.clearApiKey) {
+    apiKey = envApiKey ?? "";
+    apiKeySource = envApiKey ? "environment" : "none";
+  } else if (persistedCredential.source !== "none") {
+    apiKey = persistedCredential.apiKey;
+    apiKeySource = persistedCredential.source;
+  } else if (envApiKey) {
+    apiKey = envApiKey;
+    apiKeySource = "environment";
+  }
+
   const apiKeyConfigured = Boolean(apiKey);
   const status = buildStatus(provider, apiKeyConfigured, model);
 
@@ -179,10 +305,8 @@ export function resolveAiRuntimeSettings(): ResolvedAiRuntimeSettings {
     apiKeySource,
     apiKeyPreview: buildApiKeyPreview(apiKey),
     ...status,
-    storagePath: getAiSettingsStoragePath(),
-    storageScope: process.env.APP_CONFIG_DIR?.trim()
-      ? "Stored locally in this app's data directory on this device."
-      : "Stored locally in this project's config directory.",
+    storagePath,
+    storageScope: buildStorageScope(apiKeySource),
   };
 }
 
@@ -190,12 +314,14 @@ export async function saveAiRuntimeSettings(
   input: AiSettingsUpdateInput
 ): Promise<ResolvedAiRuntimeSettings> {
   const currentStoredSettings = readStoredAiSettingsSync();
-  const nextApiKey = input.clearApiKey
-    ? undefined
-    : normalizeNonEmptyString(input.apiKey) ?? currentStoredSettings.apiKey;
+  const storagePath = getAiSettingsStoragePath();
+  const currentCredential = await resolvePersistedCredentialState(
+    currentStoredSettings,
+    storagePath
+  );
+  const nextApiKey = normalizeNonEmptyString(input.apiKey);
   const nextStoredSettings = pruneStoredSettings({
     provider: normalizeProvider(input.provider ?? currentStoredSettings.provider),
-    apiKey: nextApiKey,
     model:
       normalizeNonEmptyString(input.model) ??
       normalizeNonEmptyString(currentStoredSettings.model) ??
@@ -205,11 +331,25 @@ export async function saveAiRuntimeSettings(
       normalizeNonEmptyString(currentStoredSettings.baseUrl) ??
       DEFAULT_OPENAI_BASE_URL,
     timeoutMs: normalizeTimeoutMs(input.timeoutMs ?? currentStoredSettings.timeoutMs),
+    apiKey:
+      currentCredential.source === "legacy-file" &&
+      !input.clearApiKey &&
+      !nextApiKey
+        ? currentStoredSettings.apiKey
+        : undefined,
   });
 
-  const storagePath = getAiSettingsStoragePath();
-  await fsp.mkdir(path.dirname(storagePath), { recursive: true });
-  await fsp.writeFile(storagePath, JSON.stringify(nextStoredSettings, null, 2), "utf8");
+  if (input.clearApiKey) {
+    if (currentCredential.source === "system-keychain") {
+      await clearAiCredential(storagePath);
+    }
+    nextStoredSettings.apiKey = undefined;
+  } else if (nextApiKey) {
+    await writeAiCredential(storagePath, nextApiKey);
+    nextStoredSettings.apiKey = undefined;
+  }
+
+  await writeStoredAiSettings(nextStoredSettings);
 
   return resolveAiRuntimeSettings();
 }

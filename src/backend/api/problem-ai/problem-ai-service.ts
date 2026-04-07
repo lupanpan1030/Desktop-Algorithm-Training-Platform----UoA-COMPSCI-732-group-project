@@ -35,8 +35,16 @@ export class ProblemAiService {
   constructor(
     private readonly problemsService: ProblemsService = new ProblemsService(),
     private readonly testCaseService: TestCaseService = new TestCaseService(),
-    private readonly provider: AiProvider = createAiProvider()
+    private readonly providerSource: AiProvider | (() => Promise<AiProvider>) = createAiProvider
   ) {}
+
+  private async getProvider() {
+    if (typeof this.providerSource === "function") {
+      return this.providerSource();
+    }
+
+    return this.providerSource;
+  }
 
   public async generateTestDrafts(
     problemId: number,
@@ -52,8 +60,9 @@ export class ProblemAiService {
       Boolean(dto.locale)
     );
     const existingTestcases = await this.testCaseService.getTestCases(problemId);
+    const provider = await this.getProvider();
 
-    const result = await this.provider.generateTestDrafts({
+    const result = await provider.generateTestDrafts({
       problemId,
       problem,
       existingTestcases,

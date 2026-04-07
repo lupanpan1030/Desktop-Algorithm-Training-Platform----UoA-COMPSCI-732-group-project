@@ -7,10 +7,18 @@ import {
 } from "../../services/ai/providers/provider-utils";
 
 export class AiService {
-  private provider: AiProvider;
+  private readonly providerSource: AiProvider | (() => Promise<AiProvider>);
 
-  constructor(provider: AiProvider = createAiProvider()) {
-    this.provider = provider;
+  constructor(provider: AiProvider | (() => Promise<AiProvider>) = createAiProvider) {
+    this.providerSource = provider;
+  }
+
+  private async getProvider() {
+    if (typeof this.providerSource === "function") {
+      return this.providerSource();
+    }
+
+    return this.providerSource;
   }
 
   async respond(dto: AiRespondRequestDto): Promise<AiRespondResponseDto> {
@@ -31,7 +39,9 @@ export class AiService {
       };
     }
 
-    return this.provider.respond({
+    const provider = await this.getProvider();
+
+    return provider.respond({
       action: dto.action ?? (dto.userMessage ? "answer" : "suggest"),
       userMessage: dto.userMessage,
       pageContext: dto.pageContext,

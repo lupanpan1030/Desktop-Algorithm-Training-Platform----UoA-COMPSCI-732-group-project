@@ -3,11 +3,11 @@ import { MockAiProvider } from "./mock-ai-provider";
 import { OpenAiProvider } from "./openai-provider";
 import { resolveAiRuntimeSettings } from "../ai-runtime-settings";
 
-export function createAiProvider(): AiProvider {
-  const settings = resolveAiRuntimeSettings();
+export async function createAiProvider(): Promise<AiProvider> {
+  const settings = await resolveAiRuntimeSettings();
 
   if (settings.provider === "openai" && settings.apiKeyConfigured) {
-    return new OpenAiProvider();
+    return new OpenAiProvider(settings);
   }
 
   return new MockAiProvider();
