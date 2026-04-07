@@ -7,10 +7,15 @@ const quietTypecheckLogger = {
   },
 };
 
-const plugins = [
-  new ForkTsCheckerWebpackPlugin({
-    logger: quietTypecheckLogger,
-  }),
-];
+const shouldSkipWebpackTypecheck =
+  process.env.SKIP_WEBPACK_TYPECHECK === 'true';
+
+const plugins = shouldSkipWebpackTypecheck
+  ? []
+  : [
+      new ForkTsCheckerWebpackPlugin({
+        logger: quietTypecheckLogger,
+      }),
+    ];
 
 module.exports = { plugins };

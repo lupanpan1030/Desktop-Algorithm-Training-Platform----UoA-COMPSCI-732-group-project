@@ -33,7 +33,7 @@ let rendererConfigPreparation;
 
 if (!isDevelopment) {
   rendererConfigPreparation = {
-    devtool: 'source-map',
+    devtool: false,
     module: {
       rules,
     },
@@ -74,6 +74,7 @@ if (!isDevelopment) {
       },
     },
     optimization: {
+      minimize: false,
       splitChunks: {
         cacheGroups: {
           monacoCommon: {
