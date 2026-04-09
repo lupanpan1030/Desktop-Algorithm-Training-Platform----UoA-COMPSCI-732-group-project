@@ -1,37 +1,38 @@
-name: test
+name: verify
 
-# Trigger on push to main/dev branches or on any pull request
 on:
   push:
-    branches: [dev-*]
+    branches: [main, dev-*]
   pull_request:
     branches: [main]
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.x]
     steps:
-      # Checkout code
       - uses: actions/checkout@v4
 
-      # Set up and cache the specified Node.js version and npm dependencies
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'               # Automatically cache ~/.npm
+          cache: 'npm'
 
-      # Install dependencies
       - run: npm ci
 
-      # Run backend tests (Node environment)
-      - name: Run backend tests
-        run: npm run test:back
+      - name: Lint
+        run: npm run lint
 
-      # Run frontend tests (jsdom environment)
-      - name: Run frontend tests
-        run: npm run test:front
+      - name: Typecheck
+        run: npm run typecheck
 
+      - name: Check committed TSOA outputs
+        run: |
+          npx tsoa spec-and-routes
+          git diff --exit-code -- src/backend/api/routes.ts src/backend/api/swagger.json
+
+      - name: Run tests
+        run: npm run test

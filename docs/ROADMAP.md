@@ -58,7 +58,7 @@ Goal: make future feature work cheaper.
 Tasks:
 - continue converting implicit frontend contracts into typed API models
 - expand frontend coverage around detail-page workflows and admin flows
-- add CI for lint, tests, and TSOA generation checks
+- expand CI coverage for lint, typecheck, tests, and TSOA generation checks
 - reduce mixed JS/TS inconsistencies in shared UI state and hooks
 
 ## Immediate Priority Order

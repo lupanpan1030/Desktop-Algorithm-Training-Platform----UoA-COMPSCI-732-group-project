@@ -202,6 +202,8 @@ npm run package
 ## Documentation
 
 - Documentation index: [docs/README.md](./docs/README.md)
+- Architecture overview: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- Current verification and support status: [docs/STATUS.md](./docs/STATUS.md)
 - Redevelopment roadmap: [docs/ROADMAP.md](./docs/ROADMAP.md)
 - Development guide: [docs/development.md](./docs/development.md)
 - Product and implementation plans: [docs/plans/](./docs/plans)

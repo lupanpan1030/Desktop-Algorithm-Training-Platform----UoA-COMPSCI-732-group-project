@@ -202,6 +202,8 @@ npm run package
 ## 文档索引
 
 - 文档总览：[docs/README.md](./docs/README.md)
+- 架构概览：[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- 当前验证状态与支持范围：[docs/STATUS.md](./docs/STATUS.md)
 - 迭代路线图：[docs/ROADMAP.md](./docs/ROADMAP.md)
 - 开发说明：[docs/development.md](./docs/development.md)
 - 规划文档集合：[docs/plans/](./docs/plans)
