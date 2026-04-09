@@ -18,7 +18,7 @@
 
 当前这条分支是由下列维护者继续推进的个人二次开发线：
 
-- 陈璐 / `lupanpan` - `clu396@aucklanduni.ac.nz`
+- Chen Lu / `lupanpan` - `clu396@aucklanduni.ac.nz`
 
 这条分支是在原课程项目基础上继续演进的结果，不应被理解为当前代码库的所有内容都等量代表原始 6 位成员在后续阶段的共同投入。
 
