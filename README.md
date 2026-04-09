@@ -1,7 +1,7 @@
 # Delightful Dogs
 
 <p align="center">
-  Local Electron-based algorithm practice platform with problem curation, judge tooling, and a desktop AI assistant.
+  Local Electron-based algorithm practice platform with problem curation, judge tooling, and an optional desktop AI assistant.
 </p>
 
 <p align="center">
@@ -16,48 +16,85 @@
 
 This repository started as the CS732 group project from Team Delightful Dogs.
 
-It is now maintained as an independent personal redevelopment line by:
+The current branch is a personal redevelopment line maintained by:
 
 - Chen Lu (`lupanpan`) - `clu396@aucklanduni.ac.nz`
 
-The current product focus is a fully local desktop workflow for:
+This branch extends the original course-project baseline. It should not be read as a claim that the entire current codebase reflects equal involvement from every original team member.
 
-- browsing and curating practice problems
-- writing, running, and submitting solutions
-- reviewing submission history
-- managing language presets and imported metadata
-- using a page-aware AI assistant inside the app
+Original team members:
+
+- Manling Chen - `mche600@aucklanduni.ac.nz`
+- Xinyang Guo - `xguo339@aucklanduni.ac.nz`
+- Yimei Zhang - `byhz331@aucklanduni.ac.nz`
+- Zhuyu Liu - `zliu770@aucklanduni.ac.nz`
+- Junxiao Liao - `jila469@aucklanduni.ac.nz`
+- Chen Lu - `clu396@aucklanduni.ac.nz`
+
+The current product goal is still local-first desktop practice, not an online judge or a cloud platform. The main workflow is:
+
+- browse and curate practice problems
+- write, run, and submit solutions locally
+- review per-testcase results and submission history
+- manage local language presets
+- optionally use a page-aware AI assistant inside the app
 
 ## Current Status
 
-This repository is in a usable redevelopment state, not just an archive.
+This branch is currently usable for local development, packaging, and demo use on the verified environment below.
 
-The current branch has already been verified with:
+Verified on the current development machine:
 
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
-- `npm run package`
-- packaged-app smoke tests on macOS arm64
+- `source scripts/use-dev-node.sh && npm run package`
+- packaged-app smoke tests on macOS arm64 for startup, problem listing, language admin, problem detail rendering, run, and submit
 
-Current packaged output for the local machine:
+Current packaged output on the verified machine:
 
 ```text
 out/algo-platform-darwin-arm64/algo-platform.app
 ```
 
-## What Changed In This Redevelopment Line
+What is working now:
 
-Compared with the original course-project state, this branch now emphasizes reliability and maintainability:
+- local Electron desktop startup
+- embedded Express + TSOA backend bootstrap
+- problem browsing and locale-aware detail rendering
+- Monaco-based editing with per-language draft persistence
+- run / submit / submission-history flows
+- problem CRUD and testcase CRUD
+- language preset CRUD
+- packaged-app startup with packaged SQLite seed bootstrap
+- optional page-aware AI assistant with mock fallback
 
-- desktop runtime and database bootstrap flow have been stabilized
-- the judge workflow supports run, submit, and submission-history review
-- Monaco editor drafts are preserved per language with starter-code recovery
-- problem administration now exposes imported metadata, tags, starter code, and testcase curation
-- a floating global AI assistant has been added to the desktop shell
-- packaging for the current platform has been repaired and smoke-tested
+What is not fully validated yet:
 
-The active roadmap is tracked in [docs/ROADMAP.md](./docs/ROADMAP.md).
+- Windows packaging on a Windows machine
+- Linux packaging on a Linux machine
+- broader manual UI regression coverage beyond the smoke pass
+- long-running or adversarial judge execution scenarios
+
+Important limits:
+
+- code execution is local child-process execution, not a hardened sandbox
+- execution isolation, diagnostics, and resource controls still need work
+- SQLite portability and backup/restore flows are still incomplete
+- packaging is verified on one target platform, not across the full Forge matrix
+
+The active redevelopment roadmap is tracked in [docs/ROADMAP.md](./docs/ROADMAP.md).
+
+## What Changed In This Branch
+
+Compared with the tagged course-project state, this branch focuses on reliability and maintainability rather than only assignment delivery:
+
+- stabilised the desktop runtime and packaged database bootstrap flow
+- completed run, submit, and submission-history review in the detail-page workflow
+- preserved Monaco drafts per language with starter-code recovery
+- expanded problem administration to cover imported metadata, tags, starter code, and testcase curation
+- repaired production packaging for the current platform
+- added an optional global AI assistant layer that does not block the core local workflow
 
 ## Key Features
 
@@ -68,7 +105,7 @@ The active roadmap is tracked in [docs/ROADMAP.md](./docs/ROADMAP.md).
 - Bilingual English/Chinese problem content support
 - Language preset management for the local judge
 - Local LeetCode CN importer for building a personal dataset
-- Global page-aware AI assistant
+- Optional page-aware AI assistant
 
 ## Tech Stack
 
@@ -196,7 +233,7 @@ npm run package
 
 - Packaging is platform-specific, not one artifact for every OS
 - the current repository state has been verified on macOS arm64
-- `npm run package` now prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, and then invokes Electron Forge
+- `npm run package` prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, and then invokes Electron Forge
 - Windows packaging is configured in Forge, but still needs validation on a Windows machine
 
 ## Documentation
@@ -241,12 +278,3 @@ In short:
 
 - documentation and planning material belong under `docs/`
 - build, runtime, package-manager, and tool-entry files should stay at the root
-
-## Original Team
-
-- Manling Chen - `mche600@aucklanduni.ac.nz`
-- Xinyang Guo - `xguo339@aucklanduni.ac.nz`
-- Yimei Zhang - `byhz331@aucklanduni.ac.nz`
-- Zhuyu Liu - `zliu770@aucklanduni.ac.nz`
-- Junxiao Liao - `jila469@aucklanduni.ac.nz`
-- Chen Lu - `clu396@aucklanduni.ac.nz`
