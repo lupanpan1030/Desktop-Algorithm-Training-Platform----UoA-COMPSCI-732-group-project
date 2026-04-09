@@ -1,138 +1,250 @@
 # Delightful Dogs
 
+<p align="center">
+  Local Electron-based algorithm practice platform with problem curation, judge tooling, and a desktop AI assistant.
+</p>
+
+<p align="center">
+  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">中文</a>
+</p>
+
+<p align="center">
+  <img src="./docs/assets/delightful-dogs.png" alt="Delightful Dogs banner" width="720" />
+</p>
+
+## Overview
+
 This repository started as the CS732 group project from Team Delightful Dogs.
 
-It is now being independently redeveloped and maintained by:
+It is now maintained as an independent personal redevelopment line by:
 
-- Chen Lu _(clu396@aucklanduni.ac.nz)_ / `lupanpan`
+- Chen Lu (`lupanpan`) - `clu396@aucklanduni.ac.nz`
 
-Original team members:
+The current product focus is a fully local desktop workflow for:
 
-- Manling Chen _(mche600@aucklanduni.ac.nz)_
-- Xinyang Guo _(xguo339@aucklanduni.ac.nz)_
-- Yimei Zhang _(byhz331@aucklanduni.ac.nz)_
-- Zhuyu Liu _(zliu770@aucklanduni.ac.nz)_
-- Junxiao Liao _(jila469@aucklanduni.ac.nz)_
-- Chen Lu _(clu396@aucklanduni.ac.nz)_
+- browsing and curating practice problems
+- writing, running, and submitting solutions
+- reviewing submission history
+- managing language presets and imported metadata
+- using a page-aware AI assistant inside the app
 
-![](./Delightful%20Dogs.png)
+## Current Status
 
-## Project Overview
-An algorithm puzzle ([Competitive programming](https://en.wikipedia.org/wiki/Competitive_programming)) training platform that runs on desktop in a completely local environment.
+This repository is in a usable redevelopment state, not just an archive.
 
-This branch/version is the personal secondary-development edition of the original project. The current maintenance focus is:
+The current branch has already been verified with:
 
-- stabilising the local desktop + backend runtime
-- making database/bootstrap flow reproducible
-- improving the judge execution pipeline
-- turning the project into a maintainable local training platform with import and curation workflows
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run package`
+- packaged-app smoke tests on macOS arm64
 
-The current redevelopment plan is tracked in [ROADMAP.md](./ROADMAP.md).
+Current packaged output for the local machine:
+
+```text
+out/algo-platform-darwin-arm64/algo-platform.app
+```
+
+## What Changed In This Redevelopment Line
+
+Compared with the original course-project state, this branch now emphasizes reliability and maintainability:
+
+- desktop runtime and database bootstrap flow have been stabilized
+- the judge workflow supports run, submit, and submission-history review
+- Monaco editor drafts are preserved per language with starter-code recovery
+- problem administration now exposes imported metadata, tags, starter code, and testcase curation
+- a floating global AI assistant has been added to the desktop shell
+- packaging for the current platform has been repaired and smoke-tested
+
+The active roadmap is tracked in [docs/ROADMAP.md](./docs/ROADMAP.md).
 
 ## Key Features
-- Local execution with a desktop GUI.
-- Configurable programming-language presets.
-- Run / submit evaluation with submission history review.
-- Monaco-based code editor with per-language local drafts and starter-code reset support.
-- Problem administration UI for problem CRUD, testcase CRUD, and imported metadata inspection.
-- Bilingual problem content support with English/Chinese locale switching.
-- Local LeetCode CN importer for building a personal practice dataset.
 
-## Technology
-- Desktop: [electron.js](https://www.electronjs.org/), [electron-forge](https://www.electronforge.io/)
-- Frontend: [react.js](https://react.dev/), [MUI](https://mui.com/), [monaco editor](https://microsoft.github.io/monaco-editor/), [webpack](https://webpack.js.org/)
-- Backend: [express.js](https://expressjs.com/), [TSOA](https://tsoa-community.github.io/docs/), [prisma](https://www.prisma.io/)
+- Local desktop execution with Electron
+- Problem list, detail page, and submission history
+- Monaco-based editor with local draft persistence
+- Problem CRUD and testcase CRUD in the desktop UI
+- Bilingual English/Chinese problem content support
+- Language preset management for the local judge
+- Local LeetCode CN importer for building a personal dataset
+- Global page-aware AI assistant
 
-## Run Project
+## Tech Stack
 
-### Download & Run the Published Executable
-1. Download the compiled portable from [Release Page](https://github.com/UOA-CS732-S1-2025/group-project-delightful-dogs/releases).
-2. To start the application, run the `./out/start_application` script.
+- Desktop: Electron, Electron Forge
+- Frontend: React, MUI, Monaco Editor, Webpack
+- Backend: Express, TSOA, Prisma, SQLite
+- Testing: Vitest, Testing Library, Supertest
 
-### Run Source Code for Development
-More details for development are provided in [dev-doc.md](./dev-doc.md).
+## Quick Start
 
-- Recommended environment isolation:
-  - This repository now includes [environment.yml](./environment.yml) for a dedicated conda environment.
-  - Create it with `conda env create -f environment.yml`
-  - Activate it with `conda activate delightful-dogs-dev`
-  - The recommended Node runtime is currently `22.x` LTS. Node `24.x` can still run the project, but it emits noisy TypeScript-config parsing warnings in Electron Forge development mode.
-  - Copy `.env.example` to `.env` before your first run.
+### Prerequisites
 
-- To start project for development:
-  - Ensure Node.js and npm are properly set up.
-  - Run in the project root directory.
-      ```bash
-      cp .env.example .env
-      npm start
-      ```
-  - This launches the Electron shell and the webpack-based renderer dev server.
-  - If `conda activate delightful-dogs-dev` still resolves `node` to Homebrew instead of the conda environment, use one of these repo-local helpers:
-      ```bash
-      source scripts/use-dev-node.sh
-      npm start
-      ```
-      or
-      ```bash
-      npm run start:node22
-      ```
-- To enable the real OpenAI-backed global assistant:
-  - Set these in your local `.env`.
-      ```bash
-      AI_PROVIDER="openai"
-      OPENAI_API_KEY="your_key_here"
-      AI_MODEL="gpt-5-mini"
-      ```
-  - If `AI_PROVIDER` stays `mock`, the assistant still works, but it uses the local preview provider instead of the network API.
-- To run backend only:
-  - Run in the project root directory.
-      ```bash
-      npm run dev
-      ```
-  - The API server listens on `http://localhost:6785`.
-- To run tests:
-  - Run in the project root directory.
-      ```bash
-      npm run test
-      ```
-  - Individual suites are available as `npm run test:front` and `npm run test:back`.
-- To regenerate backend routes and OpenAPI output after changing TSOA controllers or DTOs:
-  - Run in the project root directory.
-      ```bash
-      npx tsoa spec-and-routes
-      ```
-- Swagger UI debug page is available at:
-  - `http://localhost:6785/docs`
-- To initialize the local development database:
-  - Run in the project root directory.
-      ```bash
-      npm run db:init
-      ```
-- To reset and reseed the local development database:
-  - Run in the project root directory.
-      ```bash
-      npm run db:reset
-      ```
-- To import LeetCode CN problems from a local `leetcode-problemset` checkout:
-  - Dry-run the importer first.
-      ```bash
-      npm run import:leetcode-cn -- --source /Users/ethan/Documents/GitHub/leetcode-problemset/leetcode-cn/originData --limit 20 --dry-run --verbose
-      ```
-  - Then run the real import.
-      ```bash
-      npm run import:leetcode-cn -- --source /Users/ethan/Documents/GitHub/leetcode-problemset/leetcode-cn/originData --limit 20
-      ```
-  - Imported problems are stored as content-first entries.
-  - The importer keeps your later testcase/judge work intact by preserving `judge_ready` and existing testcase rows.
-  - Imported LeetCode problems will still need manual testcase completion before they become fully runnable in the local judge.
-- Current notable UI areas:
-  - `Problem List`: browse localized problems and difficulty/completion filters.
-  - `Detail Page`: read the problem, code, run, submit, and inspect submission history.
-  - `Problem Admin`: curate problems, testcases, imported sample references, tags, and starter-code metadata.
-  - `Languages`: manage execution language presets.
-  - `Global AI Assistant`: open the floating assistant button from any page to get page-aware help and suggested questions.
-- To compile an executable for the current platform:
-  - Run in the project root directory.
-      ```bash
-      npm run package
-      ```
+- Node `22.x` LTS is recommended
+- `npm`
+- Conda is optional, but the repository includes a pinned local environment in [`environment.yml`](./environment.yml)
+
+### Development Setup
+
+```bash
+cp .env.example .env
+npm install
+```
+
+If you use the provided conda environment:
+
+```bash
+conda env create -f environment.yml
+conda activate delightful-dogs-dev
+```
+
+### Start The App
+
+Standard development startup:
+
+```bash
+npm start
+```
+
+If your shell still resolves `node` to Homebrew instead of the conda environment:
+
+```bash
+source scripts/use-dev-node.sh
+npm start
+```
+
+Or use the repo-local Node 22 helper directly:
+
+```bash
+npm run start:node22
+```
+
+### Optional AI Provider Setup
+
+To enable the real OpenAI-backed assistant:
+
+```env
+AI_PROVIDER="openai"
+OPENAI_API_KEY="your_key_here"
+AI_MODEL="gpt-5-mini"
+```
+
+If `AI_PROVIDER` stays `mock`, the assistant still works in preview mode without network calls.
+
+## Common Commands
+
+Run the backend API only:
+
+```bash
+npm run dev
+```
+
+Run all checks:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+```
+
+Run individual test suites:
+
+```bash
+npm run test:front
+npm run test:back
+```
+
+Regenerate backend routes and OpenAPI output:
+
+```bash
+npx tsoa spec-and-routes
+```
+
+Initialize the local development database:
+
+```bash
+npm run db:init
+```
+
+Reset and reseed the local development database:
+
+```bash
+npm run db:reset
+```
+
+Prepare the packaged seed database:
+
+```bash
+npm run db:prepare-package-db
+```
+
+Import LeetCode CN problems from a local checkout:
+
+```bash
+npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20 --dry-run --verbose
+npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20
+```
+
+Package the current platform:
+
+```bash
+npm run package
+```
+
+## Packaging Notes
+
+- Packaging is platform-specific, not one artifact for every OS
+- the current repository state has been verified on macOS arm64
+- `npm run package` now prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, and then invokes Electron Forge
+- Windows packaging is configured in Forge, but still needs validation on a Windows machine
+
+## Documentation
+
+- Documentation index: [docs/README.md](./docs/README.md)
+- Redevelopment roadmap: [docs/ROADMAP.md](./docs/ROADMAP.md)
+- Development guide: [docs/development.md](./docs/development.md)
+- Product and implementation plans: [docs/plans/](./docs/plans)
+
+## Repository Layout
+
+```text
+.
+├── src/                 # Electron main process, backend, frontend, shared code, tests
+├── scripts/             # Local helper scripts such as the Node 22 launcher helpers
+├── docs/                # Roadmap, development guide, plans, and static documentation assets
+├── build-resources/     # Generated packaging resources such as seed.db
+├── backups/             # Local backup artifacts
+├── package.json         # npm scripts and dependency manifest
+├── forge.config.js      # Electron Forge packaging configuration
+└── README.md            # English repository overview
+```
+
+## Why Some Files Still Belong In The Repository Root
+
+Not everything should be moved into `docs/`.
+
+These files are supposed to stay at the root because tools expect them there:
+
+- `package.json`, `package-lock.json`
+- `forge.config.js`
+- `tsconfig.json`
+- `tsoa.json`
+- `vitest.config.ts`
+- `webpack.*.js`
+- `.gitignore`, `.env.example`
+- `environment.yml`
+
+In short:
+
+- documentation and planning material belong under `docs/`
+- build, runtime, package-manager, and tool-entry files should stay at the root
+
+## Original Team
+
+- Manling Chen - `mche600@aucklanduni.ac.nz`
+- Xinyang Guo - `xguo339@aucklanduni.ac.nz`
+- Yimei Zhang - `byhz331@aucklanduni.ac.nz`
+- Zhuyu Liu - `zliu770@aucklanduni.ac.nz`
+- Junxiao Liao - `jila469@aucklanduni.ac.nz`
+- Chen Lu - `clu396@aucklanduni.ac.nz`
