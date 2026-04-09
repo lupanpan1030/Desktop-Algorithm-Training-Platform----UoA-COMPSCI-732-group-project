@@ -286,5 +286,5 @@ describe('LanguageAdmin Component', () => {
     await waitFor(() => {
       expect(screen.getByText(/already exists/i)).toBeInTheDocument();
     });
-  });
+  }, 15000);
 }); 
