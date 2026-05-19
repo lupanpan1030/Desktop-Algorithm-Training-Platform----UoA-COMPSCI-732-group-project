@@ -154,6 +154,16 @@ Judge pipeline:
 
 - `src/backend/services/judge/executor.ts`
 
+## AI-Assisted Work
+
+Use `docs/ai-development-workflow.md` for AI-assisted implementation flow. The short version is:
+
+```text
+Intake -> Context -> Scope -> Spec / Plan -> Implement -> Verify -> Commit -> Retro
+```
+
+New capabilities, architecture changes, security-sensitive behavior, data model changes, API contract changes, judge semantics, and release-sensitive workflows should get a short plan before coding.
+
 ## Current Product Areas
 
 Problem detail flow:

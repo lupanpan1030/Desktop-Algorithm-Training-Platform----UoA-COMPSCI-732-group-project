@@ -34,6 +34,15 @@ If an API contract changes, regenerate the committed TSOA outputs:
 npx tsoa spec-and-routes
 ```
 
+## AI Development Workflow
+
+Use `docs/ai-development-workflow.md` as the project-specific workflow for AI-assisted work.
+
+- For ambiguous or non-trivial requests, follow `Intake -> Context -> Scope -> Spec / Plan -> Implement -> Verify -> Commit -> Retro`.
+- New product capabilities, architecture changes, security-sensitive changes, data model changes, API contract changes, and release-sensitive workflows need a short proposal or plan before implementation, usually under `docs/plans/`.
+- Bug fixes can be implemented directly after reproducing or otherwise establishing root-cause evidence.
+- Completion claims require verification evidence. State which checks were run, and call out anything that was not verified.
+
 ## Repository Shape
 
 - `src/index.ts`: Electron main-process entrypoint

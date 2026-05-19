@@ -7,6 +7,7 @@ This directory keeps the non-code project material out of the repository root.
 - [STATUS.md](./STATUS.md): current verification state, support matrix, and known risks
 - [ROADMAP.md](./ROADMAP.md): current redevelopment priorities and remaining work
 - [development.md](./development.md): local setup, commands, database tasks, and build flow
+- [ai-development-workflow.md](./ai-development-workflow.md): AI-assisted planning, implementation, verification, and review protocol
 
 ## Plans
 - [plans/ai-assistant-v1.md](./plans/ai-assistant-v1.md): global AI assistant product plan
