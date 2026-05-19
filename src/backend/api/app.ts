@@ -10,12 +10,88 @@ import { ForbiddenError } from "../utils/errors/forbidden-error";
 import { ConflictError } from "../utils/errors/conflict-error";
 import swaggerUi from "swagger-ui-express";
 import cors from "cors";
+import crypto from "crypto";
+import {
+  LOCAL_API_AUTH_HEADER,
+  LOCAL_API_AUTH_TOKEN_ENV,
+} from "../../shared/backendConfig";
 
 let app: express.Application;
-export async function createApp() {
+
+type CreateAppOptions = {
+  localApiAuthToken?: string | null;
+};
+
+function isAllowedLocalOrigin(origin?: string) {
+  if (!origin || origin === "null" || origin === "file://") {
+    return true;
+  }
+
+  try {
+    const url = new URL(origin);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      ["localhost", "127.0.0.1", "::1"].includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function buildCorsOptions(): cors.CorsOptions {
+  return {
+    origin(origin, callback) {
+      callback(null, isAllowedLocalOrigin(origin) ? origin || true : false);
+    },
+    allowedHeaders: ["Content-Type", LOCAL_API_AUTH_HEADER],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  };
+}
+
+function tokensMatch(actual: string, expected: string) {
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+
+  return (
+    actualBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+  );
+}
+
+function requireLocalApiAuth(
+  expectedToken: string | null | undefined
+) {
+  return (req: ExRequest, res: ExResponse, next: NextFunction) => {
+    const normalizedExpectedToken = expectedToken?.trim();
+    if (!normalizedExpectedToken || req.method === "OPTIONS") {
+      next();
+      return;
+    }
+
+    const actualToken = req.header(LOCAL_API_AUTH_HEADER)?.trim() ?? "";
+    if (actualToken && tokensMatch(actualToken, normalizedExpectedToken)) {
+      next();
+      return;
+    }
+
+    res.status(401).json({
+      message: "Unauthorized local API request",
+    });
+  };
+}
+
+export async function createApp(options: CreateAppOptions = {}) {
   app = express();
+  const localApiAuthToken = Object.prototype.hasOwnProperty.call(
+    options,
+    "localApiAuthToken"
+  )
+    ? options.localApiAuthToken
+    : process.env[LOCAL_API_AUTH_TOKEN_ENV];
+
+  app.use(cors(buildCorsOptions()));
+  app.use(requireLocalApiAuth(localApiAuthToken));
   app.use(express.json());
-  app.use(cors());
 
   // Register all TSOA routes
   RegisterRoutes(app);

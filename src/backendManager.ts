@@ -1,9 +1,15 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as http from 'http';
+import * as crypto from 'crypto';
 import 'dotenv/config';
 import { createApp } from './backend/api/app';
 import { initializeDatabase } from './backend/db/prisma/initialize-database';
-import { buildBackendBaseUrl, normalizeBackendPort } from './shared/backendConfig';
+import {
+  DEFAULT_BACKEND_HOST,
+  buildBackendBaseUrl,
+  LOCAL_API_AUTH_TOKEN_ENV,
+  normalizeBackendPort,
+} from './shared/backendConfig';
 import { StartupFailure } from './startupFailure';
 
 let backendProcess: ChildProcess | undefined;
@@ -16,6 +22,17 @@ let recentBackendLogLines: string[] = [];
 
 function getBackendPort() {
   return normalizeBackendPort(process.env.PORT);
+}
+
+function ensureLocalApiAuthToken() {
+  const existingToken = process.env[LOCAL_API_AUTH_TOKEN_ENV]?.trim();
+  if (existingToken) {
+    return existingToken;
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  process.env[LOCAL_API_AUTH_TOKEN_ENV] = token;
+  return token;
 }
 
 function getBackendStartTimeoutMs() {
@@ -84,11 +101,11 @@ async function startBackendDirectly(): Promise<void> {
   const port = getBackendPort();
 
   await new Promise<void>((resolve, reject) => {
-    const server = expressApp.listen(port);
+    const server = expressApp.listen(port, DEFAULT_BACKEND_HOST);
 
     server.once('listening', () => {
       directServerInstance = server;
-      console.log(`Server directly started on port ${port}`);
+      console.log(`Server directly started on ${DEFAULT_BACKEND_HOST}:${port}`);
       resolve();
     });
     server.once('error', reject);
@@ -98,6 +115,7 @@ async function startBackendDirectly(): Promise<void> {
 export async function startBackend(): Promise<void> {
   registerCleanupHandlers();
   resetBackendStartupLog();
+  ensureLocalApiAuthToken();
 
   if (process.env.NODE_ENV === 'development') {
     // Development mode - use ts-node-dev

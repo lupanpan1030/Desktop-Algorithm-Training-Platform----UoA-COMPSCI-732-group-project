@@ -1,8 +1,13 @@
 import axios from 'axios';
-import { buildBackendBaseUrl, DEFAULT_BACKEND_PORT } from '../../shared/backendConfig';
+import {
+  buildBackendBaseUrl,
+  DEFAULT_BACKEND_PORT,
+  LOCAL_API_AUTH_HEADER,
+} from '../../shared/backendConfig';
 
 type ElectronApiBridge = {
   backendBaseUrl?: string;
+  backendAuthToken?: string;
 };
 
 function resolveBackendBaseUrl() {
@@ -16,10 +21,26 @@ function resolveBackendBaseUrl() {
   return buildBackendBaseUrl(DEFAULT_BACKEND_PORT);
 }
 
+function resolveBackendAuthToken() {
+  if (typeof window !== 'undefined') {
+    const electronAPI = (window as Window & { electronAPI?: ElectronApiBridge }).electronAPI;
+    if (electronAPI?.backendAuthToken) {
+      return electronAPI.backendAuthToken;
+    }
+  }
+
+  return undefined;
+}
+
 const api = axios.create({
   baseURL: resolveBackendBaseUrl(),
   timeout: 10_000,
 });
+
+const backendAuthToken = resolveBackendAuthToken();
+if (backendAuthToken) {
+  api.defaults.headers.common[LOCAL_API_AUTH_HEADER] = backendAuthToken;
+}
 
 export type ApiClientError = Error & {
   status?: number;
