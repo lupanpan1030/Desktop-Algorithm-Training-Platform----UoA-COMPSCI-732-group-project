@@ -85,7 +85,7 @@ This is simpler than the crate-level modularization used in `claw-code-main`, bu
 ### Run And Submit
 
 - `SubmissionService` orchestrates language lookup, testcase selection, judge execution, and submission persistence.
-- `src/backend/services/judge/executor.ts` handles compile and run phases, timeout enforcement, and best-effort memory sampling.
+- `src/backend/services/judge/executor.ts` handles compile and run phases, timeout enforcement, process-tree cleanup, and best-effort process-group memory sampling.
 - `runCode()` executes a small testcase subset for fast feedback.
 - `submitCode()` evaluates the full testcase set and persists the result tree.
 

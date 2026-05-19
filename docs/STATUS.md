@@ -47,7 +47,7 @@ Not yet fully validated:
 
 ## Known Engineering Risks
 
-- judge diagnostics and execution isolation still need hardening
+- judge diagnostics and deeper execution sandboxing still need hardening beyond the current process-tree cleanup
 - SQLite portability and backup/restore flows are still incomplete
 - frontend code still mixes JS and TS in several areas
 - packaging is verified on one target platform, not across the full Forge matrix

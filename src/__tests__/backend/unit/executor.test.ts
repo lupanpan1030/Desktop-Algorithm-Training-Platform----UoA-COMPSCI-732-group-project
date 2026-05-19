@@ -1,6 +1,33 @@
 import { SubmissionStatus } from '@prisma/client';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { describe, it, expect } from 'vitest';
 import { judgeSolution, ExecutionMode, EXECUTABLE_NAME } from '../../../backend/services/judge/executor';
+
+function isProcessAlive(pid: number) {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (error) {
+		return !(
+			error instanceof Error &&
+			'code' in error &&
+			error.code === 'ESRCH'
+		);
+	}
+}
+
+async function waitForProcessExit(pid: number, timeoutMs = 1500) {
+	const startedAt = Date.now();
+	while (Date.now() - startedAt < timeoutMs) {
+		if (!isProcessAlive(pid)) {
+			return true;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 50));
+	}
+	return !isProcessAlive(pid);
+}
 
 describe('judgeSolution', () => {
 
@@ -174,5 +201,82 @@ print(len(data))
 		expect(result.phase).toBe('run');
 		expect(result.stderr).toContain('memory limit exceeded');
 		expect(result.executionMemoryKb).toBeGreaterThan(16 * 1024);
+	}, 15000);
+
+	it('cleans up spawned child processes when a run times out', async () => {
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'judge-timeout-tree-'));
+		const markerPath = path.join(tempDir, 'sleeper.pid');
+		const childScript = `
+import os
+import pathlib
+import time
+pathlib.Path(${JSON.stringify(markerPath)}).write_text(str(os.getpid()), encoding="utf8")
+time.sleep(10)
+		`.trim();
+		const pythonCode = `
+import pathlib
+import subprocess
+import sys
+import time
+
+marker = pathlib.Path(${JSON.stringify(markerPath)})
+subprocess.Popen([sys.executable, "-c", ${JSON.stringify(childScript)}])
+deadline = time.time() + 2
+while not marker.exists() and time.time() < deadline:
+    time.sleep(0.01)
+time.sleep(10)
+		`.trim();
+
+		try {
+			const results = await judgeSolution(ExecutionMode.Interprete, {
+				code: pythonCode,
+				fileSuffix: 'py',
+				interpretCmd: 'python3',
+				testCases: [{ input: '', timeLimitMs: 250 }],
+			});
+
+			expect(results).toHaveLength(1);
+			expect(results[0].status).toBe(SubmissionStatus.TIME_LIMIT_EXCEEDED);
+			expect(fs.existsSync(markerPath)).toBe(true);
+
+			const childPid = Number.parseInt(fs.readFileSync(markerPath, 'utf8'), 10);
+			expect(Number.isInteger(childPid)).toBe(true);
+			await expect(waitForProcessExit(childPid)).resolves.toBe(true);
+		} finally {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	}, 10000);
+
+	it('samples memory across spawned child processes', async () => {
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		const pythonCode = `
+import subprocess
+import sys
+import time
+
+child_script = "data = bytearray(64 * 1024 * 1024); time.sleep(10)"
+subprocess.Popen([sys.executable, "-c", child_script])
+time.sleep(10)
+		`.trim();
+
+		const results = await judgeSolution(ExecutionMode.Interprete, {
+			code: pythonCode,
+			fileSuffix: 'py',
+			interpretCmd: 'python3',
+			testCases: [{ input: '', timeLimitMs: 3000, memoryLimitMb: 32 }],
+		});
+
+		expect(results).toHaveLength(1);
+		expect(results[0].succeeded).toBe(false);
+		expect(results[0].status).toBe(SubmissionStatus.RUNTIME_ERROR);
+		expect(results[0].stderr).toContain('memory limit exceeded');
+		expect(results[0].executionMemoryKb).toBeGreaterThan(32 * 1024);
 	}, 15000);
 });

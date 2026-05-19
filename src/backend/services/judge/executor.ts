@@ -1,4 +1,4 @@
-import { execFile, spawn } from 'child_process';
+import { ChildProcess, execFile, spawn } from 'child_process';
 import { SubmissionStatus } from '@prisma/client';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -135,23 +135,67 @@ function readCommandOutput(command: string, args: string[]) {
     });
 }
 
+function sumMemorySamples(output: string) {
+    return output
+        .split(/\r?\n/)
+        .map((line) => Number.parseInt(line.trim(), 10))
+        .filter(Number.isFinite)
+        .reduce((total, rssKb) => total + rssKb, 0);
+}
+
 async function sampleProcessMemoryKb(pid: number) {
     try {
         if (process.platform === "win32") {
             const output = await readCommandOutput("powershell", [
                 "-NoProfile",
                 "-Command",
-                `(Get-Process -Id ${pid}).WorkingSet64`,
+                [
+                    "$ids = New-Object System.Collections.Generic.List[int]",
+                    "function Add-ProcessTree([int]$ProcessId) {",
+                    "  $ids.Add($ProcessId)",
+                    "  Get-CimInstance Win32_Process -Filter \"ParentProcessId=$ProcessId\" | ForEach-Object { Add-ProcessTree ([int]$_.ProcessId) }",
+                    "}",
+                    `Add-ProcessTree ${pid}`,
+                    "$sum = 0",
+                    "foreach ($id in $ids) {",
+                    "  try { $sum += (Get-Process -Id $id -ErrorAction Stop).WorkingSet64 } catch {}",
+                    "}",
+                    "$sum",
+                ].join("\n"),
             ]);
             const bytes = Number.parseInt(output.trim(), 10);
             return Number.isFinite(bytes) ? Math.ceil(bytes / 1024) : null;
         }
 
-        const output = await readCommandOutput("ps", ["-o", "rss=", "-p", String(pid)]);
-        const rssKb = Number.parseInt(output.trim(), 10);
-        return Number.isFinite(rssKb) ? rssKb : null;
+        const output = await readCommandOutput("ps", ["-o", "rss=", "-g", String(pid)]);
+        const rssKb = sumMemorySamples(output);
+        return rssKb > 0 ? rssKb : null;
     } catch {
         return null;
+    }
+}
+
+function killProcessTree(child: ChildProcess) {
+    if (child.pid == null) {
+        child.kill("SIGKILL");
+        return;
+    }
+
+    if (process.platform === "win32") {
+        execFile("taskkill", ["/pid", String(child.pid), "/T", "/F"], (error) => {
+            if (error) {
+                child.kill("SIGKILL");
+            }
+        });
+        return;
+    }
+
+    try {
+        process.kill(-child.pid, "SIGKILL");
+    } catch (error) {
+        if (!(error instanceof Error && "code" in error && error.code === "ESRCH")) {
+            child.kill("SIGKILL");
+        }
     }
 }
 
@@ -175,6 +219,7 @@ async function runProcess(
     return await new Promise<ExecutionResult>((resolve) => {
         const child = spawn(command, args, {
             cwd: options.cwd,
+            detached: process.platform !== "win32",
             stdio: "pipe",
         });
 
@@ -197,7 +242,7 @@ async function runProcess(
         };
 
         const timer = setTimeout(() => {
-            child.kill("SIGKILL");
+            killProcessTree(child);
             const timeoutMessage = "time limit exceeded";
             finish({
                 succeeded: false,
@@ -227,7 +272,7 @@ async function runProcess(
 
             if (currentMemoryKb > memoryLimitKb) {
                 const memoryMessage = `memory limit exceeded (${options.memoryLimitMb} MB)`;
-                child.kill("SIGKILL");
+                killProcessTree(child);
                 finish({
                     succeeded: false,
                     executionTime: Date.now() - startTime,
