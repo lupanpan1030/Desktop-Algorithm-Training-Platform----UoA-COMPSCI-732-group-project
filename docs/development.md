@@ -116,6 +116,8 @@ Package the current platform:
 npm run package
 ```
 
+This also runs `npm run release:verify`, which blocks the release if packaged artifacts contain `.env*` files, local development databases, or exact local secret values.
+
 Create distributables:
 
 ```bash

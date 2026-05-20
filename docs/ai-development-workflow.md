@@ -110,6 +110,8 @@ source scripts/use-dev-node.sh
 npm run package
 ```
 
+`npm run package`, `npm run make`, and `npm run publish` all finish with `npm run release:verify`, which fails if packaged artifacts include `.env*` files, local development databases, or exact local secret values.
+
 For API contract changes, regenerate TSOA output and include the generated files:
 
 ```bash

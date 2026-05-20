@@ -243,7 +243,8 @@ npm run package
 
 - Packaging is platform-specific, not one artifact for every OS
 - the current repository state has been verified on macOS arm64
-- `npm run package` prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, and then invokes Electron Forge
+- `npm run package` prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, invokes Electron Forge, and then runs `npm run release:verify`
+- `npm run release:verify` scans packaged artifacts for `.env*` files, local development databases, and exact local secret values before a build is treated as releasable
 - Windows packaging is configured in Forge, but still needs validation on a Windows machine
 
 ## Documentation
