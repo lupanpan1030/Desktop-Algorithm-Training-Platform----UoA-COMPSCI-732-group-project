@@ -126,4 +126,53 @@ describe("reconcileProblemCatalog", () => {
       "zh-CN",
     ]);
   });
+
+  it("does not merge distinct slugs that share a reused LeetCode frontend id", async () => {
+    await testPrisma.problem.createMany({
+      data: [
+        {
+          problem_id: 201,
+          title: "Find the Index of the First Occurrence in a String",
+          description: "new title",
+          difficulty: "EASY",
+          source: "LEETCODE",
+          locale: "en",
+          source_slug: "find-the-index-of-the-first-occurrence-in-a-string",
+          external_problem_id: "28",
+          import_key: "LEETCODE:find-the-index-of-the-first-occurrence-in-a-string",
+          judge_ready: false,
+        },
+        {
+          problem_id: 202,
+          title: "Implement strStr()",
+          description: "legacy title",
+          difficulty: "EASY",
+          source: "LEETCODE",
+          locale: "en",
+          source_slug: "implement-strstr",
+          external_problem_id: "28",
+          import_key: "LEETCODE:implement-strstr",
+          judge_ready: false,
+        },
+      ],
+    });
+
+    const result = await reconcileProblemCatalog(testPrisma);
+
+    expect(result.mergedProblems).toBe(1);
+
+    const sameFrontendIdProblems = await testPrisma.problem.findMany({
+      where: {
+        external_problem_id: "28",
+      },
+      orderBy: {
+        source_slug: "asc",
+      },
+    });
+
+    expect(sameFrontendIdProblems.map((problem) => problem.source_slug)).toEqual([
+      "find-the-index-of-the-first-occurrence-in-a-string",
+      "implement-strstr",
+    ]);
+  });
 });

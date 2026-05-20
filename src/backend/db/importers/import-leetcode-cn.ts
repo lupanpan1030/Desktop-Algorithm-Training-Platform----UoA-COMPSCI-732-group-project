@@ -40,12 +40,6 @@ function buildProblemMatchConditions(problem: NormalizedImportedProblem) {
     },
   ];
 
-  if (problem.externalProblemId) {
-    conditions.push({
-      external_problem_id: problem.externalProblemId,
-    });
-  }
-
   return conditions;
 }
 
@@ -64,9 +58,7 @@ function isExistingMatch(
   return (
     existingProblem.import_key === problem.importKey ||
     legacyImportKeys.includes(existingProblem.import_key ?? "") ||
-    existingProblem.source_slug === problem.sourceSlug ||
-    (problem.externalProblemId != null &&
-      existingProblem.external_problem_id === problem.externalProblemId)
+    existingProblem.source_slug === problem.sourceSlug
   );
 }
 
@@ -99,15 +91,17 @@ async function main() {
       return;
     }
 
-    const importKeys = selectedProblems.map((problem) => problem.importKey);
-    const sourceSlugs = [...new Set(selectedProblems.map((problem) => problem.sourceSlug))];
-    const externalProblemIds = [
+    const importKeys = [
       ...new Set(
-        selectedProblems
-          .map((problem) => problem.externalProblemId)
-          .filter((value): value is string => Boolean(value))
+        selectedProblems.flatMap((problem) => [
+          problem.importKey,
+          ...problem.translations.map(
+            (translation) => `${problem.source}:${translation.locale}:${problem.sourceSlug}`
+          ),
+        ])
       ),
     ];
+    const sourceSlugs = [...new Set(selectedProblems.map((problem) => problem.sourceSlug))];
     const tagNames = [...new Set(selectedProblems.flatMap((problem) => problem.tags.map((tag) => tag.name)))];
 
     const [existingProblems, existingTags] = await Promise.all([
@@ -120,13 +114,6 @@ async function main() {
             {
               source_slug: { in: sourceSlugs },
             },
-            ...(externalProblemIds.length > 0
-              ? [
-                  {
-                    external_problem_id: { in: externalProblemIds },
-                  },
-                ]
-              : []),
           ],
         },
         select: {

@@ -259,9 +259,9 @@ export async function reconcileProblemCatalog(
   const groupedProblems = new Map<string, ProblemIdentityRow[]>();
 
   for (const problem of knownProblems) {
-    const groupKey = problem.external_problem_id
-      ? `external:${problem.external_problem_id}`
-      : `slug:${problem.source_slug}`;
+    const groupKey = problem.source_slug
+      ? `source:${problem.source}:${problem.source_slug}`
+      : `external:${problem.external_problem_id}`;
 
     if (!groupedProblems.has(groupKey)) {
       groupedProblems.set(groupKey, []);
