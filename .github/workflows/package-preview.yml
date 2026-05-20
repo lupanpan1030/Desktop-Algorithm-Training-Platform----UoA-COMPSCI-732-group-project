@@ -18,12 +18,21 @@ jobs:
           - name: macOS
             os: macos-14
             artifact: macos
+            workdir: .
+            artifactPath: out/make/**
           - name: Windows
             os: windows-2022
             artifact: windows
+            workdir: W:/
+            artifactPath: W:/out/make/**
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Mount short Windows workspace path
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: subst W: "$env:GITHUB_WORKSPACE"
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
@@ -32,23 +41,28 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        working-directory: ${{ matrix.workdir }}
         run: npm ci
 
       - name: Generate Prisma Client
+        working-directory: ${{ matrix.workdir }}
         run: npx prisma generate
 
       - name: Lint
+        working-directory: ${{ matrix.workdir }}
         run: npm run lint
 
       - name: Typecheck
+        working-directory: ${{ matrix.workdir }}
         run: npm run typecheck
 
       - name: Make preview artifact
+        working-directory: ${{ matrix.workdir }}
         run: npm run make
 
       - name: Upload preview artifact
         uses: actions/upload-artifact@v4
         with:
           name: algo-platform-${{ matrix.artifact }}-${{ github.run_id }}
-          path: out/make/**
+          path: ${{ matrix.artifactPath }}
           if-no-files-found: error
