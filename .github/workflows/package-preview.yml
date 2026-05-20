@@ -1,0 +1,51 @@
+name: package-preview
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "preview-*"
+      - "v*"
+
+jobs:
+  package:
+    name: Package ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            os: macos-14
+            artifact: macos
+          - name: Windows
+            os: windows-2022
+            artifact: windows
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Make preview artifact
+        run: npm run make
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: algo-platform-${{ matrix.artifact }}-${{ github.ref_name }}
+          path: out/make/**
+          if-no-files-found: error

@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const asar = require("@electron/asar");
 const dotenv = require("dotenv");
+const sqlite3 = require("sqlite3");
 
 const repoRoot = process.cwd();
 const outputRoots = ["out", "build-resources"].map((root) => path.join(repoRoot, root));
@@ -14,6 +15,13 @@ const placeholderPattern =
   /^(|change_me|example|placeholder|test|your[_-]?key[_-]?here|sk-\.\.\.)$/i;
 const forbiddenEnvFilePattern = /(^|[/\\])\.env($|[.][^/\\]+$)/;
 const forbiddenDatabasePattern = /(^|[/\\])(dev|local|test)[^/\\]*[.](db|sqlite|sqlite3)$/i;
+const thirdPartyProblemSources = new Set(["LEETCODE", "LEETCODE_CN"]);
+const thirdPartyProblemLimit = Number.parseInt(
+  process.env.PUBLIC_THIRD_PARTY_PROBLEM_LIMIT ?? "100",
+  10
+);
+const allowFullThirdPartyProblemsetRelease =
+  process.env.ALLOW_FULL_THIRD_PARTY_PROBLEMSET_RELEASE === "1";
 
 function toRelative(filePath) {
   return path.relative(repoRoot, filePath) || ".";
@@ -187,7 +195,65 @@ function scanSecretBytes(files, secrets, findings) {
   }
 }
 
-function main() {
+function queryAll(databasePath, sql) {
+  return new Promise((resolve, reject) => {
+    const db = new sqlite3.Database(databasePath, sqlite3.OPEN_READONLY, (openError) => {
+      if (openError) {
+        reject(openError);
+        return;
+      }
+
+      db.all(sql, (queryError, rows) => {
+        db.close();
+        if (queryError) {
+          reject(queryError);
+          return;
+        }
+
+        resolve(rows);
+      });
+    });
+  });
+}
+
+async function scanPackagedSeedDatabases(files, findings) {
+  if (allowFullThirdPartyProblemsetRelease) {
+    return;
+  }
+
+  const seedDatabases = files.filter((file) => path.basename(file) === "seed.db");
+
+  for (const seedDatabase of seedDatabases) {
+    const sources = await queryAll(
+      seedDatabase,
+      "SELECT source, COUNT(*) AS count FROM Problem GROUP BY source"
+    ).catch((error) => {
+      if (/no such table: Problem/i.test(String(error?.message ?? error))) {
+        return [];
+      }
+      throw error;
+    });
+
+    for (const row of sources) {
+      const source = String(row.source ?? "");
+      const count = Number(row.count ?? 0);
+
+      if (!thirdPartyProblemSources.has(source) || count <= thirdPartyProblemLimit) {
+        continue;
+      }
+
+      findings.push({
+        type: "third-party-problemset",
+        message:
+          `Packaged seed database ${toRelative(seedDatabase)} contains ${count} ${source} problems. ` +
+          "Public preview releases should not bundle full third-party problem catalogs without documented distribution rights. " +
+          "Keep full imports local, or set ALLOW_FULL_THIRD_PARTY_PROBLEMSET_RELEASE=1 only after rights review.",
+      });
+    }
+  }
+}
+
+async function main() {
   const files = outputRoots.flatMap(walkFiles);
 
   if (files.length === 0) {
@@ -206,6 +272,7 @@ function main() {
     scanAsarFileList(asarFile, findings);
   }
   scanSecretBytes(files, secrets, findings);
+  await scanPackagedSeedDatabases(files, findings);
 
   if (findings.length > 0) {
     console.error("Release artifact secret check failed:");
@@ -220,9 +287,7 @@ function main() {
   );
 }
 
-try {
-  main();
-} catch (error) {
+main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
-}
+});

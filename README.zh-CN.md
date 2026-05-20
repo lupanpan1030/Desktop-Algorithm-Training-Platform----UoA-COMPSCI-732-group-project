@@ -110,7 +110,7 @@ out/algo-platform-darwin-arm64/algo-platform.app
 - 题目 CRUD 与测试用例 CRUD
 - 中英文题面支持
 - 本地 judge 语言配置管理
-- LeetCode CN 本地导入能力
+- LeetCode CN 本地导入能力，用于个人本地数据集，不作为公开再分发题库包
 - 可选的页面感知 AI Assistant
 
 ## 技术栈
@@ -229,6 +229,17 @@ npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/
 npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20
 ```
 
+把导入题面里的示例转换成可见 sample testcase：
+
+```bash
+npm run db:materialize-samples -- --source LEETCODE --dry-run
+npm run db:materialize-samples -- --source LEETCODE
+```
+
+公开包默认只带小型 seed 数据库。完整 LeetCode/力扣导入数据只用于个人本地学习和开发验证，除非已经单独处理并记录数据分发权。见
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) 和
+[`docs/release-distribution.md`](./docs/release-distribution.md)。
+
 打包当前平台：
 
 ```bash
@@ -239,7 +250,8 @@ npm run package
 
 - 打包是按平台分别进行的，不是一个包同时适用于所有系统
 - 当前仓库状态已经在 macOS arm64 上完成了实际打包与启动验证
-- `npm run package` 会准备 seed 数据库、生成 Prisma Client、执行 `npm run typecheck`，然后调用 Electron Forge
+- `npm run package` 会准备 seed 数据库、生成 Prisma Client、执行 `npm run typecheck`，然后调用 Electron Forge，并执行 `npm run release:verify`
+- `npm run release:verify` 会检查打包产物里的 `.env*`、本地开发数据库、真实本地 secret 值，以及异常大的第三方题库数据
 - Windows 打包配置已经存在，但仍需要在 Windows 机器上单独验证
 
 ## 文档索引
@@ -249,6 +261,8 @@ npm run package
 - 当前验证状态与支持范围：[docs/STATUS.md](./docs/STATUS.md)
 - 迭代路线图：[docs/ROADMAP.md](./docs/ROADMAP.md)
 - 开发说明：[docs/development.md](./docs/development.md)
+- 发布与数据分发策略：[docs/release-distribution.md](./docs/release-distribution.md)
+- 第三方内容说明：[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
 - 规划文档集合：[docs/plans/](./docs/plans)
 
 ## 仓库结构

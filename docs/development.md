@@ -116,6 +116,7 @@ Notes:
 - imported examples can become sample-runnable testcases
 - imported problems still need reviewed hidden testcase coverage before they become submit-ready
 - the LeetCode runner adapter currently targets common Python and JavaScript function/class templates; linked-list, tree, and other structured object adapters need separate support
+- full imported LeetCode/力扣 catalogs are local/private study data by default; do not publish a packaged `seed.db` containing the full catalog unless distribution rights are documented
 
 ## Build Commands
 
@@ -125,13 +126,15 @@ Package the current platform:
 npm run package
 ```
 
-This also runs `npm run release:verify`, which blocks the release if packaged artifacts contain `.env*` files, local development databases, or exact local secret values.
+This also runs `npm run release:verify`, which blocks the release if packaged artifacts contain `.env*` files, local development databases, exact local secret values, or an unexpectedly large third-party problem catalog.
 
 Create distributables:
 
 ```bash
 npm run make
 ```
+
+See [release-distribution.md](./release-distribution.md) for public preview wording and platform-specific release boundaries.
 
 ## Current Runtime Shape
 

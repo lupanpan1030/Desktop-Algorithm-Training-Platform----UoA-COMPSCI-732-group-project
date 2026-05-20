@@ -7,12 +7,14 @@ This directory keeps the non-code project material out of the repository root.
 - [STATUS.md](./STATUS.md): current verification state, support matrix, and known risks
 - [ROADMAP.md](./ROADMAP.md): current redevelopment priorities and remaining work
 - [development.md](./development.md): local setup, commands, database tasks, and build flow
+- [release-distribution.md](./release-distribution.md): public preview packaging, platform support, and third-party problem data policy
 - [ai-development-workflow.md](./ai-development-workflow.md): AI-assisted planning, implementation, verification, and review protocol
 
 ## Plans
 - [plans/ai-assistant-v1.md](./plans/ai-assistant-v1.md): global AI assistant product plan
 - [plans/ai-testcase-drafts.md](./plans/ai-testcase-drafts.md): AI-assisted testcase drafting workflow
 - [plans/judge-sandbox-hardening.md](./plans/judge-sandbox-hardening.md): staged local judge diagnostics and sandbox hardening plan
+- [plans/release-distribution-hardening.md](./plans/release-distribution-hardening.md): preview release data and platform validation hardening plan
 - [plans/ui-redesign.md](./plans/ui-redesign.md): UI redesign direction and design goals
 
 ## Assets

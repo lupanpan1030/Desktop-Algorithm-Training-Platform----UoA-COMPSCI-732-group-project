@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: April 9, 2026
+Last updated: May 21, 2026
 
 ## Executive Summary
 
@@ -12,6 +12,7 @@ The current branch has been verified on macOS arm64 with:
 - `npm run typecheck`
 - `npm run test`
 - `npm run package`
+- `npm run make`
 - packaged-app smoke tests for startup, problem listing, language admin, problem detail rendering, run, and submit
 
 ## Verified Environment
@@ -37,6 +38,7 @@ Working now:
 - language preset CRUD
 - page-aware global AI assistant shell
 - packaged-app startup with packaged SQLite seed bootstrap
+- release artifact verification for local secrets and unexpectedly large third-party problem catalogs
 
 Not yet fully validated:
 
@@ -64,6 +66,7 @@ Local verification:
 Repository automation:
 
 - GitHub Actions verifies lint, typecheck, tests, and committed TSOA output drift on Node `22.x`
+- a manual preview packaging workflow can build macOS and Windows artifacts, but Windows still needs a successful run and manual launch check before public linking
 
 ## Next High-Value Work
 

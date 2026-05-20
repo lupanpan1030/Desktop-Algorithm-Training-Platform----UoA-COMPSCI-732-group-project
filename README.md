@@ -110,7 +110,8 @@ Compared with the tagged course-project state, this branch focuses on reliabilit
 - Problem CRUD and testcase CRUD in the desktop UI
 - Bilingual English/Chinese problem content support
 - Language preset management for the local judge
-- Local LeetCode CN importer for building a personal dataset
+- Local LeetCode CN importer for building a personal dataset, not a public
+  redistribution bundle
 - Optional page-aware AI assistant
 
 ## Tech Stack
@@ -240,7 +241,11 @@ npm run db:materialize-samples -- --source LEETCODE --dry-run
 npm run db:materialize-samples -- --source LEETCODE
 ```
 
-The public package still ships the small local seed by default. Full LeetCode-style imports are intended for personal local use unless the dataset distribution rights are handled separately.
+The public package still ships the small local seed by default. Full
+LeetCode-style imports are intended for personal local use unless the dataset
+distribution rights are handled separately. See
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) and
+[`docs/release-distribution.md`](./docs/release-distribution.md).
 
 Package the current platform:
 
@@ -253,7 +258,7 @@ npm run package
 - Packaging is platform-specific, not one artifact for every OS
 - the current repository state has been verified on macOS arm64
 - `npm run package` prepares the seed database, regenerates Prisma Client, runs `npm run typecheck`, invokes Electron Forge, and then runs `npm run release:verify`
-- `npm run release:verify` scans packaged artifacts for `.env*` files, local development databases, and exact local secret values before a build is treated as releasable
+- `npm run release:verify` scans packaged artifacts for `.env*` files, local development databases, exact local secret values, and unexpectedly large third-party problem catalogs before a build is treated as releasable
 - Windows packaging is configured in Forge, but still needs validation on a Windows machine
 
 ## Documentation
@@ -263,6 +268,8 @@ npm run package
 - Current verification and support status: [docs/STATUS.md](./docs/STATUS.md)
 - Redevelopment roadmap: [docs/ROADMAP.md](./docs/ROADMAP.md)
 - Development guide: [docs/development.md](./docs/development.md)
+- Release distribution policy: [docs/release-distribution.md](./docs/release-distribution.md)
+- Third-party content notices: [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
 - Product and implementation plans: [docs/plans/](./docs/plans)
 
 ## Repository Layout
