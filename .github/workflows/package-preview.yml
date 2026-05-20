@@ -50,10 +50,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Mount short Windows workspace path
+      - name: Copy checkout to short Windows path
         shell: pwsh
         run: |
-          subst W: "$env:GITHUB_WORKSPACE"
+          if (Test-Path C:/w) {
+            Remove-Item -Recurse -Force C:/w
+          }
+          New-Item -ItemType Directory -Force C:/w | Out-Null
+          robocopy "$env:GITHUB_WORKSPACE" C:/w /MIR /XD .git
+          if ($LASTEXITCODE -gt 7) {
+            exit $LASTEXITCODE
+          }
+          exit 0
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
@@ -64,32 +72,38 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
-          Set-Location W:/
+          Set-Location C:/w
           npm ci
 
       - name: Generate Prisma Client
         shell: pwsh
         run: |
-          Set-Location W:/
+          Set-Location C:/w
           npx prisma generate
 
       - name: Lint
         shell: pwsh
         run: |
-          Set-Location W:/
+          Set-Location C:/w
           npm run lint
 
       - name: Typecheck
         shell: pwsh
         run: |
-          Set-Location W:/
+          Set-Location C:/w
           npm run typecheck
 
       - name: Make preview artifact
         shell: pwsh
         run: |
-          Set-Location W:/
+          Set-Location C:/w
           npm run make
+
+      - name: Copy Windows artifacts back
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE/out" | Out-Null
+          Copy-Item -Recurse -Force C:/w/out/make "$env:GITHUB_WORKSPACE/out/make"
 
       - name: Upload preview artifact
         uses: actions/upload-artifact@v4
