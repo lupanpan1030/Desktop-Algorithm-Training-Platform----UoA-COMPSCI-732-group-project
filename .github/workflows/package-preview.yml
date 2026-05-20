@@ -61,28 +61,38 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        working-directory: "W:/"
-        run: npm ci
+        shell: pwsh
+        run: |
+          Set-Location W:/
+          npm ci
 
       - name: Generate Prisma Client
-        working-directory: "W:/"
-        run: npx prisma generate
+        shell: pwsh
+        run: |
+          Set-Location W:/
+          npx prisma generate
 
       - name: Lint
-        working-directory: "W:/"
-        run: npm run lint
+        shell: pwsh
+        run: |
+          Set-Location W:/
+          npm run lint
 
       - name: Typecheck
-        working-directory: "W:/"
-        run: npm run typecheck
+        shell: pwsh
+        run: |
+          Set-Location W:/
+          npm run typecheck
 
       - name: Make preview artifact
-        working-directory: "W:/"
-        run: npm run make
+        shell: pwsh
+        run: |
+          Set-Location W:/
+          npm run make
 
       - name: Upload preview artifact
         uses: actions/upload-artifact@v4
         with:
           name: algo-platform-windows-${{ github.run_id }}
-          path: "W:/out/make/**"
+          path: out/make/**
           if-no-files-found: error
