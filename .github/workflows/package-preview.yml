@@ -18,13 +18,13 @@ jobs:
           - name: macOS
             os: macos-14
             artifact: macos
-            workdir: .
-            artifactPath: out/make/**
+            workdir: "."
+            artifactPath: "out/make/**"
           - name: Windows
             os: windows-2022
             artifact: windows
-            workdir: W:/
-            artifactPath: W:/out/make/**
+            workdir: "W:/"
+            artifactPath: "W:/out/make/**"
 
     steps:
       - uses: actions/checkout@v4
