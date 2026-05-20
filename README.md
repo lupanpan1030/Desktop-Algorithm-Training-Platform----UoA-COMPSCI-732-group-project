@@ -233,6 +233,15 @@ npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/
 npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20
 ```
 
+Materialize imported examples into visible sample testcases:
+
+```bash
+npm run db:materialize-samples -- --source LEETCODE --dry-run
+npm run db:materialize-samples -- --source LEETCODE
+```
+
+The public package still ships the small local seed by default. Full LeetCode-style imports are intended for personal local use unless the dataset distribution rights are handled separately.
+
 Package the current platform:
 
 ```bash

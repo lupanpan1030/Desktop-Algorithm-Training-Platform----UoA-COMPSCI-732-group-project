@@ -8,6 +8,10 @@ import {
 } from "./ai-provider";
 import { AiTestcaseDraftDto } from "../../../api/problem-ai/problem-ai";
 import { buildDefaultSources, buildDefaultSuggestions } from "./provider-utils";
+import {
+  dedupeSampleTestcases,
+  extractSampleTestcasesFromText,
+} from "../../../db/problem-catalog/sample-testcase-extraction";
 
 type InferredIntent =
   | "explain_problem"
@@ -92,41 +96,10 @@ function buildSuggestions(pageContext: AiPageContextDto): AiSuggestionDto[] {
   return buildDefaultSuggestions(pageContext);
 }
 
-type ExtractedExample = {
-  input: string;
-  expectedOutput: string;
-  sourceHint: string;
-};
-
 function factsToMap(pageContext: AiPageContextDto) {
   return Object.fromEntries(
     (pageContext.facts ?? []).map((fact) => [fact.key, fact.value])
   );
-}
-
-function extractExamplePairs(text: string, sourceHint: string): ExtractedExample[] {
-  const sanitized = text.replace(/\*\*/g, "");
-  const pattern =
-    /Input:\s*([\s\S]*?)\s*Output:\s*([\s\S]*?)(?=(?:\n\s*(?:Explanation|Note|Constraints?)\s*:)|(?:\n\s*Example\b)|$)/gi;
-  const results: ExtractedExample[] = [];
-  let match: RegExpExecArray | null = null;
-
-  while ((match = pattern.exec(sanitized)) !== null) {
-    const input = match[1]?.trim();
-    const expectedOutput = match[2]?.trim();
-
-    if (!input || !expectedOutput) {
-      continue;
-    }
-
-    results.push({
-      input,
-      expectedOutput,
-      sourceHint,
-    });
-  }
-
-  return results;
 }
 
 function buildMockDrafts(input: AiTestDraftInput): AiTestDraftOutput {
@@ -148,21 +121,17 @@ function buildMockDrafts(input: AiTestDraftInput): AiTestDraftOutput {
       (testcase) => `${testcase.isSample ? "sample" : "hidden"}:${testcase.input}::${testcase.expectedOutput}`
     )
   );
-  const combinedExamples = [
+  const combinedExamples = dedupeSampleTestcases([
     ...(input.problem.sampleTestcase
-      ? extractExamplePairs(input.problem.sampleTestcase, "sample reference")
+      ? extractSampleTestcasesFromText(input.problem.sampleTestcase, "sample reference")
       : []),
-    ...extractExamplePairs(input.problem.description, "problem description"),
-  ];
-  const uniqueExamples = combinedExamples.filter((example, index, list) => {
-    const signature = `${example.input}::${example.expectedOutput}`;
-    return list.findIndex((candidate) => `${candidate.input}::${candidate.expectedOutput}` === signature) === index;
-  });
+    ...extractSampleTestcasesFromText(input.problem.description, "problem description"),
+  ]);
 
   const drafts: AiTestcaseDraftDto[] = [];
 
   if (input.includeSampleDrafts) {
-    uniqueExamples.forEach((example, index) => {
+    combinedExamples.forEach((example, index) => {
       if (drafts.length >= input.targetCount) {
         return;
       }

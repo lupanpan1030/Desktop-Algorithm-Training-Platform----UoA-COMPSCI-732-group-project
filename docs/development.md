@@ -102,11 +102,20 @@ npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/
 npm run import:leetcode-cn -- --source /path/to/leetcode-problemset/leetcode-cn/originData --limit 20
 ```
 
+Convert explicit examples in imported descriptions into sample testcases:
+
+```bash
+npm run db:materialize-samples -- --source LEETCODE --dry-run
+npm run db:materialize-samples -- --source LEETCODE
+```
+
 Notes:
 
 - imported problems are content-first entries
 - imported sample references and starter code are preserved as metadata
-- imported problems still need testcase completion before they become fully judge-ready
+- imported examples can become sample-runnable testcases
+- imported problems still need reviewed hidden testcase coverage before they become submit-ready
+- the LeetCode runner adapter currently targets common Python and JavaScript function/class templates; linked-list, tree, and other structured object adapters need separate support
 
 ## Build Commands
 

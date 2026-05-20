@@ -20,7 +20,8 @@
     "db:init": "npx ts-node src/backend/db/seeds/init-db_first.ts",
     "db:reset": "npx ts-node src/backend/db/seeds/init-db+drop.ts",
     "db:prepare-package-db": "npx ts-node src/backend/db/prepare-package-db.ts",
-    "import:leetcode-cn": "npx ts-node src/backend/db/importers/import-leetcode-cn.ts"
+    "import:leetcode-cn": "npx ts-node src/backend/db/importers/import-leetcode-cn.ts",
+    "db:materialize-samples": "npx ts-node src/backend/db/problem-catalog/materialize-sample-testcases.ts"
   },
   "keywords": [],
   "author": {

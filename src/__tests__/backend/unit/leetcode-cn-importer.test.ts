@@ -4,6 +4,7 @@ import {
   normalizeLeetCodeCnQuestion,
   parseImportCliArgs,
 } from "../../../backend/db/importers/leetcode-cn-importer";
+import { extractSampleTestcasesFromText } from "../../../backend/db/problem-catalog/sample-testcase-extraction";
 
 describe("leetcode-cn-importer", () => {
   it("normalizes a structured LeetCode CN question into local problem data", () => {
@@ -100,5 +101,38 @@ describe("leetcode-cn-importer", () => {
     expect(options.dryRun).toBe(true);
     expect(options.verbose).toBe(true);
     expect(options.databasePath).toContain("tmp/dev.db");
+  });
+
+  it("extracts visible sample testcase pairs from imported HTML descriptions", () => {
+    const samples = extractSampleTestcasesFromText(
+      `
+      <p><strong class="example">Example 1:</strong></p>
+      <pre>
+      <strong>Input:</strong> nums = [2,7,11,15], target = 9
+      <strong>Output:</strong> [0,1]
+      <strong>Explanation:</strong> nums[0] + nums[1] == 9.
+      </pre>
+      <p><strong class="example">示例 2：</strong></p>
+      <pre>
+      <strong>输入：</strong>s = "babad"
+      <strong>输出：</strong>"bab"
+      <strong>解释：</strong>"aba" 同样符合题意。
+      </pre>
+      `,
+      "problem description"
+    );
+
+    expect(samples).toEqual([
+      {
+        input: "nums = [2,7,11,15], target = 9",
+        expectedOutput: "[0,1]",
+        sourceHint: "problem description",
+      },
+      {
+        input: 's = "babad"',
+        expectedOutput: '"bab"',
+        sourceHint: "problem description",
+      },
+    ]);
   });
 });
