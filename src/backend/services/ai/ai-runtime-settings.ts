@@ -8,6 +8,7 @@ import {
 } from "./ai-credential-store";
 
 export type AiProviderKind = "mock" | "openai";
+export type AiApiFormat = "responses" | "chat_completions";
 export type AiSettingsStatus = "preview" | "ready" | "misconfigured";
 export type AiApiKeySource =
   | "provided"
@@ -18,6 +19,7 @@ export type AiApiKeySource =
 
 type StoredAiSettings = {
   provider?: AiProviderKind;
+  apiFormat?: AiApiFormat;
   apiKey?: string;
   model?: string;
   baseUrl?: string;
@@ -26,6 +28,7 @@ type StoredAiSettings = {
 
 export type AiSettingsUpdateInput = {
   provider?: string | null;
+  apiFormat?: string | null;
   apiKey?: string | null;
   clearApiKey?: boolean;
   model?: string | null;
@@ -44,6 +47,7 @@ type PersistedCredentialState = {
 
 export type ResolvedAiRuntimeSettings = {
   provider: AiProviderKind;
+  apiFormat: AiApiFormat;
   model: string;
   baseUrl: string;
   timeoutMs: number;
@@ -61,9 +65,26 @@ export type ResolvedAiRuntimeSettings = {
 export const DEFAULT_AI_MODEL = "gpt-5-mini";
 export const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
 export const DEFAULT_OPENAI_TIMEOUT_MS = 30000;
+export const DEFAULT_AI_API_FORMAT: AiApiFormat = "responses";
 
 function normalizeProvider(value?: string | null): AiProviderKind {
   return value?.trim().toLowerCase() === "openai" ? "openai" : "mock";
+}
+
+function normalizeApiFormat(value?: string | null): AiApiFormat {
+  const normalized = value?.trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+  if (
+    normalized === "chat" ||
+    normalized === "chat_completions" ||
+    normalized === "chat/completions" ||
+    normalized === "openai_compatible" ||
+    normalized === "openai_compatible_chat"
+  ) {
+    return "chat_completions";
+  }
+
+  return DEFAULT_AI_API_FORMAT;
 }
 
 function normalizeNonEmptyString(value?: string | null) {
@@ -130,14 +151,15 @@ function buildApiKeyPreview(apiKey: string) {
 function buildStatus(
   provider: AiProviderKind,
   apiKeyConfigured: boolean,
-  model: string
+  model: string,
+  apiFormat: AiApiFormat
 ): Pick<ResolvedAiRuntimeSettings, "status" | "statusLabel" | "statusReason"> {
   if (provider === "mock") {
     return {
       status: "preview",
       statusLabel: "Preview mode",
       statusReason:
-        "The assistant uses the built-in preview provider and does not call the OpenAI API.",
+        "The assistant uses the built-in preview provider and does not call external AI APIs.",
     };
   }
 
@@ -146,14 +168,17 @@ function buildStatus(
       status: "misconfigured",
       statusLabel: "Needs API key",
       statusReason:
-        "OpenAI is selected, but no API key is available yet. The assistant will stay in preview mode until one is configured.",
+        "A live AI endpoint is selected, but no API key is available yet. The assistant will stay in preview mode until one is configured.",
     };
   }
 
+  const formatLabel =
+    apiFormat === "chat_completions" ? "Chat Completions" : "Responses API";
+
   return {
     status: "ready",
-    statusLabel: "OpenAI live",
-    statusReason: `Live assistant responses will use OpenAI with model ${model}.`,
+    statusLabel: apiFormat === "chat_completions" ? "Live API (Chat)" : "Live API (Responses)",
+    statusReason: `Live assistant responses will use ${formatLabel} with model ${model}.`,
   };
 }
 
@@ -180,7 +205,7 @@ function buildStorageScope(source: AiApiKeySource) {
     case "legacy-file":
       return `${settingsScope} A legacy API key is still being read from the local settings file until it can be migrated into the system keychain.`;
     case "environment":
-      return `${settingsScope} The API key currently comes from the OPENAI_API_KEY environment variable.`;
+      return `${settingsScope} The API key currently comes from the AI_API_KEY or OPENAI_API_KEY environment variable.`;
     case "provided":
       return `${settingsScope} The API key is being used only for this connection test and has not been saved yet.`;
     default:
@@ -253,13 +278,21 @@ export async function resolveAiRuntimeSettings(
   const storedSettings = readStoredAiSettingsSync();
   const storagePath = getAiSettingsStoragePath();
   const persistedCredential = await resolvePersistedCredentialState(storedSettings, storagePath);
-  const envApiKey = normalizeNonEmptyString(process.env.OPENAI_API_KEY);
+  const envApiKey =
+    normalizeNonEmptyString(process.env.AI_API_KEY) ??
+    normalizeNonEmptyString(process.env.OPENAI_API_KEY);
   const transientApiKey = options.allowTransientApiKey
     ? normalizeNonEmptyString(input?.apiKey)
     : undefined;
 
   const provider = normalizeProvider(
     input?.provider ?? storedSettings.provider ?? process.env.AI_PROVIDER
+  );
+  const apiFormat = normalizeApiFormat(
+    input?.apiFormat ??
+      storedSettings.apiFormat ??
+      process.env.AI_API_FORMAT ??
+      process.env.OPENAI_API_FORMAT
   );
   const model =
     normalizeNonEmptyString(input?.model) ??
@@ -269,10 +302,14 @@ export async function resolveAiRuntimeSettings(
   const baseUrl =
     normalizeNonEmptyString(input?.baseUrl) ??
     normalizeNonEmptyString(storedSettings.baseUrl) ??
+    normalizeNonEmptyString(process.env.AI_BASE_URL) ??
     normalizeNonEmptyString(process.env.OPENAI_BASE_URL) ??
     DEFAULT_OPENAI_BASE_URL;
   const timeoutMs = normalizeTimeoutMs(
-    input?.timeoutMs ?? storedSettings.timeoutMs ?? process.env.OPENAI_TIMEOUT_MS
+    input?.timeoutMs ??
+      storedSettings.timeoutMs ??
+      process.env.AI_TIMEOUT_MS ??
+      process.env.OPENAI_TIMEOUT_MS
   );
 
   let apiKey = "";
@@ -293,10 +330,11 @@ export async function resolveAiRuntimeSettings(
   }
 
   const apiKeyConfigured = Boolean(apiKey);
-  const status = buildStatus(provider, apiKeyConfigured, model);
+  const status = buildStatus(provider, apiKeyConfigured, model, apiFormat);
 
   return {
     provider,
+    apiFormat,
     model,
     baseUrl,
     timeoutMs,
@@ -322,6 +360,7 @@ export async function saveAiRuntimeSettings(
   const nextApiKey = normalizeNonEmptyString(input.apiKey);
   const nextStoredSettings = pruneStoredSettings({
     provider: normalizeProvider(input.provider ?? currentStoredSettings.provider),
+    apiFormat: normalizeApiFormat(input.apiFormat ?? currentStoredSettings.apiFormat),
     model:
       normalizeNonEmptyString(input.model) ??
       normalizeNonEmptyString(currentStoredSettings.model) ??

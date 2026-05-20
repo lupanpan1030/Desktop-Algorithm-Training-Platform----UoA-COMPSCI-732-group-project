@@ -11,7 +11,6 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  Paper,
   Stack,
   TextField,
   ToggleButton,
@@ -28,6 +27,7 @@ import {
 
 type FormState = {
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   timeoutMs: string;
@@ -37,6 +37,7 @@ type FormState = {
 function buildInitialFormState(settings: AiSettingsSnapshot): FormState {
   return {
     provider: settings.provider,
+    apiFormat: settings.apiFormat,
     model: settings.model,
     baseUrl: settings.baseUrl,
     timeoutMs: String(settings.timeoutMs),
@@ -116,13 +117,18 @@ export default function AiSettings() {
       route: "/settings/ai",
       pageTitle: "Assistant Settings",
       summary: settings
-        ? `${settings.statusLabel}. Provider preference is ${settings.provider}.`
+        ? `${settings.statusLabel}. Provider preference is ${settings.provider}. API format is ${settings.apiFormat}.`
         : "Configuring the global assistant provider and local AI credentials.",
       facts: [
         {
           key: "provider",
           label: "Selected provider",
           value: form?.provider ?? settings?.provider ?? "mock",
+        },
+        {
+          key: "apiFormat",
+          label: "API format",
+          value: form?.apiFormat ?? settings?.apiFormat ?? "responses",
         },
         {
           key: "status",
@@ -137,11 +143,11 @@ export default function AiSettings() {
       ],
       suggestedPrompts: [
         "What does preview mode mean here?",
-        "How do I switch this app to live OpenAI mode?",
-        "How do I test whether this OpenAI setup works?",
+        "How do I switch this app to a live API?",
+        "How do I test whether this AI setup works?",
       ],
     }),
-    [form?.provider, settings]
+    [form?.apiFormat, form?.provider, settings]
   );
 
   useAiPageContext(pageContext);
@@ -153,6 +159,7 @@ export default function AiSettings() {
       form &&
       (
         form.provider !== settings.provider ||
+        form.apiFormat !== settings.apiFormat ||
         form.model !== settings.model ||
         form.baseUrl !== settings.baseUrl ||
         form.timeoutMs !== String(settings.timeoutMs) ||
@@ -186,6 +193,17 @@ export default function AiSettings() {
           };
         }
 
+        if (field === "apiFormat") {
+          if (!nextValue) {
+            return current;
+          }
+
+          return {
+            ...current,
+            apiFormat: nextValue as FormState["apiFormat"],
+          };
+        }
+
         return {
           ...current,
           [field]: (event.target as HTMLInputElement).value,
@@ -206,6 +224,7 @@ export default function AiSettings() {
     try {
       const nextSettings = await updateAiSettings({
         provider: form.provider,
+        apiFormat: form.apiFormat,
         model: form.model.trim(),
         baseUrl: form.baseUrl.trim(),
         timeoutMs: timeoutValue,
@@ -237,6 +256,7 @@ export default function AiSettings() {
     try {
       const nextSettings = await updateAiSettings({
         provider: form.provider,
+        apiFormat: form.apiFormat,
         model: form.model.trim(),
         baseUrl: form.baseUrl.trim(),
         timeoutMs: timeoutValid ? timeoutValue : settings.timeoutMs,
@@ -268,6 +288,7 @@ export default function AiSettings() {
     try {
       const result = await testAiSettings({
         provider: form.provider,
+        apiFormat: form.apiFormat,
         model: form.model.trim(),
         baseUrl: form.baseUrl.trim(),
         timeoutMs: timeoutValue,
@@ -317,15 +338,12 @@ export default function AiSettings() {
         },
       }}
     >
-      <Paper
-        elevation={0}
+      <Box
+        component="section"
         sx={{
-          borderRadius: 6,
           p: { xs: 1.8, md: 2.2 },
-          border: "1px solid",
+          borderRight: { xl: "1px solid" },
           borderColor: alpha(theme.palette.divider, 0.42),
-          bgcolor: alpha(theme.palette.background.paper, 0.72),
-          backdropFilter: "blur(18px)",
         }}
       >
         <Stack spacing={1.6}>
@@ -339,7 +357,7 @@ export default function AiSettings() {
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.7, maxWidth: 660 }}>
                 This screen replaces the old `.env`-only setup. Packaged builds can save the assistant
-                provider and model locally, while API keys are stored in the system keychain.
+                provider, API format, and model locally, while API keys are stored in the system keychain.
               </Typography>
             </Box>
 
@@ -384,6 +402,11 @@ export default function AiSettings() {
                 sx={{ display: "block", mt: 0.5, opacity: 0.84 }}
               >
                 Credential source: {testResult.credentialSource}
+                {` · Format: ${
+                  testResult.apiFormat === "chat_completions"
+                    ? "Chat Completions"
+                    : "Responses API"
+                }`}
                 {typeof testResult.latencyMs === "number"
                   ? ` · ${testResult.latencyMs} ms`
                   : ""}
@@ -411,12 +434,11 @@ export default function AiSettings() {
               gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
             }}
           >
-            <Paper
-              variant="outlined"
+            <Box
               sx={{
-                borderRadius: 4,
+                borderLeft: "2px solid",
+                borderColor: alpha(theme.palette.divider, 0.5),
                 p: 1.35,
-                bgcolor: alpha(theme.palette.background.default, 0.4),
               }}
             >
               <Typography variant="caption" color="text.secondary">
@@ -425,13 +447,12 @@ export default function AiSettings() {
               <Typography variant="subtitle1" sx={{ mt: 0.45, fontWeight: 700 }}>
                 {buildCredentialSummary(settings)}
               </Typography>
-            </Paper>
-            <Paper
-              variant="outlined"
+            </Box>
+            <Box
               sx={{
-                borderRadius: 4,
+                borderLeft: "2px solid",
+                borderColor: alpha(theme.palette.divider, 0.5),
                 p: 1.35,
-                bgcolor: alpha(theme.palette.background.default, 0.4),
               }}
             >
               <Typography variant="caption" color="text.secondary">
@@ -443,13 +464,12 @@ export default function AiSettings() {
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 {settings.storageScope}
               </Typography>
-            </Paper>
-            <Paper
-              variant="outlined"
+            </Box>
+            <Box
               sx={{
-                borderRadius: 4,
+                borderLeft: "2px solid",
+                borderColor: alpha(theme.palette.divider, 0.5),
                 p: 1.35,
-                bgcolor: alpha(theme.palette.background.default, 0.4),
               }}
             >
               <Typography variant="caption" color="text.secondary">
@@ -458,7 +478,14 @@ export default function AiSettings() {
               <Typography variant="subtitle1" sx={{ mt: 0.45, fontWeight: 700 }}>
                 {settings.provider === "openai" ? settings.model : "Preview provider"}
               </Typography>
-            </Paper>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                {settings.provider === "openai"
+                  ? settings.apiFormat === "chat_completions"
+                    ? "Chat Completions-compatible endpoint"
+                    : "Responses API endpoint"
+                  : "No external API calls"}
+              </Typography>
+            </Box>
           </Box>
 
           <Divider />
@@ -474,8 +501,25 @@ export default function AiSettings() {
               sx={{ alignSelf: "flex-start" }}
             >
               <ToggleButton value="mock">Preview</ToggleButton>
-              <ToggleButton value="openai">OpenAI</ToggleButton>
+              <ToggleButton value="openai">Live API</ToggleButton>
             </ToggleButtonGroup>
+
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              API format
+            </Typography>
+            <ToggleButtonGroup
+              value={form.apiFormat}
+              exclusive
+              onChange={handleFieldChange("apiFormat")}
+              sx={{ alignSelf: "flex-start" }}
+            >
+              <ToggleButton value="responses">Responses API</ToggleButton>
+              <ToggleButton value="chat_completions">Chat Completions</ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" color="text.secondary">
+              Use Chat Completions for OpenAI-compatible endpoints such as DeepSeek, Qwen/DashScope,
+              Gemini, and local gateways.
+            </Typography>
 
             <TextField
               label="Model"
@@ -505,7 +549,7 @@ export default function AiSettings() {
             />
 
             <TextField
-              label="OpenAI API key"
+              label="API key"
               type="password"
               value={form.apiKey}
               onChange={handleFieldChange("apiKey")}
@@ -521,7 +565,7 @@ export default function AiSettings() {
                     ? "A legacy local key is active right now. Saving again will migrate it into the system keychain."
                   : settings.apiKeySource === "environment"
                     ? "An environment key is currently active. Saving a key here will override it for this app."
-                    : "No API key is configured yet. Add one to enable live OpenAI responses."
+                    : "No API key is configured yet. Add one to enable live AI responses."
               }
               fullWidth
             />
@@ -561,17 +605,15 @@ export default function AiSettings() {
             ) : null}
           </Stack>
         </Stack>
-      </Paper>
+      </Box>
 
       <Stack spacing={1.8}>
-        <Paper
-          elevation={0}
+        <Box
+          component="section"
           sx={{
-            borderRadius: 6,
             p: 2,
-            border: "1px solid",
+            borderBottom: "1px solid",
             borderColor: alpha(theme.palette.divider, 0.42),
-            bgcolor: alpha(theme.palette.background.paper, 0.72),
           }}
         >
           <Stack spacing={1.35}>
@@ -583,7 +625,7 @@ export default function AiSettings() {
             </Stack>
             <Typography variant="body2" color="text.secondary">
               Saved changes apply to the assistant immediately. You do not need to restart the app
-              after changing provider, model, base URL, or API key.
+              after changing provider, API format, model, base URL, or API key.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Use <strong>Test connection</strong> before saving when you want to validate a new
@@ -605,16 +647,14 @@ export default function AiSettings() {
               {settings.storagePath}
             </Typography>
           </Stack>
-        </Paper>
+        </Box>
 
-        <Paper
-          elevation={0}
+        <Box
+          component="section"
           sx={{
-            borderRadius: 6,
             p: 2,
-            border: "1px solid",
+            borderBottom: "1px solid",
             borderColor: alpha(theme.palette.divider, 0.42),
-            bgcolor: alpha(theme.palette.background.paper, 0.72),
           }}
         >
           <Stack spacing={1.15}>
@@ -622,18 +662,17 @@ export default function AiSettings() {
               Recommended setup
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Use Preview mode when you want local UI testing without API calls. Switch to OpenAI,
-              save a valid API key, then keep the model at `gpt-5-mini` unless you have a reason to
-              pay for a larger one.
+              Use Preview mode when you want local UI testing without API calls. Switch to Live API,
+              select the endpoint format, then save a valid key for that provider.
             </Typography>
             {form.provider === "openai" && !settings.apiKeyConfigured && !form.apiKey.trim() ? (
               <Alert severity="warning" sx={{ borderRadius: 3 }}>
-                OpenAI is selected, but no key is configured yet. Until you save one, the assistant
+                Live API is selected, but no key is configured yet. Until you save one, the assistant
                 will remain in preview mode.
               </Alert>
             ) : null}
           </Stack>
-        </Paper>
+        </Box>
       </Stack>
     </Box>
   );

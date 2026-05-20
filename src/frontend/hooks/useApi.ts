@@ -108,6 +108,7 @@ export interface TestCaseMutationPayload {
 
 export interface AiSettings {
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   timeoutMs: number;
@@ -123,6 +124,7 @@ export interface AiSettings {
 
 export interface AiSettingsUpdatePayload {
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   timeoutMs: number;
@@ -135,6 +137,7 @@ export interface AiConnectionTestResult {
   status: "preview" | "success" | "error";
   message: string;
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   credentialSource: "provided" | "system-keychain" | "legacy-file" | "environment" | "none";

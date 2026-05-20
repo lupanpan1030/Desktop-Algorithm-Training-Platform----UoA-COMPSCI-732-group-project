@@ -94,7 +94,7 @@ This is currently the most critical reliability surface in the repository.
 ### AI Assistant
 
 - Backend provider selection lives under `src/backend/services/ai/`.
-- `createAiProvider()` resolves runtime settings and chooses a real OpenAI provider only when it is configured correctly.
+- `createAiProvider()` resolves runtime settings and chooses a live API provider only when it is configured correctly.
 - Otherwise the app falls back to a mock provider so the UI remains usable without network credentials.
 - The renderer keeps a global assistant shell through `GlobalAiAssistantProvider`.
 - Page-aware prompts are registered from route-level context via `useAiPageContext()`.

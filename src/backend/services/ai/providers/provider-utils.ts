@@ -24,7 +24,7 @@ export const DEFAULT_SUGGESTIONS: Record<string, string[]> = {
   ],
   "assistant-settings": [
     "What does preview mode mean here?",
-    "How do I switch this app to live OpenAI mode?",
+    "How do I switch this app to a live AI endpoint?",
     "Where is this API key stored locally?",
   ],
 };

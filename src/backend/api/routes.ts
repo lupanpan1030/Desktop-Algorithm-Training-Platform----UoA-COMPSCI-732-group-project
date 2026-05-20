@@ -163,6 +163,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}],"required":true},
+            "apiFormat": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["responses"]},{"dataType":"enum","enums":["chat_completions"]}],"required":true},
             "model": {"dataType":"string","required":true},
             "baseUrl": {"dataType":"string","required":true},
             "timeoutMs": {"dataType":"double","required":true},
@@ -182,6 +183,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}]},
+            "apiFormat": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["responses"]},{"dataType":"enum","enums":["chat_completions"]}]},
             "apiKey": {"dataType":"string"},
             "clearApiKey": {"dataType":"boolean"},
             "model": {"dataType":"string"},
@@ -198,6 +200,7 @@ const models: TsoaRoute.Models = {
             "status": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["preview"]},{"dataType":"enum","enums":["success"]},{"dataType":"enum","enums":["error"]}],"required":true},
             "message": {"dataType":"string","required":true},
             "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}],"required":true},
+            "apiFormat": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["responses"]},{"dataType":"enum","enums":["chat_completions"]}],"required":true},
             "model": {"dataType":"string","required":true},
             "baseUrl": {"dataType":"string","required":true},
             "credentialSource": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["provided"]},{"dataType":"enum","enums":["system-keychain"]},{"dataType":"enum","enums":["legacy-file"]},{"dataType":"enum","enums":["environment"]},{"dataType":"enum","enums":["none"]}],"required":true},
@@ -210,6 +213,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "provider": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["mock"]},{"dataType":"enum","enums":["openai"]}]},
+            "apiFormat": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["responses"]},{"dataType":"enum","enums":["chat_completions"]}]},
             "apiKey": {"dataType":"string"},
             "clearApiKey": {"dataType":"boolean"},
             "model": {"dataType":"string"},

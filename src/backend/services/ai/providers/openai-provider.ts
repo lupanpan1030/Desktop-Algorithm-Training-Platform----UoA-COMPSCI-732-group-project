@@ -9,6 +9,7 @@ import {
   AiTestDraftGenerationStrategy,
 } from "./ai-provider";
 import {
+  AiApiFormat,
   DEFAULT_AI_MODEL,
   DEFAULT_OPENAI_BASE_URL,
   DEFAULT_OPENAI_TIMEOUT_MS,
@@ -51,6 +52,19 @@ type OpenAiResponse = {
   output?: OpenAiResponseOutputItem[];
 };
 
+type OpenAiChatCompletionContentPart = {
+  type?: string;
+  text?: string;
+};
+
+type OpenAiChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | OpenAiChatCompletionContentPart[] | null;
+    };
+  }>;
+};
+
 function normalizeIntent(value?: string) {
   return value?.trim() || "general_question";
 }
@@ -63,6 +77,24 @@ function extractOutputText(response: OpenAiResponse) {
       .map((item) => item.text ?? "") ?? [];
 
   return chunks.join("\n").trim();
+}
+
+function extractChatCompletionText(response: OpenAiChatCompletionResponse) {
+  const content = response.choices?.[0]?.message?.content;
+
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => item.text ?? "")
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+  }
+
+  return "";
 }
 
 function extractJsonObject(text: string) {
@@ -384,41 +416,84 @@ function toSuggestions(
 
 export class OpenAiProvider implements AiProvider {
   private readonly apiKey: string;
+  private readonly apiFormat: AiApiFormat;
   private readonly model: string;
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
 
   constructor(settings: ResolvedAiRuntimeSettings) {
     this.apiKey = settings.apiKey.trim();
+    this.apiFormat = settings.apiFormat;
     this.model = settings.model.trim() || DEFAULT_AI_MODEL;
-    this.baseUrl = settings.baseUrl.trim() || DEFAULT_OPENAI_BASE_URL;
+    this.baseUrl = (settings.baseUrl.trim() || DEFAULT_OPENAI_BASE_URL).replace(/\/+$/, "");
     this.timeoutMs = Number(settings.timeoutMs ?? DEFAULT_OPENAI_TIMEOUT_MS);
 
     if (!this.apiKey) {
       throw new Error(
-        "OPENAI_API_KEY is required when AI_PROVIDER is set to openai."
+        "An AI API key is required when AI_PROVIDER is set to openai."
       );
     }
   }
 
-  async respond(input: AiProviderInput): Promise<AiProviderOutput> {
+  private get providerName() {
+    return this.apiFormat === "chat_completions"
+      ? `openai-compatible:${this.model}`
+      : `openai:${this.model}`;
+  }
+
+  private get requestConfig() {
+    return {
+      timeout: this.timeoutMs,
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+    };
+  }
+
+  private async generateJsonText(systemInstructions: string, prompt: string) {
+    if (this.apiFormat === "chat_completions") {
+      const response = await axios.post<OpenAiChatCompletionResponse>(
+        `${this.baseUrl}/chat/completions`,
+        {
+          model: this.model,
+          messages: [
+            {
+              role: "system",
+              content: systemInstructions,
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          stream: false,
+        },
+        this.requestConfig
+      );
+
+      return extractChatCompletionText(response.data);
+    }
+
     const response = await axios.post<OpenAiResponse>(
       `${this.baseUrl}/responses`,
       {
         model: this.model,
-        instructions: buildSystemInstructions(),
-        input: buildPrompt(input),
+        instructions: systemInstructions,
+        input: prompt,
       },
-      {
-        timeout: this.timeoutMs,
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
+      this.requestConfig
     );
 
-    const outputText = extractOutputText(response.data);
+    return extractOutputText(response.data);
+  }
+
+  async respond(input: AiProviderInput): Promise<AiProviderOutput> {
+    const outputText = await this.generateJsonText(
+      buildSystemInstructions(),
+      buildPrompt(input)
+    );
+
     const parsed = parseAssistantPayload(outputText);
 
     return {
@@ -431,28 +506,16 @@ export class OpenAiProvider implements AiProvider {
       sourcesUsed:
         parsed?.sourcesUsed?.filter(Boolean)?.slice(0, 5) ??
         buildDefaultSources(input.pageContext),
-      provider: `openai:${this.model}`,
+      provider: this.providerName,
     };
   }
 
   async generateTestDrafts(input: AiTestDraftInput): Promise<AiTestDraftOutput> {
-    const response = await axios.post<OpenAiResponse>(
-      `${this.baseUrl}/responses`,
-      {
-        model: this.model,
-        instructions: buildTestDraftSystemInstructions(),
-        input: buildTestDraftPrompt(input),
-      },
-      {
-        timeout: this.timeoutMs,
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
+    const outputText = await this.generateJsonText(
+      buildTestDraftSystemInstructions(),
+      buildTestDraftPrompt(input)
     );
 
-    const outputText = extractOutputText(response.data);
     const parsed = parseTestDraftPayload(outputText);
 
     if (!parsed) {
@@ -460,7 +523,7 @@ export class OpenAiProvider implements AiProvider {
     }
 
     return {
-      provider: `openai:${this.model}`,
+      provider: this.providerName,
       drafts: normalizeDrafts(input, parsed),
       warnings: normalizeStringArray(parsed.warnings),
     };

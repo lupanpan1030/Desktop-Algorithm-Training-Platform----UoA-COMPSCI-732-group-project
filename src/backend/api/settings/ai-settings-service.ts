@@ -15,6 +15,7 @@ async function toDto(): Promise<AiSettingsDto> {
 
   return {
     provider: settings.provider,
+    apiFormat: settings.apiFormat,
     model: settings.model,
     baseUrl: settings.baseUrl,
     timeoutMs: settings.timeoutMs,
@@ -29,7 +30,7 @@ async function toDto(): Promise<AiSettingsDto> {
   };
 }
 
-function buildOpenAiErrorMessage(error: unknown) {
+function buildAiProviderErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const apiMessage =
@@ -40,11 +41,11 @@ function buildOpenAiErrorMessage(error: unknown) {
           : null;
 
     if (status === 401) {
-      return "OpenAI rejected the API key. Check that the key is valid and still active.";
+      return "The AI endpoint rejected the API key. Check that the key is valid and still active.";
     }
 
     if (status === 403) {
-      return "OpenAI rejected the request. The API key may not have access to this model.";
+      return "The AI endpoint rejected the request. The API key may not have access to this model.";
     }
 
     if (status === 404) {
@@ -52,19 +53,19 @@ function buildOpenAiErrorMessage(error: unknown) {
     }
 
     if (status === 429) {
-      return "OpenAI rate-limited the request. Try again in a moment.";
+      return "The AI endpoint rate-limited the request. Try again in a moment.";
     }
 
     if (status && status >= 500) {
-      return "OpenAI is temporarily unavailable. Try again shortly.";
+      return "The AI endpoint is temporarily unavailable. Try again shortly.";
     }
 
     if (error.code === "ECONNABORTED") {
-      return "The connection test timed out before OpenAI responded.";
+      return "The connection test timed out before the AI endpoint responded.";
     }
 
     if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
-      return "The app could not reach the configured OpenAI endpoint. Check the base URL and network access.";
+      return "The app could not reach the configured AI endpoint. Check the base URL and network access.";
     }
 
     if (apiMessage) {
@@ -77,6 +78,52 @@ function buildOpenAiErrorMessage(error: unknown) {
     : "The connection test failed unexpectedly.";
 }
 
+async function testLiveEndpoint(settings: Awaited<ReturnType<typeof resolveAiRuntimeSettings>>) {
+  const baseUrl = settings.baseUrl.replace(/\/+$/, "");
+  const headers = {
+    Authorization: `Bearer ${settings.apiKey}`,
+    "Content-Type": "application/json",
+  };
+
+  if (settings.apiFormat === "chat_completions") {
+    await axios.post(
+      `${baseUrl}/chat/completions`,
+      {
+        model: settings.model,
+        messages: [
+          {
+            role: "system",
+            content: "You are testing an AI API connection. Reply with OK.",
+          },
+          {
+            role: "user",
+            content: "Connection test",
+          },
+        ],
+        stream: false,
+      },
+      {
+        timeout: settings.timeoutMs,
+        headers,
+      }
+    );
+    return;
+  }
+
+  await axios.post(
+    `${baseUrl}/responses`,
+    {
+      model: settings.model,
+      instructions: "You are testing an AI API connection. Reply with OK.",
+      input: "Connection test",
+    },
+    {
+      timeout: settings.timeoutMs,
+      headers,
+    }
+  );
+}
+
 export class AiSettingsService {
   async getSettings(): Promise<AiSettingsDto> {
     return toDto();
@@ -85,6 +132,7 @@ export class AiSettingsService {
   async updateSettings(body: UpdateAiSettingsRequestDto): Promise<AiSettingsDto> {
     await saveAiRuntimeSettings({
       provider: body.provider,
+      apiFormat: body.apiFormat,
       apiKey: body.apiKey,
       clearApiKey: body.clearApiKey,
       model: body.model,
@@ -99,6 +147,7 @@ export class AiSettingsService {
     const settings = await resolveAiRuntimeSettings(
       {
         provider: body.provider,
+        apiFormat: body.apiFormat,
         apiKey: body.apiKey,
         clearApiKey: body.clearApiKey,
         model: body.model,
@@ -115,8 +164,9 @@ export class AiSettingsService {
         ok: true,
         status: "preview",
         message:
-          "Preview mode does not contact OpenAI. Switch the provider to OpenAI to test a live connection.",
+          "Preview mode does not contact an external AI API. Switch the provider to Live API to test a live connection.",
         provider: settings.provider,
+        apiFormat: settings.apiFormat,
         model: settings.model,
         baseUrl: settings.baseUrl,
         credentialSource: settings.apiKeySource,
@@ -130,6 +180,7 @@ export class AiSettingsService {
         message:
           "No API key is available for this configuration yet. Add a key or switch back to preview mode.",
         provider: settings.provider,
+        apiFormat: settings.apiFormat,
         model: settings.model,
         baseUrl: settings.baseUrl,
         credentialSource: settings.apiKeySource,
@@ -139,19 +190,14 @@ export class AiSettingsService {
     const startedAt = Date.now();
 
     try {
-      await axios.get(`${settings.baseUrl.replace(/\/+$/, "")}/models/${encodeURIComponent(settings.model)}`, {
-        timeout: settings.timeoutMs,
-        headers: {
-          Authorization: `Bearer ${settings.apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
+      await testLiveEndpoint(settings);
 
       return {
         ok: true,
         status: "success",
-        message: `Connected successfully. OpenAI accepted the key for model ${settings.model}.`,
+        message: `Connected successfully. The ${settings.apiFormat === "chat_completions" ? "Chat Completions-compatible" : "Responses API"} endpoint accepted the key for model ${settings.model}.`,
         provider: settings.provider,
+        apiFormat: settings.apiFormat,
         model: settings.model,
         baseUrl: settings.baseUrl,
         credentialSource: settings.apiKeySource,
@@ -161,8 +207,9 @@ export class AiSettingsService {
       return {
         ok: false,
         status: "error",
-        message: buildOpenAiErrorMessage(error),
+        message: buildAiProviderErrorMessage(error),
         provider: settings.provider,
+        apiFormat: settings.apiFormat,
         model: settings.model,
         baseUrl: settings.baseUrl,
         credentialSource: settings.apiKeySource,

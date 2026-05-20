@@ -190,7 +190,7 @@ function buildMockDrafts(input: AiTestDraftInput): AiTestDraftOutput {
 
   if (input.includeHiddenDrafts) {
     warnings.push(
-      "Hidden testcase drafts are not generated in preview mode; switch the assistant to OpenAI for inferred edge-case suggestions."
+      "Hidden testcase drafts are not generated in preview mode; switch the assistant to Live API for inferred edge-case suggestions."
     );
   }
 

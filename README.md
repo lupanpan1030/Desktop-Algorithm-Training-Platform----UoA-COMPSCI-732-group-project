@@ -165,13 +165,17 @@ npm run start:node22
 
 ### Optional AI Provider Setup
 
-To enable the real OpenAI-backed assistant:
+To enable the live assistant through OpenAI Responses API or an OpenAI-compatible Chat Completions endpoint:
 
 ```env
 AI_PROVIDER="openai"
-OPENAI_API_KEY="your_key_here"
+AI_API_FORMAT="responses"
+AI_API_KEY="your_key_here"
 AI_MODEL="gpt-5-mini"
+AI_BASE_URL="https://api.openai.com/v1"
 ```
+
+Set `AI_API_FORMAT="chat_completions"` for compatible endpoints such as DeepSeek, Qwen/DashScope, Gemini, or a local gateway. The legacy `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `OPENAI_API_FORMAT` names still work.
 
 If `AI_PROVIDER` stays `mock`, the assistant still works in preview mode without network calls.
 

@@ -1,5 +1,6 @@
 export class UpdateAiSettingsRequestDto {
   public provider?: "mock" | "openai";
+  public apiFormat?: "responses" | "chat_completions";
   public apiKey?: string;
   public clearApiKey?: boolean;
   public model?: string;
@@ -9,6 +10,7 @@ export class UpdateAiSettingsRequestDto {
 
 export interface AiSettingsDto {
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   timeoutMs: number;
@@ -24,6 +26,7 @@ export interface AiSettingsDto {
 
 export class TestAiSettingsRequestDto {
   public provider?: "mock" | "openai";
+  public apiFormat?: "responses" | "chat_completions";
   public apiKey?: string;
   public clearApiKey?: boolean;
   public model?: string;
@@ -36,6 +39,7 @@ export interface AiConnectionTestDto {
   status: "preview" | "success" | "error";
   message: string;
   provider: "mock" | "openai";
+  apiFormat: "responses" | "chat_completions";
   model: string;
   baseUrl: string;
   credentialSource: "provided" | "system-keychain" | "legacy-file" | "environment" | "none";

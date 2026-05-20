@@ -348,6 +348,13 @@
 							"openai"
 						]
 					},
+					"apiFormat": {
+						"type": "string",
+						"enum": [
+							"responses",
+							"chat_completions"
+						]
+					},
 					"model": {
 						"type": "string"
 					},
@@ -398,6 +405,7 @@
 				},
 				"required": [
 					"provider",
+					"apiFormat",
 					"model",
 					"baseUrl",
 					"timeoutMs",
@@ -420,6 +428,13 @@
 						"enum": [
 							"mock",
 							"openai"
+						]
+					},
+					"apiFormat": {
+						"type": "string",
+						"enum": [
+							"responses",
+							"chat_completions"
 						]
 					},
 					"apiKey": {
@@ -465,6 +480,13 @@
 							"openai"
 						]
 					},
+					"apiFormat": {
+						"type": "string",
+						"enum": [
+							"responses",
+							"chat_completions"
+						]
+					},
 					"model": {
 						"type": "string"
 					},
@@ -491,6 +513,7 @@
 					"status",
 					"message",
 					"provider",
+					"apiFormat",
 					"model",
 					"baseUrl",
 					"credentialSource"
@@ -505,6 +528,13 @@
 						"enum": [
 							"mock",
 							"openai"
+						]
+					},
+					"apiFormat": {
+						"type": "string",
+						"enum": [
+							"responses",
+							"chat_completions"
 						]
 					},
 					"apiKey": {
