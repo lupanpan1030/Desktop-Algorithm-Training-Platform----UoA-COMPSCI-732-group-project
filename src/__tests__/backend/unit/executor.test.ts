@@ -102,6 +102,38 @@ int main() {
 		expect(result.exitCode).toBe(0);
 	}, 20000);
 
+	it('runs compiled binaries through an explicit {executablePath} run command', async () => {
+		const cCode = `
+#include <stdio.h>
+
+int main() {
+	int value;
+	if (scanf("%d", &value) == 1) {
+		printf("%d", value * 3);
+	}
+	return 0;
+}
+		`.trim();
+
+		const results = await judgeSolution(ExecutionMode.Compiled, {
+			code: cCode,
+			fileSuffix: '.c',
+			compileCmd: 'gcc -o {executable} {source}',
+			runCmd: '{executablePath}',
+			executable: 'triple',
+			testCases: ['7'],
+		});
+
+		expect(results).toHaveLength(1);
+		expect(results[0]).toMatchObject({
+			succeeded: true,
+			status: SubmissionStatus.ACCEPTED,
+			output: '21',
+			phase: 'run',
+			exitCode: 0,
+		});
+	}, 20000);
+
 	it('captures compile diagnostics for invalid C code', async () => {
 		const invalidCCode = `
 #include <stdio.h>
@@ -279,4 +311,54 @@ time.sleep(10)
 		expect(results[0].stderr).toContain('memory limit exceeded');
 		expect(results[0].executionMemoryKb).toBeGreaterThan(32 * 1024);
 	}, 15000);
+
+	it('normalizes dotted suffixes and honors explicit {source} interpreter placeholders', async () => {
+		const pythonCode = `
+import pathlib
+import sys
+print(pathlib.Path(sys.argv[0]).suffix)
+		`.trim();
+
+		const results = await judgeSolution(ExecutionMode.Interprete, {
+			code: pythonCode,
+			fileSuffix: '.py',
+			interpretCmd: 'python3 {source}',
+			testCases: [''],
+		});
+
+		expect(results).toHaveLength(1);
+		expect(results[0]).toMatchObject({
+			succeeded: true,
+			status: SubmissionStatus.ACCEPTED,
+			output: '.py',
+			phase: 'run',
+			exitCode: 0,
+		});
+	});
+
+	it('rejects missing interpreter and compiler commands before running child processes', async () => {
+		await expect(
+			judgeSolution(ExecutionMode.Interprete, {
+				code: 'print("x")',
+				fileSuffix: 'py',
+				testCases: [''],
+			})
+		).rejects.toMatchObject({
+			phase: 'run',
+			status: SubmissionStatus.RUNTIME_ERROR,
+			message: 'interpretCmd is required for interprete mode.',
+		});
+
+		await expect(
+			judgeSolution(ExecutionMode.Compiled, {
+				code: 'int main() { return 0; }',
+				fileSuffix: 'c',
+				testCases: [''],
+			})
+		).rejects.toMatchObject({
+			phase: 'compile',
+			status: SubmissionStatus.COMPILE_ERROR,
+			message: 'compileCmd is required for compiled mode.',
+		});
+	});
 });

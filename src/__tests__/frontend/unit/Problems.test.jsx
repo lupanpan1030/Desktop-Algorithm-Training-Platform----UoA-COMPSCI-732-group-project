@@ -95,6 +95,30 @@ describe('ListPage Component', () => {
     });
   }, 15000);
 
+  test('clear filters restores the full visible list after a no-match combination', async () => {
+    renderWithRouter(<ListPage />);
+
+    expect(await screen.findByText('Two Sum')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /toggle filters/i }));
+    fireEvent.click(screen.getByRole('button', { name: /medium/i }));
+    fireEvent.click(screen.getByRole('button', { name: /completed/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Two Sum')).not.toBeInTheDocument();
+      expect(screen.queryByText('Binary Search')).not.toBeInTheDocument();
+      expect(screen.queryByText('Longest Path')).not.toBeInTheDocument();
+      expect(screen.getByText(/no problems found/i)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Two Sum')).toBeInTheDocument();
+      expect(screen.getByText('Binary Search')).toBeInTheDocument();
+      expect(screen.getByText('Longest Path')).toBeInTheDocument();
+    });
+  }, 15000);
+
   test('ProblemList component correctly renders chips based on difficulty', async () => {
     renderWithRouter(<ListPage />);
 

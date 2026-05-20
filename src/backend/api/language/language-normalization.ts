@@ -7,7 +7,7 @@ export function normalizeLanguageName(name?: string | null) {
 }
 
 export function normalizeLanguageSuffix(suffix?: string | null) {
-  return normalizeLanguageKey(suffix);
+  return normalizeLanguageKey(suffix).replace(/^\.+/, "");
 }
 
 export function normalizeLanguageDisplayName(name?: string | null, fallback = "Language") {

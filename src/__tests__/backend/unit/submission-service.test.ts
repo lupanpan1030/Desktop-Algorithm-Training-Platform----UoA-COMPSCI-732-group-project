@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SubmissionService } from "../../../backend/api/submission/submission-service";
 import { ProblemsDao } from "../../../backend/api/problem/problem-dao";
 import { SubmissionDao } from "../../../backend/api/submission/submission-dao";
-import { judgeSolution } from "../../../backend/services/judge/executor";
+import {
+  JudgeExecutionSetupError,
+  judgeSolution,
+} from "../../../backend/services/judge/executor";
 import { NotFoundError } from "../../../backend/utils/errors/not-found-error";
 
 vi.mock("../../../backend/api/submission/submission-dao", () => ({
@@ -205,6 +208,238 @@ describe("SubmissionService", () => {
         ],
       })
     );
+  });
+
+  it("runs only sample testcases first and caps Run to three cases", async () => {
+    service.testCaseService = {
+      getTestCases: vi.fn().mockResolvedValue([
+        {
+          testcaseId: 1,
+          input: "hidden-first",
+          expectedOutput: "ignored",
+          timeLimitMs: 1000,
+          memoryLimitMb: 128,
+          isSample: false,
+        },
+        {
+          testcaseId: 2,
+          input: "sample-1",
+          expectedOutput: "ok",
+          timeLimitMs: 100,
+          memoryLimitMb: 16,
+          isSample: true,
+        },
+        {
+          testcaseId: 3,
+          input: "sample-2",
+          expectedOutput: "ok",
+          timeLimitMs: 200,
+          memoryLimitMb: 32,
+          isSample: true,
+        },
+        {
+          testcaseId: 4,
+          input: "sample-3",
+          expectedOutput: "ok",
+          timeLimitMs: 300,
+          memoryLimitMb: 64,
+          isSample: true,
+        },
+        {
+          testcaseId: 5,
+          input: "sample-4",
+          expectedOutput: "ignored",
+          timeLimitMs: 400,
+          memoryLimitMb: 128,
+          isSample: true,
+        },
+      ]),
+    };
+    mockedJudgeSolution.mockResolvedValueOnce(
+      ["sample-1", "sample-2", "sample-3"].map(() => ({
+        succeeded: true,
+        executionTime: 10,
+        executionMemoryKb: 2048,
+        output: "ok",
+        stdout: "ok",
+        stderr: "",
+        exitCode: 0,
+        timedOut: false,
+        phase: "run" as const,
+        status: SubmissionStatus.ACCEPTED,
+      }))
+    );
+
+    const response = await service.runCode(1, {
+      code: "print('ok')",
+      languageId: 1,
+    });
+
+    expect(response.status).toBe(SubmissionStatus.ACCEPTED);
+    expect(mockedJudgeSolution).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        testCases: [
+          expect.objectContaining({ input: "sample-1", timeLimitMs: 100, memoryLimitMb: 16 }),
+          expect.objectContaining({ input: "sample-2", timeLimitMs: 200, memoryLimitMb: 32 }),
+          expect.objectContaining({ input: "sample-3", timeLimitMs: 300, memoryLimitMb: 64 }),
+        ],
+      })
+    );
+  });
+
+  it("falls back to the first three hidden cases when no sample cases exist", async () => {
+    service.testCaseService = {
+      getTestCases: vi.fn().mockResolvedValue(
+        ["hidden-1", "hidden-2", "hidden-3", "hidden-4"].map((input, index) => ({
+          testcaseId: index + 1,
+          input,
+          expectedOutput: "ok",
+          timeLimitMs: 1000,
+          memoryLimitMb: 128,
+          isSample: false,
+        }))
+      ),
+    };
+    mockedJudgeSolution.mockResolvedValueOnce(
+      ["hidden-1", "hidden-2", "hidden-3"].map(() => ({
+        succeeded: true,
+        executionTime: 10,
+        executionMemoryKb: 2048,
+        output: "ok",
+        stdout: "ok",
+        stderr: "",
+        exitCode: 0,
+        timedOut: false,
+        phase: "run" as const,
+        status: SubmissionStatus.ACCEPTED,
+      }))
+    );
+
+    await service.runCode(1, {
+      code: "print('ok')",
+      languageId: 1,
+    });
+
+    expect(mockedJudgeSolution).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        testCases: [
+          expect.objectContaining({ input: "hidden-1" }),
+          expect.objectContaining({ input: "hidden-2" }),
+          expect.objectContaining({ input: "hidden-3" }),
+        ],
+      })
+    );
+  });
+
+  it("trims successful output for comparison and rejects mismatched output", async () => {
+    service.testCaseService = {
+      getTestCases: vi.fn().mockResolvedValue([
+        {
+          testcaseId: 1,
+          input: "1",
+          expectedOutput: "2  ",
+          timeLimitMs: 1000,
+          memoryLimitMb: 128,
+          isSample: true,
+        },
+        {
+          testcaseId: 2,
+          input: "2",
+          expectedOutput: "3",
+          timeLimitMs: 1000,
+          memoryLimitMb: 128,
+          isSample: true,
+        },
+      ]),
+    };
+    mockedJudgeSolution.mockResolvedValueOnce([
+      {
+        succeeded: true,
+        executionTime: 10,
+        executionMemoryKb: 2048,
+        output: "2\n",
+        stdout: "2\n",
+        stderr: "",
+        exitCode: 0,
+        timedOut: false,
+        phase: "run",
+        status: SubmissionStatus.ACCEPTED,
+      },
+      {
+        succeeded: true,
+        executionTime: 10,
+        executionMemoryKb: 2048,
+        output: "wrong",
+        stdout: "wrong",
+        stderr: "",
+        exitCode: 0,
+        timedOut: false,
+        phase: "run",
+        status: SubmissionStatus.ACCEPTED,
+      },
+    ]);
+
+    const response = await service.runCode(1, {
+      code: "print('x')",
+      languageId: 1,
+    });
+
+    expect(response.status).toBe(SubmissionStatus.REJECTED);
+    expect(response.results[0]).toMatchObject({
+      status: SubmissionStatus.ACCEPTED,
+      expectedOutput: "2",
+    });
+    expect(response.results[1]).toMatchObject({
+      status: SubmissionStatus.REJECTED,
+      expectedOutput: "3",
+    });
+  });
+
+  it("throws NotFoundError when running or submitting without testcases", async () => {
+    service.testCaseService = {
+      getTestCases: vi.fn().mockResolvedValue([]),
+    };
+
+    await expect(
+      service.runCode(1, { code: "print('x')", languageId: 1 })
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      service.submitCode(1, { code: "print('x')", languageId: 1 })
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(mockedJudgeSolution).not.toHaveBeenCalled();
+    expect(mockedSubmissionDao.createSubmission).not.toHaveBeenCalled();
+  });
+
+  it("preserves setup-error phase and status when Run cannot start the judge", async () => {
+    service.languageService = {
+      getLanguageById: vi.fn().mockResolvedValue({
+        languageId: 1,
+        suffix: "py",
+        compilerCmd: null,
+        runtimeCmd: "",
+      }),
+    };
+    mockedJudgeSolution.mockRejectedValueOnce(
+      new JudgeExecutionSetupError(
+        "interpretCmd is required for interprete mode.",
+        "run",
+        SubmissionStatus.RUNTIME_ERROR
+      )
+    );
+
+    const response = await service.runCode(1, {
+      code: "print('x')",
+      languageId: 1,
+    });
+
+    expect(response.status).toBe(SubmissionStatus.RUNTIME_ERROR);
+    expect(response.results[0]).toMatchObject({
+      status: SubmissionStatus.RUNTIME_ERROR,
+      phase: "run",
+      stderr: "interpretCmd is required for interprete mode.",
+    });
   });
 
   it("finalizes unexpected judge failures instead of leaving submissions pending", async () => {

@@ -84,6 +84,30 @@ describe("None input", () => {
     
     expect(screen.getByText('Please set your code!')).exist;
   });
+
+  test("blocks run and submit while language configuration is unavailable", async () => {
+    mock.onGet("/problems/1/submissions").reply(200, []);
+
+    render(
+      <CodeSubmission
+        code="print('x')"
+        problemId={1}
+        languageId={null}
+        actionBlockedReason="Language configuration is still loading."
+      />
+    );
+
+    expect(screen.getByText("Language configuration is still loading.")).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Run" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Submit" }) as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(mock.history.post).toHaveLength(0);
+    });
+  });
 })
 
 describe("Excute error", () => {

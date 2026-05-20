@@ -71,6 +71,35 @@ describe("TestCase routes", () => {
     expect(res.body.testcaseId).toBeDefined();
   });
 
+  it("POST /problems/:id/testcases accepts numeric boundary limits", async () => {
+    const minLimit = {
+      input: "0",
+      expectedOutput: "0",
+      timeLimitMs: 100,
+      memoryLimitMb: 16,
+      isSample: true,
+    };
+    const maxLimit = {
+      input: "1",
+      expectedOutput: "1",
+      timeLimitMs: 10000,
+      memoryLimitMb: 1024,
+      isSample: false,
+    };
+
+    const minRes = await request(app)
+      .post("/problems/1/testcases")
+      .send(minLimit)
+      .expect(201);
+    const maxRes = await request(app)
+      .post("/problems/1/testcases")
+      .send(maxLimit)
+      .expect(201);
+
+    expect(minRes.body).toEqual(expect.objectContaining(minLimit));
+    expect(maxRes.body).toEqual(expect.objectContaining(maxLimit));
+  });
+
   it("PUT /problems/:id/testcases/:tid ⇒ 200 and returns the updated record", async () => {
     const res = await request(app)
       .put("/problems/1/testcases/1")
@@ -90,6 +119,15 @@ describe("TestCase routes", () => {
     );
   });
 
+  it("PUT /problems/:id/testcases/:tid ⇒ 404 when testcase belongs to another problem", async () => {
+    await request(app)
+      .put("/problems/1/testcases/3")
+      .send({
+        expectedOutput: "should not update",
+      })
+      .expect(404);
+  });
+
   it("POST /problems/:id/testcases ⇒ 422 when body is invalid", async () => {
     // Missing the input field, should trigger ValidateError
     await request(app)
@@ -98,6 +136,48 @@ describe("TestCase routes", () => {
         expectedOutput: "oops",
         timeLimitMs: 500,
         memoryLimitMb: 128,
+      })
+      .expect(422);
+  });
+
+  it("POST /problems/:id/testcases ⇒ 422 below and above numeric limits", async () => {
+    await request(app)
+      .post("/problems/1/testcases")
+      .send({
+        input: "0",
+        expectedOutput: "0",
+        timeLimitMs: 99,
+        memoryLimitMb: 16,
+      })
+      .expect(422);
+
+    await request(app)
+      .post("/problems/1/testcases")
+      .send({
+        input: "0",
+        expectedOutput: "0",
+        timeLimitMs: 100,
+        memoryLimitMb: 15,
+      })
+      .expect(422);
+
+    await request(app)
+      .post("/problems/1/testcases")
+      .send({
+        input: "0",
+        expectedOutput: "0",
+        timeLimitMs: 10001,
+        memoryLimitMb: 1024,
+      })
+      .expect(422);
+
+    await request(app)
+      .post("/problems/1/testcases")
+      .send({
+        input: "0",
+        expectedOutput: "0",
+        timeLimitMs: 10000,
+        memoryLimitMb: 1025,
       })
       .expect(422);
   });
@@ -111,5 +191,21 @@ describe("TestCase routes", () => {
 
   it("DELETE /problems/:id/testcases/:tid ⇒ 204 when testcase does not exist", async () => {
     await request(app).delete("/problems/1/testcases/9999").expect(204);
+  });
+
+  it("DELETE /problems/:id/testcases/:tid refreshes judge readiness after the final testcase is removed", async () => {
+    await request(app).delete("/problems/1/testcases/1").expect(204);
+    await request(app).delete("/problems/1/testcases/2").expect(204);
+
+    const res = await request(app).get("/problems/1").expect(200);
+
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        judgeReady: false,
+        testcaseCount: 0,
+        sampleCaseCount: 0,
+        hiddenCaseCount: 0,
+      })
+    );
   });
 });
