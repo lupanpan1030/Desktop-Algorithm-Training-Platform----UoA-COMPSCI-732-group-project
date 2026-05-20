@@ -13,6 +13,8 @@ export class TestCaseService {
     time_limit_ms: number;
     memory_limit_mb: number;
     is_sample: boolean;
+    source?: TestCase["source"];
+    review_status?: TestCase["reviewStatus"];
   }): TestCase {
     return {
       testcaseId: tc.testcase_id,
@@ -21,6 +23,8 @@ export class TestCaseService {
       timeLimitMs: tc.time_limit_ms,
       memoryLimitMb: tc.memory_limit_mb,
       isSample: tc.is_sample,
+      source: tc.source ?? "MANUAL",
+      reviewStatus: tc.review_status ?? "REVIEWED",
     };
   }
 

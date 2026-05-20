@@ -7,6 +7,21 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"TestCaseSource": {
+				"type": "string",
+				"enum": [
+					"MANUAL",
+					"IMPORTED_SAMPLE",
+					"AI_DRAFT"
+				]
+			},
+			"TestCaseReviewStatus": {
+				"type": "string",
+				"enum": [
+					"NEEDS_REVIEW",
+					"REVIEWED"
+				]
+			},
 			"TestCase": {
 				"properties": {
 					"testcaseId": {
@@ -29,6 +44,12 @@
 					},
 					"isSample": {
 						"type": "boolean"
+					},
+					"source": {
+						"$ref": "#/components/schemas/TestCaseSource"
+					},
+					"reviewStatus": {
+						"$ref": "#/components/schemas/TestCaseReviewStatus"
 					}
 				},
 				"required": [
@@ -37,7 +58,9 @@
 					"expectedOutput",
 					"timeLimitMs",
 					"memoryLimitMb",
-					"isSample"
+					"isSample",
+					"source",
+					"reviewStatus"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -112,6 +135,12 @@
 					},
 					"isSample": {
 						"type": "boolean"
+					},
+					"source": {
+						"$ref": "#/components/schemas/TestCaseSource"
+					},
+					"reviewStatus": {
+						"$ref": "#/components/schemas/TestCaseReviewStatus"
 					}
 				},
 				"required": [
@@ -147,6 +176,12 @@
 					},
 					"isSample": {
 						"type": "boolean"
+					},
+					"source": {
+						"$ref": "#/components/schemas/TestCaseSource"
+					},
+					"reviewStatus": {
+						"$ref": "#/components/schemas/TestCaseReviewStatus"
 					}
 				},
 				"type": "object",
@@ -690,6 +725,16 @@
 					"Unattempted"
 				]
 			},
+			"ProblemReadinessStatus": {
+				"type": "string",
+				"enum": [
+					"STATEMENT_ONLY",
+					"SAMPLE_REFERENCE",
+					"SAMPLE_RUNNABLE",
+					"SUBMIT_READY",
+					"REVIEWED"
+				]
+			},
 			"ProblemSummary": {
 				"properties": {
 					"problemId": {
@@ -731,6 +776,21 @@
 					"judgeReady": {
 						"type": "boolean"
 					},
+					"readinessStatus": {
+						"$ref": "#/components/schemas/ProblemReadinessStatus"
+					},
+					"readinessLabel": {
+						"type": "string"
+					},
+					"readinessReason": {
+						"type": "string"
+					},
+					"canRunSample": {
+						"type": "boolean"
+					},
+					"canSubmit": {
+						"type": "boolean"
+					},
 					"testcaseCount": {
 						"type": "number",
 						"format": "double"
@@ -740,6 +800,10 @@
 						"format": "double"
 					},
 					"hiddenCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"unreviewedCaseCount": {
 						"type": "number",
 						"format": "double"
 					},
@@ -763,9 +827,15 @@
 					"defaultLocale",
 					"availableLocales",
 					"judgeReady",
+					"readinessStatus",
+					"readinessLabel",
+					"readinessReason",
+					"canRunSample",
+					"canSubmit",
 					"testcaseCount",
 					"sampleCaseCount",
 					"hiddenCaseCount",
+					"unreviewedCaseCount",
 					"sampleReferenceAvailable",
 					"tags"
 				],
@@ -836,6 +906,21 @@
 					"judgeReady": {
 						"type": "boolean"
 					},
+					"readinessStatus": {
+						"$ref": "#/components/schemas/ProblemReadinessStatus"
+					},
+					"readinessLabel": {
+						"type": "string"
+					},
+					"readinessReason": {
+						"type": "string"
+					},
+					"canRunSample": {
+						"type": "boolean"
+					},
+					"canSubmit": {
+						"type": "boolean"
+					},
 					"testcaseCount": {
 						"type": "number",
 						"format": "double"
@@ -852,6 +937,10 @@
 						"format": "double"
 					},
 					"hiddenCaseCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"unreviewedCaseCount": {
 						"type": "number",
 						"format": "double"
 					},
@@ -879,10 +968,16 @@
 					"defaultLocale",
 					"availableLocales",
 					"judgeReady",
+					"readinessStatus",
+					"readinessLabel",
+					"readinessReason",
+					"canRunSample",
+					"canSubmit",
 					"testcaseCount",
 					"sampleReferenceAvailable",
 					"sampleCaseCount",
 					"hiddenCaseCount",
+					"unreviewedCaseCount",
 					"tags",
 					"starterCodes"
 				],

@@ -145,10 +145,18 @@ export default function ProblemAdminTable({
                   size="small"
                 />
                 <Chip
-                  label={problem.judgeReady ? "Judge ready" : "Needs tests"}
+                  label={problem.readinessLabel}
                   size="small"
-                  variant={problem.judgeReady ? "filled" : "outlined"}
+                  variant={problem.canSubmit ? "filled" : "outlined"}
                 />
+                {problem.unreviewedCaseCount > 0 && (
+                  <Chip
+                    label={`${problem.unreviewedCaseCount} review`}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
+                )}
                 {problem.tags.length > 0 && (
                   <Chip label={`${problem.tags.length} tags`} size="small" variant="outlined" />
                 )}

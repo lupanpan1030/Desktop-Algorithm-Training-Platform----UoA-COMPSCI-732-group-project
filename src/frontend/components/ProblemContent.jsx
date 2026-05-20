@@ -116,14 +116,21 @@ export default function ProblemContent({ problem, onLocaleChange }) {
           <Chip label={problem.difficulty} color={difficultyColor(problem.difficulty)} />
           <Chip label={`${problem.source} / ${problem.locale}`} variant="outlined" />
           <Chip
-            label={problem.judgeReady ? "Judge ready" : "Needs tests"}
-            color={problem.judgeReady ? "success" : "default"}
-            variant={problem.judgeReady ? "filled" : "outlined"}
+            label={problem.readinessLabel ?? (problem.judgeReady ? "Judge ready" : "Needs tests")}
+            color={problem.canSubmit ? "success" : "default"}
+            variant={problem.canSubmit ? "filled" : "outlined"}
           />
           <Chip
             label={`${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`}
             variant="outlined"
           />
+          {problem.unreviewedCaseCount > 0 && (
+            <Chip
+              label={`${problem.unreviewedCaseCount} needs review`}
+              color="warning"
+              variant="outlined"
+            />
+          )}
         </Stack>
 
         {problem.tags?.length > 0 && (

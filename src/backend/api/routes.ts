@@ -24,6 +24,16 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "TestCaseSource": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["MANUAL"]},{"dataType":"enum","enums":["IMPORTED_SAMPLE"]},{"dataType":"enum","enums":["AI_DRAFT"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TestCaseReviewStatus": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["NEEDS_REVIEW"]},{"dataType":"enum","enums":["REVIEWED"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TestCase": {
         "dataType": "refObject",
         "properties": {
@@ -33,6 +43,8 @@ const models: TsoaRoute.Models = {
             "timeLimitMs": {"dataType":"double","required":true},
             "memoryLimitMb": {"dataType":"double","required":true},
             "isSample": {"dataType":"boolean","required":true},
+            "source": {"ref":"TestCaseSource","required":true},
+            "reviewStatus": {"ref":"TestCaseReviewStatus","required":true},
         },
         "additionalProperties": false,
     },
@@ -65,6 +77,8 @@ const models: TsoaRoute.Models = {
             "timeLimitMs": {"dataType":"double","required":true,"validators":{"minimum":{"value":100},"maximum":{"value":10000}}},
             "memoryLimitMb": {"dataType":"double","required":true,"validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
             "isSample": {"dataType":"boolean"},
+            "source": {"ref":"TestCaseSource"},
+            "reviewStatus": {"ref":"TestCaseReviewStatus"},
         },
         "additionalProperties": false,
     },
@@ -77,6 +91,8 @@ const models: TsoaRoute.Models = {
             "timeLimitMs": {"dataType":"double","validators":{"minimum":{"value":100},"maximum":{"value":10000}}},
             "memoryLimitMb": {"dataType":"double","validators":{"minimum":{"value":16},"maximum":{"value":1024}}},
             "isSample": {"dataType":"boolean"},
+            "source": {"ref":"TestCaseSource"},
+            "reviewStatus": {"ref":"TestCaseReviewStatus"},
         },
         "additionalProperties": false,
     },
@@ -276,6 +292,11 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["Completed"]},{"dataType":"enum","enums":["Attempted"]},{"dataType":"enum","enums":["Unattempted"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ProblemReadinessStatus": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["STATEMENT_ONLY"]},{"dataType":"enum","enums":["SAMPLE_REFERENCE"]},{"dataType":"enum","enums":["SAMPLE_RUNNABLE"]},{"dataType":"enum","enums":["SUBMIT_READY"]},{"dataType":"enum","enums":["REVIEWED"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ProblemSummary": {
         "dataType": "refObject",
         "properties": {
@@ -290,9 +311,15 @@ const models: TsoaRoute.Models = {
             "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "judgeReady": {"dataType":"boolean","required":true},
+            "readinessStatus": {"ref":"ProblemReadinessStatus","required":true},
+            "readinessLabel": {"dataType":"string","required":true},
+            "readinessReason": {"dataType":"string","required":true},
+            "canRunSample": {"dataType":"boolean","required":true},
+            "canSubmit": {"dataType":"boolean","required":true},
             "testcaseCount": {"dataType":"double","required":true},
             "sampleCaseCount": {"dataType":"double","required":true},
             "hiddenCaseCount": {"dataType":"double","required":true},
+            "unreviewedCaseCount": {"dataType":"double","required":true},
             "sampleReferenceAvailable": {"dataType":"boolean","required":true},
             "tags": {"dataType":"array","array":{"dataType":"string"},"required":true},
         },
@@ -324,11 +351,17 @@ const models: TsoaRoute.Models = {
             "sourceSlug": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "externalProblemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "judgeReady": {"dataType":"boolean","required":true},
+            "readinessStatus": {"ref":"ProblemReadinessStatus","required":true},
+            "readinessLabel": {"dataType":"string","required":true},
+            "readinessReason": {"dataType":"string","required":true},
+            "canRunSample": {"dataType":"boolean","required":true},
+            "canSubmit": {"dataType":"boolean","required":true},
             "testcaseCount": {"dataType":"double","required":true},
             "sampleReferenceAvailable": {"dataType":"boolean","required":true},
             "sampleTestcase": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "sampleCaseCount": {"dataType":"double","required":true},
             "hiddenCaseCount": {"dataType":"double","required":true},
+            "unreviewedCaseCount": {"dataType":"double","required":true},
             "tags": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "starterCodes": {"dataType":"array","array":{"dataType":"refObject","ref":"StarterCodeSnippet"},"required":true},
         },

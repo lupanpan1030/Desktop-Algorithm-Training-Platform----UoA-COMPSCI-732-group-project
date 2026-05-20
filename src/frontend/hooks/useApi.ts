@@ -14,9 +14,15 @@ export interface ProblemSummary {
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
+  readinessStatus: "STATEMENT_ONLY" | "SAMPLE_REFERENCE" | "SAMPLE_RUNNABLE" | "SUBMIT_READY" | "REVIEWED";
+  readinessLabel: string;
+  readinessReason: string;
+  canRunSample: boolean;
+  canSubmit: boolean;
   testcaseCount: number;
   sampleCaseCount: number;
   hiddenCaseCount: number;
+  unreviewedCaseCount: number;
   sampleReferenceAvailable: boolean;
   tags: string[];
 }
@@ -89,6 +95,8 @@ export interface TestCase {
   timeLimitMs: number;
   memoryLimitMb: number;
   isSample: boolean;
+  source: "MANUAL" | "IMPORTED_SAMPLE" | "AI_DRAFT";
+  reviewStatus: "NEEDS_REVIEW" | "REVIEWED";
 }
 
 export interface ProblemMutationPayload {
@@ -104,6 +112,8 @@ export interface TestCaseMutationPayload {
   timeLimitMs: number;
   memoryLimitMb: number;
   isSample?: boolean;
+  source?: "MANUAL" | "IMPORTED_SAMPLE" | "AI_DRAFT";
+  reviewStatus?: "NEEDS_REVIEW" | "REVIEWED";
 }
 
 export interface AiSettings {

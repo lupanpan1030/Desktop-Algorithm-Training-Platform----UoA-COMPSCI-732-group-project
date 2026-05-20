@@ -95,7 +95,7 @@ describe("reconcileProblemCatalog", () => {
     expect(remainingProblems).toHaveLength(1);
     expect(remainingProblems[0].problem_id).toBe(101);
     expect(remainingProblems[0].title).toBe("Two Sum");
-    expect(remainingProblems[0].judge_ready).toBe(true);
+    expect(remainingProblems[0].judge_ready).toBe(false);
 
     const movedTestcases = await testPrisma.testCase.findMany({
       where: {

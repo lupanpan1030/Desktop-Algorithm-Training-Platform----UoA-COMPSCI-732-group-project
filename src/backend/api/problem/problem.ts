@@ -3,6 +3,12 @@
 import { Difficulty, Prisma } from "@prisma/client";
 
 export type CompletionState = 'Completed' | 'Attempted' | 'Unattempted';
+export type ProblemReadinessStatus =
+  | "STATEMENT_ONLY"
+  | "SAMPLE_REFERENCE"
+  | "SAMPLE_RUNNABLE"
+  | "SUBMIT_READY"
+  | "REVIEWED";
 
 export interface StarterCodeSnippet {
   languageSlug: string;
@@ -23,9 +29,15 @@ export interface ProblemSummary {
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
+  readinessStatus: ProblemReadinessStatus;
+  readinessLabel: string;
+  readinessReason: string;
+  canRunSample: boolean;
+  canSubmit: boolean;
   testcaseCount: number;
   sampleCaseCount: number;
   hiddenCaseCount: number;
+  unreviewedCaseCount: number;
   sampleReferenceAvailable: boolean;
   tags: string[];
 }
@@ -44,11 +56,17 @@ export interface ProblemDetails {
   sourceSlug?: string | null;
   externalProblemId?: string | null;
   judgeReady: boolean;
+  readinessStatus: ProblemReadinessStatus;
+  readinessLabel: string;
+  readinessReason: string;
+  canRunSample: boolean;
+  canSubmit: boolean;
   testcaseCount: number;
   sampleReferenceAvailable: boolean;
   sampleTestcase?: string | null;
   sampleCaseCount: number;
   hiddenCaseCount: number;
+  unreviewedCaseCount: number;
   tags: string[];
   starterCodes: StarterCodeSnippet[];
 }
@@ -71,6 +89,7 @@ export type ProblemWithStatuses = Prisma.ProblemGetPayload<{
     test_cases: {
       select: {
         is_sample: true;
+        review_status: true;
       };
     };
     problem_tags: {
@@ -102,6 +121,7 @@ export type ProblemWithCounts = Prisma.ProblemGetPayload<{
     test_cases: {
       select: {
         is_sample: true;
+        review_status: true;
       };
     };
     problem_tags: {

@@ -35,6 +35,7 @@ export class ProblemsDao {
         test_cases: {
           select: {
             is_sample: true,
+            review_status: true,
           },
         },
         problem_tags: {
@@ -78,6 +79,7 @@ export class ProblemsDao {
         test_cases: {
           select: {
             is_sample: true,
+            review_status: true,
           },
         },
         problem_tags: {
@@ -230,16 +232,17 @@ export class ProblemsDao {
   }
 
   public static async syncJudgeReadiness(problemId: number): Promise<void> {
-    const testcaseCount = await this.db.testCase.count({
+    const hiddenCaseCount = await this.db.testCase.count({
       where: {
         problem_id: problemId,
+        is_sample: false,
       },
     });
 
     await this.db.problem.updateMany({
       where: { problem_id: problemId },
       data: {
-        judge_ready: testcaseCount > 0,
+        judge_ready: hiddenCaseCount > 0,
       },
     });
   }

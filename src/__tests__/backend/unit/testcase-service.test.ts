@@ -48,6 +48,8 @@ describe("TestCaseService", () => {
           time_limit_ms: 1_000,
           memory_limit_mb: 128,
           is_sample: false,
+          source: "MANUAL",
+          review_status: "REVIEWED",
         },
       ]);
 
@@ -62,6 +64,8 @@ describe("TestCaseService", () => {
           timeLimitMs: 1_000,
           memoryLimitMb: 128,
           isSample: false,
+          source: "MANUAL",
+          reviewStatus: "REVIEWED",
         },
       ]);
     });
@@ -78,7 +82,9 @@ describe("TestCaseService", () => {
         time_limit_ms: 2_000,
         memory_limit_mb: 256,
         is_sample: false,
-      };
+        source: "MANUAL",
+        review_status: "REVIEWED",
+      } as const;
       mockedDao.createTestCase.mockResolvedValue(daoReturn);
 
       const params: CreateTestCaseParams = {
@@ -99,6 +105,8 @@ describe("TestCaseService", () => {
         timeLimitMs: 2_000,
         memoryLimitMb: 256,
         isSample: false,
+        source: "MANUAL",
+        reviewStatus: "REVIEWED",
       });
     });
   });
@@ -113,7 +121,9 @@ describe("TestCaseService", () => {
         time_limit_ms: 2_000,
         memory_limit_mb: 256,
         is_sample: true,
-      };
+        source: "AI_DRAFT",
+        review_status: "NEEDS_REVIEW",
+      } as const;
       mockedDao.updateTestCase.mockResolvedValue(daoReturn);
 
       const params = {
@@ -132,6 +142,8 @@ describe("TestCaseService", () => {
         timeLimitMs: 2_000,
         memoryLimitMb: 256,
         isSample: true,
+        source: "AI_DRAFT",
+        reviewStatus: "NEEDS_REVIEW",
       });
     });
   });

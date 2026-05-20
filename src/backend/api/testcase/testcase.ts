@@ -1,5 +1,8 @@
 // This file defines the types and interfaces used in the testcase API.
 
+export type TestCaseSource = "MANUAL" | "IMPORTED_SAMPLE" | "AI_DRAFT";
+export type TestCaseReviewStatus = "NEEDS_REVIEW" | "REVIEWED";
+
 export interface TestCase {
   testcaseId: number;
   input: string;
@@ -7,6 +10,8 @@ export interface TestCase {
   timeLimitMs: number;
   memoryLimitMb: number;
   isSample: boolean;
+  source: TestCaseSource;
+  reviewStatus: TestCaseReviewStatus;
 }
 
 export class CreateTestCaseParams {
@@ -33,6 +38,8 @@ export class CreateTestCaseParams {
   memoryLimitMb!: number;
 
   isSample?: boolean;
+  source?: TestCaseSource;
+  reviewStatus?: TestCaseReviewStatus;
 }
 
 export class UpdateTestCaseParams {
@@ -59,4 +66,6 @@ export class UpdateTestCaseParams {
   memoryLimitMb?: number;
 
   isSample?: boolean;
+  source?: TestCaseSource;
+  reviewStatus?: TestCaseReviewStatus;
 }

@@ -27,6 +27,17 @@ function truncate(value: string, limit = 96) {
   return `${value.slice(0, limit)}...`;
 }
 
+function sourceLabel(source: TestCase["source"]) {
+  switch (source) {
+    case "IMPORTED_SAMPLE":
+      return "Imported sample";
+    case "AI_DRAFT":
+      return "AI draft";
+    default:
+      return "Manual";
+  }
+}
+
 export default function TestCaseTable({ testcases, onEdit, onDelete }: Props) {
   const theme = useTheme();
 
@@ -71,6 +82,17 @@ export default function TestCaseTable({ testcases, onEdit, onDelete }: Props) {
                   size="small"
                   variant="outlined"
                   label={`${testcase.timeLimitMs} ms / ${testcase.memoryLimitMb} MB`}
+                />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={sourceLabel(testcase.source)}
+                />
+                <Chip
+                  size="small"
+                  color={testcase.reviewStatus === "REVIEWED" ? "success" : "warning"}
+                  variant={testcase.reviewStatus === "REVIEWED" ? "outlined" : "filled"}
+                  label={testcase.reviewStatus === "REVIEWED" ? "Reviewed" : "Needs review"}
                 />
               </Stack>
 

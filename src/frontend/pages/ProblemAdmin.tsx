@@ -51,6 +51,8 @@ const blankTestCaseForm: TestCaseMutationPayload = {
   timeLimitMs: 1000,
   memoryLimitMb: 128,
   isSample: false,
+  source: "MANUAL",
+  reviewStatus: "REVIEWED",
 };
 
 type ProblemDialogState = {
@@ -312,9 +314,13 @@ export default function ProblemAdmin() {
       (sourceFilter === "all" ? true : problem.source === sourceFilter) &&
       (readinessFilter === "all"
         ? true
-        : readinessFilter === "ready"
-          ? problem.judgeReady
-          : !problem.judgeReady) &&
+        : readinessFilter === "sample-runnable"
+          ? problem.readinessStatus === "SAMPLE_RUNNABLE"
+          : readinessFilter === "submit-ready"
+            ? problem.readinessStatus === "SUBMIT_READY"
+            : readinessFilter === "reviewed"
+              ? problem.readinessStatus === "REVIEWED"
+              : !problem.canSubmit) &&
       (tagFilter === "all" ? true : problem.tags.includes(tagFilter)) &&
       (sampleReferenceFilter === "all"
         ? true
@@ -338,15 +344,16 @@ export default function ProblemAdmin() {
   );
 
   const nextProblemNeedingTests = useMemo(
-    () => visibleProblems.find((problem) => !problem.judgeReady) ?? null,
+    () => visibleProblems.find((problem) => !problem.canSubmit) ?? null,
     [visibleProblems]
   );
 
   const curationMetrics = useMemo(
     () => ({
       visible: visibleProblems.length,
-      ready: visibleProblems.filter((problem) => problem.judgeReady).length,
-      needsTests: visibleProblems.filter((problem) => !problem.judgeReady).length,
+      ready: visibleProblems.filter((problem) => problem.canSubmit).length,
+      needsTests: visibleProblems.filter((problem) => !problem.canSubmit).length,
+      runnableSamples: visibleProblems.filter((problem) => problem.canRunSample).length,
       withSampleReference: visibleProblems.filter(
         (problem) => problem.sampleReferenceAvailable
       ).length,
@@ -408,17 +415,13 @@ export default function ProblemAdmin() {
         {
           key: "judgeReady",
           label: "Judge readiness",
-          value: selectedProblem
-            ? selectedProblem.judgeReady
-              ? "ready"
-              : "needs tests"
-            : "n/a",
+          value: selectedProblem ? selectedProblem.readinessLabel : "n/a",
         },
         {
           key: "testcaseCounts",
           label: "Testcase coverage",
           value: selectedProblem
-            ? `${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden`
+            ? `${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden / ${selectedProblem.unreviewedCaseCount} needs review`
             : "n/a",
         },
         {
@@ -571,6 +574,8 @@ export default function ProblemAdmin() {
         timeLimitMs: testcase.timeLimitMs,
         memoryLimitMb: testcase.memoryLimitMb,
         isSample: testcase.isSample,
+        source: testcase.source,
+        reviewStatus: testcase.reviewStatus,
       },
     });
   };
@@ -784,6 +789,8 @@ export default function ProblemAdmin() {
             input: draft.input.trim(),
             expectedOutput: draft.expectedOutput.trim(),
             isSample: draft.isSample,
+            source: "AI_DRAFT",
+            reviewStatus: "NEEDS_REVIEW",
             timeLimitMs: testcaseDraftDefaults.timeLimitMs,
             memoryLimitMb: testcaseDraftDefaults.memoryLimitMb,
           });
@@ -938,9 +945,10 @@ export default function ProblemAdmin() {
             </Stack>
 
             <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
-              <Chip label={`Visible ${curationMetrics.visible}`} variant="outlined" />
-              <Chip label={`Judge ready ${curationMetrics.ready}`} variant="outlined" />
+                  <Chip label={`Visible ${curationMetrics.visible}`} variant="outlined" />
+              <Chip label={`Submit ready ${curationMetrics.ready}`} variant="outlined" />
               <Chip label={`Needs tests ${curationMetrics.needsTests}`} variant="outlined" />
+              <Chip label={`Sample runnable ${curationMetrics.runnableSamples}`} variant="outlined" />
               <Chip label={`Sample ref ${curationMetrics.withSampleReference}`} variant="outlined" />
             </Stack>
           </Stack>
@@ -1016,8 +1024,10 @@ export default function ProblemAdmin() {
                   fullWidth
                 >
                   <MenuItem value="all">All problems</MenuItem>
-                  <MenuItem value="needs-tests">Needs tests</MenuItem>
-                  <MenuItem value="ready">Judge ready</MenuItem>
+                  <MenuItem value="needs-tests">Needs submit tests</MenuItem>
+                  <MenuItem value="sample-runnable">Sample runnable</MenuItem>
+                  <MenuItem value="submit-ready">Submit ready</MenuItem>
+                  <MenuItem value="reviewed">Reviewed</MenuItem>
                 </TextField>
 
                 <TextField
@@ -1176,9 +1186,15 @@ export default function ProblemAdmin() {
                               sourceSlug: selectedProblem.sourceSlug,
                               externalProblemId: selectedProblem.externalProblemId,
                               judgeReady: selectedProblem.judgeReady,
+                              readinessStatus: selectedProblem.readinessStatus,
+                              readinessLabel: selectedProblem.readinessLabel,
+                              readinessReason: selectedProblem.readinessReason,
+                              canRunSample: selectedProblem.canRunSample,
+                              canSubmit: selectedProblem.canSubmit,
                               testcaseCount: selectedProblem.testcaseCount,
                               sampleCaseCount: selectedProblem.sampleCaseCount,
                               hiddenCaseCount: selectedProblem.hiddenCaseCount,
+                              unreviewedCaseCount: selectedProblem.unreviewedCaseCount,
                               sampleReferenceAvailable:
                                 selectedProblem.sampleReferenceAvailable,
                               tags: selectedProblem.tags,
@@ -1194,10 +1210,17 @@ export default function ProblemAdmin() {
                   <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
                     <Chip label={selectedProblem.difficulty} color="primary" variant="outlined" />
                     <Chip
-                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
-                      color={selectedProblem.judgeReady ? "success" : "default"}
-                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
+                      label={selectedProblem.readinessLabel}
+                      color={selectedProblem.canSubmit ? "success" : "default"}
+                      variant={selectedProblem.canSubmit ? "filled" : "outlined"}
                     />
+                    {selectedProblem.unreviewedCaseCount > 0 && (
+                      <Chip
+                        label={`${selectedProblem.unreviewedCaseCount} needs review`}
+                        color="warning"
+                        variant="outlined"
+                      />
+                    )}
                     <Chip label={`${selectedProblem.testcaseCount} testcases`} variant="outlined" />
                     <Chip
                       label={`${selectedProblem.sampleCaseCount} sample / ${selectedProblem.hiddenCaseCount} hidden`}
@@ -1309,9 +1332,16 @@ export default function ProblemAdmin() {
                     <Chip label={`${selectedProblem.sampleCaseCount} sample`} variant="outlined" />
                     <Chip label={`${selectedProblem.hiddenCaseCount} hidden`} variant="outlined" />
                     <Chip
-                      label={selectedProblem.judgeReady ? "Judge ready" : "Needs tests"}
-                      variant={selectedProblem.judgeReady ? "filled" : "outlined"}
+                      label={selectedProblem.readinessLabel}
+                      variant={selectedProblem.canSubmit ? "filled" : "outlined"}
                     />
+                    {selectedProblem.unreviewedCaseCount > 0 && (
+                      <Chip
+                        label={`${selectedProblem.unreviewedCaseCount} needs review`}
+                        color="warning"
+                        variant="outlined"
+                      />
+                    )}
                   </Stack>
                 )}
 

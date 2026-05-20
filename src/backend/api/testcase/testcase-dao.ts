@@ -1,6 +1,6 @@
 // This file interacts with the database to perform CRUD operations on test cases.
 
-import type { PrismaClient, TestCase } from '@prisma/client';
+import type { PrismaClient, TestCase, TestCaseReviewStatus, TestCaseSource } from '@prisma/client';
 import { getPrisma } from '../../db/prisma/prisma';
 
 export class TestCaseDao {
@@ -32,6 +32,8 @@ export class TestCaseDao {
       timeLimitMs: number;
       memoryLimitMb: number;
       isSample?: boolean;
+      source?: TestCaseSource;
+      reviewStatus?: TestCaseReviewStatus;
     }
   ): Promise<TestCase> {
     const prisma: PrismaClient = getPrisma();
@@ -42,6 +44,8 @@ export class TestCaseDao {
         time_limit_ms: params.timeLimitMs,
         memory_limit_mb: params.memoryLimitMb,
         is_sample: params.isSample ?? false,
+        source: params.source ?? "MANUAL",
+        review_status: params.reviewStatus ?? "REVIEWED",
         problem: {
           connect: { problem_id: problemId },
         },
@@ -58,6 +62,8 @@ export class TestCaseDao {
       timeLimitMs?: number;
       memoryLimitMb?: number;
       isSample?: boolean;
+      source?: TestCaseSource;
+      reviewStatus?: TestCaseReviewStatus;
     }
   ): Promise<TestCase | null> {
     const prisma: PrismaClient = getPrisma();
@@ -82,6 +88,8 @@ export class TestCaseDao {
         time_limit_ms: params.timeLimitMs,
         memory_limit_mb: params.memoryLimitMb,
         is_sample: params.isSample,
+        source: params.source,
+        review_status: params.reviewStatus,
       },
     });
   }

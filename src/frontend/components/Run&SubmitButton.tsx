@@ -31,6 +31,7 @@ interface CodeSubmissionProps {
   onRestoreSubmission?: (submission: SubmissionDetail) => void;
   onAssistantSnapshotChange?: (snapshot: AssistantResultSnapshot) => void;
   actionBlockedReason?: string | null;
+  submitBlockedReason?: string | null;
 }
 
 type ResultView = "history" | "run" | "submit";
@@ -154,6 +155,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
   onRestoreSubmission,
   onAssistantSnapshotChange,
   actionBlockedReason = null,
+  submitBlockedReason = null,
 }) => {
   const { runCode, submitCode, getSubmissions, getSubmission } = useApi();
   const [runResults, setRunResults] = useState<RunResponse | null>(null);
@@ -368,6 +370,12 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       return;
     }
 
+    if (submitBlockedReason) {
+      setPanelError(submitBlockedReason);
+      showSnackbar(submitBlockedReason, "error");
+      return;
+    }
+
     setActionLoading(true);
     setPanelError(null);
     setActiveView("run");
@@ -531,7 +539,7 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
             variant="contained"
             startIcon={<SendIcon />}
             onClick={handleSubmitCode}
-            disabled={actionLoading || languageId == null}
+            disabled={actionLoading || languageId == null || Boolean(submitBlockedReason)}
             sx={{
               minWidth: 118,
               backgroundColor: alpha(theme.palette.warning.main, 0.92),
@@ -553,6 +561,12 @@ const CodeSubmission: React.FC<CodeSubmissionProps> = ({
       {languageId == null && (
         <Alert severity="warning" sx={{ mb: 1.8 }}>
           {actionBlockedReason ?? "Load the language configuration before running or submitting code."}
+        </Alert>
+      )}
+
+      {languageId != null && submitBlockedReason && (
+        <Alert severity="info" sx={{ mb: 1.8 }}>
+          {submitBlockedReason}
         </Alert>
       )}
 

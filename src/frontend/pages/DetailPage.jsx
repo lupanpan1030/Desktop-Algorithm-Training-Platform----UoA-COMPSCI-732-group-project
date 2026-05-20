@@ -226,7 +226,7 @@ export default function DetailPage() {
       {
         key: "judgeReady",
         label: "Judge readiness",
-        value: problem.judgeReady ? "ready" : "needs tests",
+        value: problem.readinessLabel ?? (problem.judgeReady ? "ready" : "needs tests"),
       },
       {
         key: "tags",
@@ -242,6 +242,11 @@ export default function DetailPage() {
         key: "testcaseCount",
         label: "Testcases",
         value: `${problem.sampleCaseCount} sample / ${problem.hiddenCaseCount} hidden`,
+      },
+      {
+        key: "reviewStatus",
+        label: "Review status",
+        value: `${problem.unreviewedCaseCount ?? 0} testcases need review`,
       },
       {
         key: "starterLanguages",
@@ -369,6 +374,18 @@ export default function DetailPage() {
     restoredUnavailableLanguage,
   ]);
 
+  const submitBlockedReason = useMemo(() => {
+    if (!problem || problem.canSubmit) {
+      return null;
+    }
+
+    if (problem.canRunSample) {
+      return "This problem only has sample testcases. Use Run for now; add reviewed hidden testcases before Submit.";
+    }
+
+    return "This problem does not have runnable judge testcases yet.";
+  }, [problem]);
+
   const workspaceFacts = useMemo(
     () =>
       [
@@ -387,9 +404,9 @@ export default function DetailPage() {
             : "No testcase info",
         },
       ].concat(
-        problem?.judgeReady
-          ? [{ key: "judge", label: "Judge ready" }]
-          : [{ key: "judge", label: "Needs tests" }]
+        problem
+          ? [{ key: "judge", label: problem.readinessLabel ?? (problem.judgeReady ? "Judge ready" : "Needs tests") }]
+          : [{ key: "judge", label: "No readiness info" }]
       ),
     [deferredCode, editorState.language, problem]
   );
@@ -714,6 +731,7 @@ export default function DetailPage() {
                   onRestoreSubmission={handleRestoreSubmission}
                   onAssistantSnapshotChange={setAssistantResultSnapshot}
                   actionBlockedReason={submissionActionBlockedReason}
+                  submitBlockedReason={submitBlockedReason}
                 />
               )}
             </Box>

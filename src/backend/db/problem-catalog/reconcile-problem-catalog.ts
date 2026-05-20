@@ -280,9 +280,10 @@ export async function reconcileProblemCatalog(
     mergedProblems += result.merged;
 
     if (result.canonicalProblemId != null) {
-      const testcaseCount = await prisma.testCase.count({
+      const hiddenCaseCount = await prisma.testCase.count({
         where: {
           problem_id: result.canonicalProblemId,
+          is_sample: false,
         },
       });
 
@@ -291,7 +292,7 @@ export async function reconcileProblemCatalog(
           problem_id: result.canonicalProblemId,
         },
         data: {
-          judge_ready: testcaseCount > 0,
+          judge_ready: hiddenCaseCount > 0,
         },
       });
 

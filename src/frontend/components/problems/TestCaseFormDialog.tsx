@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  MenuItem,
   Switch,
   TextField,
 } from "@mui/material";
@@ -31,6 +32,8 @@ const blankValues: TestCaseMutationPayload = {
   timeLimitMs: 1000,
   memoryLimitMb: 128,
   isSample: false,
+  source: "MANUAL",
+  reviewStatus: "REVIEWED",
 };
 
 export default function TestCaseFormDialog({
@@ -102,6 +105,8 @@ export default function TestCaseFormDialog({
         timeLimitMs: Number(form.timeLimitMs),
         memoryLimitMb: Number(form.memoryLimitMb),
         isSample: Boolean(form.isSample),
+        source: form.source ?? "MANUAL",
+        reviewStatus: form.reviewStatus ?? "REVIEWED",
       });
     } catch (error) {
       const message =
@@ -148,6 +153,23 @@ export default function TestCaseFormDialog({
           }
           label="Use as sample testcase for Run"
         />
+
+        <TextField
+          select
+          label="Review status"
+          value={form.reviewStatus ?? "REVIEWED"}
+          onChange={(event) =>
+            setForm((previous) => ({
+              ...previous,
+              reviewStatus: event.target.value as TestCaseMutationPayload["reviewStatus"],
+            }))
+          }
+          fullWidth
+          size="small"
+        >
+          <MenuItem value="REVIEWED">Reviewed</MenuItem>
+          <MenuItem value="NEEDS_REVIEW">Needs review</MenuItem>
+        </TextField>
 
         <TextField
           label="Input"

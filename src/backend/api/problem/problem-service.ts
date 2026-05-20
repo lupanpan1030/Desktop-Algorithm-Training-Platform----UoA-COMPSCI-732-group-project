@@ -9,6 +9,7 @@ import {
   UpdateProblemParams,
   ProblemWithCounts,
   ProblemWithStatuses,
+  ProblemReadinessStatus,
 } from "./problem";
 import type { SubmissionStatus } from "@prisma/client";
 import { NotFoundError } from "../../utils/errors/not-found-error";
@@ -31,11 +32,76 @@ const summarizeTestcases = (
   const sampleCaseCount = problem.test_cases.filter(
     (testCase: { is_sample: boolean }) => testCase.is_sample
   ).length;
+  const unreviewedCaseCount = problem.test_cases.filter(
+    (testCase: { review_status: string }) => testCase.review_status === "NEEDS_REVIEW"
+  ).length;
   return {
     sampleCaseCount,
     hiddenCaseCount: problem.test_cases.length - sampleCaseCount,
+    unreviewedCaseCount,
   };
 };
+
+function summarizeReadiness(input: {
+  sampleCaseCount: number;
+  hiddenCaseCount: number;
+  unreviewedCaseCount: number;
+  sampleReferenceAvailable: boolean;
+}): {
+  status: ProblemReadinessStatus;
+  label: string;
+  reason: string;
+  canRunSample: boolean;
+  canSubmit: boolean;
+} {
+  if (input.hiddenCaseCount > 0 && input.unreviewedCaseCount === 0) {
+    return {
+      status: "REVIEWED",
+      label: "Reviewed",
+      reason: "Sample and hidden testcase coverage is present and all saved cases are reviewed.",
+      canRunSample: input.sampleCaseCount > 0,
+      canSubmit: true,
+    };
+  }
+
+  if (input.hiddenCaseCount > 0) {
+    return {
+      status: "SUBMIT_READY",
+      label: "Submit ready",
+      reason: "Hidden testcase coverage is present, but at least one saved case still needs review.",
+      canRunSample: input.sampleCaseCount > 0,
+      canSubmit: true,
+    };
+  }
+
+  if (input.sampleCaseCount > 0) {
+    return {
+      status: "SAMPLE_RUNNABLE",
+      label: "Sample runnable",
+      reason: "Sample testcase coverage is present, so Run can execute examples, but Submit still lacks hidden coverage.",
+      canRunSample: true,
+      canSubmit: false,
+    };
+  }
+
+  if (input.sampleReferenceAvailable) {
+    return {
+      status: "SAMPLE_REFERENCE",
+      label: "Sample reference",
+      reason: "Imported sample text is available but has not been converted into runnable testcases.",
+      canRunSample: false,
+      canSubmit: false,
+    };
+  }
+
+  return {
+    status: "STATEMENT_ONLY",
+    label: "Statement only",
+    reason: "Only the problem statement and metadata are available.",
+    canRunSample: false,
+    canSubmit: false,
+  };
+}
 
 const listProblemTags = (
   problem: Pick<ProblemWithCounts, "problem_tags"> | Pick<ProblemWithStatuses, "problem_tags">
@@ -66,7 +132,13 @@ export class ProblemsService {
   ): ProblemDetails {
     const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
     const availableLocales = listAvailableProblemLocales(problem);
-    const { sampleCaseCount, hiddenCaseCount } = summarizeTestcases(problem);
+    const { sampleCaseCount, hiddenCaseCount, unreviewedCaseCount } = summarizeTestcases(problem);
+    const readiness = summarizeReadiness({
+      sampleCaseCount,
+      hiddenCaseCount,
+      unreviewedCaseCount,
+      sampleReferenceAvailable: Boolean(problem.sample_testcase),
+    });
     this.ensureLocaleAvailable(availableLocales, preferredLocale, strictLocale);
 
     return {
@@ -81,12 +153,18 @@ export class ProblemsService {
       availableLocales,
       sourceSlug: problem.source_slug,
       externalProblemId: problem.external_problem_id,
-      judgeReady: problem.judge_ready,
+      judgeReady: readiness.canSubmit,
+      readinessStatus: readiness.status,
+      readinessLabel: readiness.label,
+      readinessReason: readiness.reason,
+      canRunSample: readiness.canRunSample,
+      canSubmit: readiness.canSubmit,
       testcaseCount: problem._count.test_cases,
       sampleReferenceAvailable: Boolean(problem.sample_testcase),
       sampleTestcase: problem.sample_testcase,
       sampleCaseCount,
       hiddenCaseCount,
+      unreviewedCaseCount,
       tags: listProblemTags(problem),
       starterCodes: problem.starter_codes
         .map((starterCode) => ({
@@ -118,7 +196,13 @@ export class ProblemsService {
       })
       .map((problem) => {
       const selectedLocalization = resolveProblemLocalization(problem, preferredLocale);
-      const { sampleCaseCount, hiddenCaseCount } = summarizeTestcases(problem);
+      const { sampleCaseCount, hiddenCaseCount, unreviewedCaseCount } = summarizeTestcases(problem);
+      const readiness = summarizeReadiness({
+        sampleCaseCount,
+        hiddenCaseCount,
+        unreviewedCaseCount,
+        sampleReferenceAvailable: Boolean(problem.sample_testcase),
+      });
 
       return {
       problemId: problem.problem_id,
@@ -133,10 +217,16 @@ export class ProblemsService {
       availableLocales: listAvailableProblemLocales(problem),
       sourceSlug: problem.source_slug,
       externalProblemId: problem.external_problem_id,
-      judgeReady: problem.judge_ready,
+      judgeReady: readiness.canSubmit,
+      readinessStatus: readiness.status,
+      readinessLabel: readiness.label,
+      readinessReason: readiness.reason,
+      canRunSample: readiness.canRunSample,
+      canSubmit: readiness.canSubmit,
       testcaseCount: problem._count.test_cases,
       sampleCaseCount,
       hiddenCaseCount,
+      unreviewedCaseCount,
       sampleReferenceAvailable: Boolean(problem.sample_testcase),
       tags: listProblemTags(problem),
     };

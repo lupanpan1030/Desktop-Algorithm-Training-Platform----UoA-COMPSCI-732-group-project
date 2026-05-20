@@ -48,6 +48,8 @@ model TestCase {
     time_limit_ms      Int @map("time_limit")
     memory_limit_mb    Int @map("memory_limit")
     is_sample       Boolean  @default(false)
+    source          TestCaseSource @default(MANUAL)
+    review_status   TestCaseReviewStatus @default(REVIEWED)
     problem         Problem  @relation(fields: [problem_id], references: [problem_id], onDelete: Cascade)
     problem_id      Int
 }
@@ -133,4 +135,15 @@ enum SubmissionStatus {
     TIME_LIMIT_EXCEEDED
     COMPILE_ERROR
     RUNTIME_ERROR
+}
+
+enum TestCaseSource {
+    MANUAL
+    IMPORTED_SAMPLE
+    AI_DRAFT
+}
+
+enum TestCaseReviewStatus {
+    NEEDS_REVIEW
+    REVIEWED
 }
