@@ -7,6 +7,7 @@ import { initializeDatabase } from './backend/db/prisma/initialize-database';
 import {
   DEFAULT_BACKEND_HOST,
   buildBackendBaseUrl,
+  LOCAL_API_AUTH_HEADER,
   LOCAL_API_AUTH_TOKEN_ENV,
   normalizeBackendPort,
 } from './shared/backendConfig';
@@ -145,6 +146,14 @@ export async function startBackend(): Promise<void> {
 
 export function waitForBackend(timeoutMs = getBackendStartTimeoutMs()): Promise<void> {
   const url = `${buildBackendBaseUrl(getBackendPort())}/problems`;
+  const localApiAuthToken = process.env[LOCAL_API_AUTH_TOKEN_ENV]?.trim();
+  const readinessRequestOptions: http.RequestOptions = localApiAuthToken
+    ? {
+        headers: {
+          [LOCAL_API_AUTH_HEADER]: localApiAuthToken,
+        },
+      }
+    : {};
 
   return new Promise((resolve, reject) => {
     const startedAt = Date.now();
@@ -169,7 +178,7 @@ export function waitForBackend(timeoutMs = getBackendStartTimeoutMs()): Promise<
 
     const poll = () => {
       http
-        .get(url, res => {
+        .get(url, readinessRequestOptions, res => {
           if (res.statusCode === 200) {
             cleanup();
             console.log(`Backend became ready after ${Date.now() - startedAt}ms.`);
