@@ -19,6 +19,7 @@ import {
   ExecutionResult,
   JudgeExecutionSetupError,
 } from '../../services/judge/executor';
+import { prepareLeetCodeJudgeRun } from '../../services/judge/leetcode-adapter';
 import { NotFoundError } from "../../utils/errors/not-found-error";
 
 export class SubmissionService {
@@ -65,6 +66,7 @@ export class SubmissionService {
    */
   async runCode(problemId: number, dto: RunCodeDto, testCaseLimit = 3): Promise<RunCodeResponseDto> {
     const language = await this.languageService.getLanguageById(dto.languageId);
+    const problem = await ProblemsDao.getProblemById(problemId);
 
     const testCases = await this.testCaseService.getTestCases(problemId);
     if (!testCases || testCases.length === 0) {
@@ -76,16 +78,22 @@ export class SubmissionService {
     
     const mode = language.compilerCmd ? ExecutionMode.Compiled : ExecutionMode.Interprete;
     let executionResults: ExecutionResult[];
+    const leetcodeRun = prepareLeetCodeJudgeRun({
+      problem,
+      language,
+      code: dto.code,
+      testCases: limitedTestCases,
+    });
 
     try {
       executionResults = await judgeSolution(mode, {
-        code: dto.code,
+        code: leetcodeRun?.code ?? dto.code,
         fileSuffix: language.suffix,
         interpretCmd: language.runtimeCmd,
         compileCmd: language.compilerCmd ?? undefined,
         runCmd: language.runtimeCmd,
         executable: EXECUTABLE_NAME,
-        testCases: limitedTestCases.map((tc) => ({
+        testCases: leetcodeRun?.testCases ?? limitedTestCases.map((tc) => ({
           input: tc.input,
           timeLimitMs: tc.timeLimitMs,
           memoryLimitMb: tc.memoryLimitMb,
@@ -116,6 +124,7 @@ export class SubmissionService {
    */
   async submitCode(problemId: number, dto: SubmitCodeDto): Promise<SubmitCodeResponseDto> {
     const language = await this.languageService.getLanguageById(dto.languageId);
+    const problem = await ProblemsDao.getProblemById(problemId);
 
     const testCases = await this.testCaseService.getTestCases(problemId);
     if (!testCases || testCases.length === 0) {
@@ -132,16 +141,22 @@ export class SubmissionService {
     const mode = language.compilerCmd ? ExecutionMode.Compiled : ExecutionMode.Interprete;
     let results: SubmissionResultDto[];
     let overallStatus: SubmissionStatus;
+    const leetcodeRun = prepareLeetCodeJudgeRun({
+      problem,
+      language,
+      code: dto.code,
+      testCases,
+    });
 
     try {
       const executionResults = await judgeSolution(mode, {
-        code: dto.code,
+        code: leetcodeRun?.code ?? dto.code,
         fileSuffix: language.suffix,
         interpretCmd: language.runtimeCmd,
         compileCmd: language.compilerCmd ?? undefined,
         runCmd: language.runtimeCmd,
         executable: EXECUTABLE_NAME,
-        testCases: testCases.map((tc) => ({
+        testCases: leetcodeRun?.testCases ?? testCases.map((tc) => ({
           input: tc.input,
           timeLimitMs: tc.timeLimitMs,
           memoryLimitMb: tc.memoryLimitMb,
