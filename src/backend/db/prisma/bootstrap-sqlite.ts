@@ -3,7 +3,10 @@ import fs from "fs/promises";
 import path from "path";
 import sqlite3 from "sqlite3";
 
-const NPX_COMMAND = process.platform === "win32" ? "npx.cmd" : "npx";
+function resolvePrismaCliPath() {
+  const runtimeRequire = eval("require") as NodeRequire;
+  return runtimeRequire.resolve("prisma/build/index.js");
+}
 
 export function getSchemaPath() {
   return path.resolve(process.cwd(), "src/backend/db/prisma/schema.prisma");
@@ -26,9 +29,9 @@ export function fromSqliteFileUrl(databaseUrl: string) {
 
 export function generateSchemaSql(schemaPath = getSchemaPath()) {
   return execFileSync(
-    NPX_COMMAND,
+    process.execPath,
     [
-      "prisma",
+      resolvePrismaCliPath(),
       "migrate",
       "diff",
       "--from-empty",
@@ -53,9 +56,9 @@ export function generateSchemaDiffSql(
   schemaPath = getSchemaPath()
 ) {
   return execFileSync(
-    NPX_COMMAND,
+    process.execPath,
     [
-      "prisma",
+      resolvePrismaCliPath(),
       "migrate",
       "diff",
       "--from-url",
