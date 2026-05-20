@@ -22,6 +22,12 @@ The current branch is a personal redevelopment line maintained by:
 
 This branch extends the original course-project baseline. It should not be read as a claim that the entire current codebase reflects equal involvement from every original team member.
 
+Branch roles:
+
+- `redevelopment/main`: active personal redevelopment line and GitHub default branch
+- `legacy/uoa-course-baseline`: preserved CS732 course-project baseline
+- `main`: old remote baseline kept for reference only
+
 Original team members:
 
 - Manling Chen - `mche600@aucklanduni.ac.nz`

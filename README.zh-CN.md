@@ -22,6 +22,12 @@
 
 这条分支是在原课程项目基础上继续演进的结果，不应被理解为当前代码库的所有内容都等量代表原始 6 位成员在后续阶段的共同投入。
 
+分支角色：
+
+- `redevelopment/main`：当前继续开发的个人二次开发主线，也是 GitHub 默认分支
+- `legacy/uoa-course-baseline`：保留的 CS732 课程项目基线
+- `main`：旧远端基线，仅作为参考保留
+
 原始团队成员：
 
 - Manling Chen - `mche600@aucklanduni.ac.nz`
