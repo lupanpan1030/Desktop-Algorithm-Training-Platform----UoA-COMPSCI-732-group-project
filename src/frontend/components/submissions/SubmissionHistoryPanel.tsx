@@ -15,7 +15,6 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Stack,
   Tooltip,
@@ -145,38 +144,44 @@ export default function SubmissionHistoryPanel({
           <CircularProgress size={28} />
         </Box>
       ) : totalSubmissionCount === 0 ? (
-        <Paper variant="outlined" sx={{ p: 2.5 }}>
+        <Box sx={{ p: 2.5, borderTop: "1px solid", borderBottom: "1px solid", borderColor: "divider" }}>
           <Typography variant="body2" color="text.secondary">
             No submissions yet. Submit a solution first to build a history for
             this problem.
           </Typography>
-        </Paper>
+        </Box>
       ) : submissions.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: 2.5 }}>
+        <Box sx={{ p: 2.5, borderTop: "1px solid", borderBottom: "1px solid", borderColor: "divider" }}>
           <Typography variant="body2" color="text.secondary">
             No submissions match the current status filter.
           </Typography>
-        </Paper>
+        </Box>
       ) : (
         <Stack spacing={1.5} role="listbox" aria-label="Submission history list">
           {submissions.map((submission) => {
             const selected = submission.submissionId === selectedSubmissionId;
 
             return (
-              <Paper
+              <Box
                 key={submission.submissionId}
-                variant="outlined"
                 onClick={() => onSelectSubmission(submission.submissionId)}
                 role="option"
                 aria-selected={selected}
                 tabIndex={0}
                 onKeyDown={(event) => handleSelectWithKeyboard(event, submission.submissionId)}
                 sx={{
-                  p: 1.5,
+                  px: 1.5,
+                  py: 1.35,
                   cursor: "pointer",
-                  borderColor: selected ? "primary.main" : "divider",
-                  boxShadow: selected ? 2 : 0,
-                  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                  borderLeft: "3px solid",
+                  borderBottom: "1px solid",
+                  borderLeftColor: selected ? "primary.main" : "transparent",
+                  borderBottomColor: "divider",
+                  bgcolor: selected ? "action.selected" : "transparent",
+                  transition: "border-color 0.2s ease, background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
                 }}
               >
                 <Stack
@@ -207,7 +212,7 @@ export default function SubmissionHistoryPanel({
                 >
                   {formatSubmissionDate(submission.submittedAt)}
                 </Typography>
-              </Paper>
+              </Box>
             );
           })}
         </Stack>

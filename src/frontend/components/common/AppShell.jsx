@@ -6,7 +6,6 @@ import {
   Chip,
   Drawer,
   IconButton,
-  Paper,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -91,7 +90,7 @@ function NavigationRailButton({ active, icon, label, to, onClick }) {
       onClick={onClick}
       sx={(theme) => ({
         width: "100%",
-        borderRadius: 4,
+        borderRadius: 2,
         px: 1,
         py: 1.25,
         display: "flex",
@@ -102,10 +101,10 @@ function NavigationRailButton({ active, icon, label, to, onClick }) {
         border: "1px solid",
         borderColor: active
           ? alpha(theme.palette.primary.main, 0.32)
-          : alpha(theme.palette.divider, 0.45),
+          : "transparent",
         backgroundColor: active
           ? alpha(theme.palette.primary.main, 0.14)
-          : alpha(theme.palette.background.paper, 0.42),
+          : "transparent",
         transition:
           "transform 160ms ease, border-color 160ms ease, background-color 160ms ease",
         "&:hover": {
@@ -113,7 +112,7 @@ function NavigationRailButton({ active, icon, label, to, onClick }) {
           borderColor: alpha(theme.palette.primary.main, 0.3),
           backgroundColor: active
             ? alpha(theme.palette.primary.main, 0.18)
-            : alpha(theme.palette.background.paper, 0.72),
+            : alpha(theme.palette.background.paper, 0.34),
         },
       })}
     >
@@ -310,40 +309,36 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
         <Box
           sx={{
             width: railWidth,
-            p: 1.3,
-            pb: 2,
+            pl: 1.3,
+            pr: 1.1,
+            py: 1.3,
             flexShrink: 0,
+            borderRight: "1px solid",
+            borderColor: "divider",
           }}
         >
-          <Paper
-            elevation={0}
+          <Box
             sx={(theme) => ({
               height: "100%",
-              borderRadius: 8,
-              border: "1px solid",
-              borderColor: alpha(theme.palette.divider, 0.42),
-              bgcolor: alpha(theme.palette.background.paper, 0.72),
-              backdropFilter: "blur(18px)",
               overflow: "hidden",
+              bgcolor: alpha(theme.palette.background.paper, 0.22),
             })}
           >
             {rail}
-          </Paper>
+          </Box>
         </Box>
       )}
 
       <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-        <Box sx={{ px: { xs: 2, md: 0 }, pt: { xs: 2, md: 2 }, pr: { md: 3 } }}>
-          <Paper
-            elevation={0}
+        <Box sx={{ px: { xs: 2, md: 0 }, pt: { xs: 2, md: 1.6 }, pr: { md: 3 } }}>
+          <Box
+            component="header"
             sx={(theme) => ({
-              borderRadius: 7,
-              border: "1px solid",
-              borderColor: alpha(theme.palette.divider, 0.4),
-              bgcolor: alpha(theme.palette.background.paper, 0.72),
-              backdropFilter: "blur(18px)",
               px: { xs: 1.4, md: compactHeader ? 1.7 : 2.5 },
-              py: { xs: 1.3, md: compactHeader ? 1.15 : 2 },
+              py: { xs: 1.3, md: compactHeader ? 1.05 : 1.7 },
+              borderBottom: "1px solid",
+              borderColor: alpha(theme.palette.divider, 0.42),
+              bgcolor: alpha(theme.palette.background.default, 0.18),
             })}
           >
             <Stack
@@ -444,7 +439,7 @@ export default function AppShell({ darkMode, setDarkMode, children }) {
                 </IconButton>
               </Stack>
             </Stack>
-          </Paper>
+          </Box>
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 0, px: { xs: 2, md: 0 }, py: 2, pr: { md: 3 }, overflow: "hidden" }}>

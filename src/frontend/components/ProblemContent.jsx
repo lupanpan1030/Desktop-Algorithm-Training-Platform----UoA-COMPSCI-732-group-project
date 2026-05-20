@@ -3,7 +3,6 @@ import {
   Box,
   Chip,
   Divider,
-  Paper,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -185,27 +184,22 @@ export default function ProblemContent({ problem, onLocaleChange }) {
 
       {problem.sampleTestcase && (
         <SectionBlock title="Imported Sample Reference">
-          <Paper
-            variant="outlined"
+          <Box
+            component="pre"
             sx={(theme) => ({
+              m: 0,
               p: 2,
-              borderRadius: 4,
-              bgcolor: alpha(theme.palette.background.default, 0.52),
+              borderLeft: "2px solid",
+              borderColor: alpha(theme.palette.primary.main, 0.34),
+              bgcolor: alpha(theme.palette.background.default, 0.42),
+              fontFamily: '"JetBrains Mono", "SFMono-Regular", monospace',
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              overflowX: "auto",
             })}
           >
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{
-                m: 0,
-                fontFamily: '"JetBrains Mono", "SFMono-Regular", monospace',
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {problem.sampleTestcase}
-            </Typography>
-          </Paper>
+            {problem.sampleTestcase}
+          </Box>
         </SectionBlock>
       )}
 
@@ -223,13 +217,13 @@ export default function ProblemContent({ problem, onLocaleChange }) {
         <SectionBlock title="Examples">
           <Stack spacing={1.5}>
             {problem.examples.map((example, index) => (
-              <Paper
+              <Box
                 key={`${problem.problemId}-example-${index}`}
-                variant="outlined"
                 sx={(theme) => ({
-                  p: 2,
-                  borderRadius: 4,
-                  bgcolor: alpha(theme.palette.background.default, 0.48),
+                  pt: index === 0 ? 0 : 1.8,
+                  pb: 0.3,
+                  borderTop: index === 0 ? "none" : "1px solid",
+                  borderColor: alpha(theme.palette.divider, 0.4),
                 })}
               >
                 <Typography variant="subtitle2" sx={{ mb: 1.1 }}>
@@ -289,7 +283,7 @@ export default function ProblemContent({ problem, onLocaleChange }) {
                     </Box>
                   )}
                 </Stack>
-              </Paper>
+              </Box>
             ))}
           </Stack>
         </SectionBlock>
@@ -297,12 +291,12 @@ export default function ProblemContent({ problem, onLocaleChange }) {
 
       {problem.constraints && (
         <SectionBlock title="Constraints">
-          <Paper
-            variant="outlined"
+          <Box
             sx={(theme) => ({
               p: 2,
-              borderRadius: 4,
-              bgcolor: alpha(theme.palette.background.default, 0.45),
+              borderLeft: "2px solid",
+              borderColor: alpha(theme.palette.divider, 0.6),
+              bgcolor: alpha(theme.palette.background.default, 0.34),
             })}
           >
             {Array.isArray(problem.constraints) ? (
@@ -316,7 +310,7 @@ export default function ProblemContent({ problem, onLocaleChange }) {
             ) : (
               <Typography variant="body2">{problem.constraints}</Typography>
             )}
-          </Paper>
+          </Box>
         </SectionBlock>
       )}
     </Box>

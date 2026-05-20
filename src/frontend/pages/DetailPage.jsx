@@ -11,7 +11,6 @@ import {
   Box,
   Chip,
   CircularProgress,
-  Paper,
   Stack,
   Typography,
   useMediaQuery,
@@ -512,17 +511,16 @@ export default function DetailPage() {
           : "1fr",
       }}
     >
-      <Paper
-        elevation={0}
+      <Box
+        component="section"
         sx={(theme) => ({
           height: "100%",
           minHeight: 0,
           overflow: "hidden",
-          borderRadius: 7,
+          borderRadius: 2,
           border: "1px solid",
           borderColor: alpha(theme.palette.divider, 0.46),
-          bgcolor: alpha(theme.palette.background.paper, 0.72),
-          backdropFilter: "blur(18px)",
+          bgcolor: alpha(theme.palette.background.paper, 0.42),
         })}
       >
         <Box sx={{ height: "100%", overflowY: "auto" }}>
@@ -549,7 +547,7 @@ export default function DetailPage() {
             </Box>
           )}
         </Box>
-      </Paper>
+      </Box>
 
       {desktopSplitEnabled && (
         <Box
@@ -604,17 +602,16 @@ export default function DetailPage() {
       )}
 
       <Stack spacing={2.5} sx={{ minWidth: 0, minHeight: 0 }}>
-        <Paper
-          elevation={0}
+        <Box
+          component="section"
           sx={(theme) => ({
             flex: 1,
             minHeight: 0,
             overflow: "hidden",
-            borderRadius: 7,
+            borderRadius: 2,
             border: "1px solid",
             borderColor: alpha(theme.palette.divider, 0.46),
-            bgcolor: alpha(theme.palette.background.paper, 0.72),
-            backdropFilter: "blur(18px)",
+            bgcolor: alpha(theme.palette.background.paper, 0.42),
             display: "flex",
             flexDirection: "column",
           })}
@@ -677,8 +674,8 @@ export default function DetailPage() {
               flex: 1,
               minHeight: 0,
               display: "grid",
-              gap: 2,
-              p: { xs: 1.5, md: 1.8 },
+              gap: 1.4,
+              p: { xs: 1.2, md: 1.4 },
               gridTemplateRows: {
                 xs: "minmax(380px, auto) minmax(320px, auto)",
                 lg: "minmax(360px, 1.15fr) minmax(300px, 1fr)",
@@ -686,19 +683,11 @@ export default function DetailPage() {
             }}
           >
             <Box
-              sx={(theme) => ({
+              sx={{
                 minHeight: 0,
                 overflow: "hidden",
-                borderRadius: 5,
-                border: "1px solid",
-                borderColor: alpha(theme.palette.primary.main, 0.16),
-                bgcolor: alpha(theme.palette.background.default, 0.34),
-                boxShadow: `inset 0 1px 0 ${alpha(
-                  theme.palette.common.white,
-                  theme.palette.mode === "dark" ? 0.04 : 0.55
-                )}`,
-                p: 1.4,
-              })}
+                p: 0.4,
+              }}
             >
               <CodeEditor
                 key={problemId}
@@ -710,18 +699,11 @@ export default function DetailPage() {
             </Box>
 
             <Box
-              sx={(theme) => ({
+              sx={{
                 minHeight: 0,
                 overflow: "hidden",
-                borderRadius: 5,
-                border: "1px solid",
-                borderColor: alpha(theme.palette.divider, 0.4),
-                bgcolor: alpha(theme.palette.background.default, 0.26),
-                boxShadow: `inset 0 1px 0 ${alpha(
-                  theme.palette.common.white,
-                  theme.palette.mode === "dark" ? 0.03 : 0.42
-                )}`,
-              })}
+                pt: 0.2,
+              }}
             >
               {problem && (
                 <CodeSubmission
@@ -736,7 +718,7 @@ export default function DetailPage() {
               )}
             </Box>
           </Box>
-        </Paper>
+        </Box>
       </Stack>
     </Box>
   );

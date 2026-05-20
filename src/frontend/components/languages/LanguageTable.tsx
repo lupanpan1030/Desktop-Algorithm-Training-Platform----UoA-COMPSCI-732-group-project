@@ -66,7 +66,7 @@ export default function LanguageTable({
             onKeyDown={(event) => handleSelectWithKeyboard(event, language)}
             sx={{
               p: 0.95,
-              borderRadius: 3,
+              borderRadius: 2,
               cursor: onSelect ? "pointer" : "default",
               bgcolor: alpha(theme.palette.background.paper, 0.42),
               borderColor: selected

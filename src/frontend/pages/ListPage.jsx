@@ -6,7 +6,6 @@ import {
   Chip,
   CircularProgress,
   IconButton,
-  Paper,
   Stack,
   Typography,
   useMediaQuery,
@@ -29,14 +28,14 @@ function buildCompletionSummary(problems) {
 
 function SummaryCard({ label, value, helper }) {
   return (
-    <Paper
-      variant="outlined"
+    <Box
       sx={(theme) => ({
-        p: 1.15,
+        py: 0.7,
+        pl: 1.1,
+        pr: 1,
         minWidth: 0,
-        borderRadius: 3.5,
-        bgcolor: alpha(theme.palette.background.paper, 0.52),
-        borderColor: alpha(theme.palette.divider, 0.34),
+        borderLeft: "2px solid",
+        borderColor: alpha(theme.palette.primary.main, 0.34),
       })}
     >
       <Typography variant="caption" color="text.secondary">
@@ -48,7 +47,7 @@ function SummaryCard({ label, value, helper }) {
       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.35, display: "block" }}>
         {helper}
       </Typography>
-    </Paper>
+    </Box>
   );
 }
 
@@ -186,17 +185,15 @@ export default function ListPage() {
         </Box>
       )}
 
-      <Paper
-        elevation={0}
+      <Box
+        component="section"
         sx={(theme) => ({
           display: "flex",
           flexDirection: "column",
           order: 1,
-          borderRadius: 6,
-          border: "1px solid",
-          borderColor: alpha(theme.palette.divider, 0.46),
-          bgcolor: alpha(theme.palette.background.paper, 0.72),
-          backdropFilter: "blur(18px)",
+          minWidth: 0,
+          borderTop: "1px solid",
+          borderColor: alpha(theme.palette.divider, 0.34),
         })}
       >
         <Box sx={{ px: { xs: 1.7, md: 2.1 }, pt: { xs: 1.55, md: 1.8 }, pb: 1.1 }}>
@@ -263,16 +260,14 @@ export default function ListPage() {
               value={completionSummary.unattempted}
               helper="Unattempted problems"
             />
-            <Paper
-              variant="outlined"
+            <Box
               sx={(theme) => ({
                 px: 1.2,
                 py: 1,
-                borderRadius: 3.5,
-                bgcolor: alpha(theme.palette.background.paper, 0.44),
-                borderColor: alpha(theme.palette.divider, 0.34),
                 display: "flex",
                 alignItems: "center",
+                borderLeft: "1px solid",
+                borderColor: alpha(theme.palette.divider, 0.42),
               })}
             >
               <Stack
@@ -285,7 +280,7 @@ export default function ListPage() {
                 <Chip size="small" label={`Attempted ${completionSummary.attempted}`} variant="outlined" />
                 <Chip size="small" label={`${activeFilterCount} active filters`} variant={activeFilterCount > 0 ? "filled" : "outlined"} />
               </Stack>
-            </Paper>
+            </Box>
           </Box>
         </Box>
 
@@ -322,24 +317,26 @@ export default function ListPage() {
                 justifyContent: "center",
               }}
             >
-              <Paper
-                variant="outlined"
+              <Box
                 sx={(theme) => ({
                   px: 3,
                   py: 2.4,
-                  borderRadius: 5,
-                  bgcolor: alpha(theme.palette.background.default, 0.5),
+                  maxWidth: 420,
+                  textAlign: "center",
+                  borderTop: "1px solid",
+                  borderBottom: "1px solid",
+                  borderColor: alpha(theme.palette.divider, 0.42),
                 })}
               >
                 <Typography variant="h6">No problems found</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.8 }}>
                   Try clearing the filters or switching the workspace locale.
                 </Typography>
-              </Paper>
+              </Box>
             </Box>
           )}
         </Box>
-      </Paper>
+      </Box>
     </Box>
   );
 }

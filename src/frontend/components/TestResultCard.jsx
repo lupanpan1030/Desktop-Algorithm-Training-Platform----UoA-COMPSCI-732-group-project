@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 const OutputBlock = ({ label, value }) => {
@@ -36,9 +36,11 @@ export default function TestResultCard({ test }) {
   const theme = useTheme();
 
   return (
-    <Paper
+    <Box
+      component="article"
       sx={{
-        p: 2,
+        px: 1.6,
+        py: 1.5,
         mb: 2,
         bgcolor:
           test.status === "ACCEPTED"
@@ -48,8 +50,8 @@ export default function TestResultCard({ test }) {
           theme.palette.mode === "dark"
             ? theme.palette.common.white
             : theme.palette.common.black,
-        border: "1px solid",
-        borderColor: "divider",
+        borderLeft: "3px solid",
+        borderColor: test.status === "ACCEPTED" ? "success.main" : "error.main",
       }}
     >
       <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
@@ -84,6 +86,6 @@ export default function TestResultCard({ test }) {
           Expect: {test.expectedOutput || "-"}
         </Typography>
       )}
-    </Paper>
+    </Box>
   );
 }

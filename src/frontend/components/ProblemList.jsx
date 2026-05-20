@@ -104,7 +104,7 @@ export default function ProblemList({ problems }) {
             sx={{
               display: "block",
               p: 0,
-              borderRadius: 4,
+              borderRadius: 2,
               overflow: "hidden",
               border: "1px solid",
               borderColor: alpha(theme.palette.divider, 0.34),

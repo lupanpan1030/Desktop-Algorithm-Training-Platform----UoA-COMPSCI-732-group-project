@@ -9,7 +9,6 @@ import {
   CircularProgress,
   Stack,
   Typography,
-  Paper,
   alpha,
   Chip,
   Button,
@@ -44,13 +43,13 @@ function DetailFact({
   value: string;
 }) {
   return (
-    <Paper
-      variant="outlined"
+    <Box
       sx={(theme) => ({
-        p: 1.05,
-        borderRadius: 3,
-        bgcolor: alpha(theme.palette.background.paper, 0.42),
-        borderColor: alpha(theme.palette.divider, 0.28),
+        py: 0.8,
+        pl: 1,
+        pr: 0.8,
+        borderLeft: "2px solid",
+        borderColor: alpha(theme.palette.divider, 0.5),
       })}
     >
       <Typography variant="caption" color="text.secondary">
@@ -59,7 +58,7 @@ function DetailFact({
       <Typography variant="body2" sx={{ mt: 0.25, fontWeight: 600 }}>
         {value}
       </Typography>
-    </Paper>
+    </Box>
   );
 }
 
@@ -244,13 +243,12 @@ export default function LanguageAdmin() {
       }}
     >
       <Stack spacing={2.2}>
-        <Paper
-          variant="outlined"
+        <Box
+          component="section"
           sx={{
             p: { xs: 1.8, md: 2.2 },
-            borderRadius: 6,
-            bgcolor: alpha(theme.palette.background.paper, 0.72),
-            borderColor: alpha(theme.palette.divider, 0.42),
+            borderBottom: "1px solid",
+            borderColor: alpha(theme.palette.divider, 0.38),
           }}
         >
           <Stack spacing={1.6}>
@@ -295,7 +293,7 @@ export default function LanguageAdmin() {
               <Chip label={`Interpreted ${metrics.interpreted}`} variant="outlined" />
             </Stack>
           </Stack>
-        </Paper>
+        </Box>
 
         {error && showErrorAlert && (
           <Alert severity="error" onClose={() => setShowErrorAlert(false)}>
@@ -321,13 +319,12 @@ export default function LanguageAdmin() {
             }}
           >
             <Stack spacing={2.2}>
-              <Paper
-                variant="outlined"
+              <Box
+                component="section"
                 sx={{
                   p: 1.8,
-                  borderRadius: 6,
-                  bgcolor: alpha(theme.palette.background.paper, 0.68),
-                  borderColor: alpha(theme.palette.divider, 0.42),
+                  borderRight: { xl: "1px solid" },
+                  borderColor: alpha(theme.palette.divider, 0.36),
                 }}
               >
                 <Stack spacing={1.4}>
@@ -355,14 +352,14 @@ export default function LanguageAdmin() {
                     onDelete={(id, name) => setDel({ open: true, id, name })}
                   />
                 </Stack>
-              </Paper>
+              </Box>
 
               <Accordion
                 disableGutters
                 elevation={0}
                 sx={{
-                  borderRadius: 6,
-                  bgcolor: alpha(theme.palette.background.paper, 0.68),
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.background.paper, 0.28),
                   borderColor: alpha(theme.palette.divider, 0.42),
                   border: "1px solid",
                   overflow: "hidden",
@@ -432,13 +429,10 @@ export default function LanguageAdmin() {
               </Accordion>
             </Stack>
 
-            <Paper
-              variant="outlined"
+            <Box
+              component="section"
               sx={{
                 p: 1.8,
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
                 minHeight: 0,
                 alignSelf: "start",
               }}
@@ -547,13 +541,13 @@ export default function LanguageAdmin() {
                       },
                     }}
                   >
-                    <Paper
-                      variant="outlined"
+                    <Box
+                      component="section"
                       sx={{
                         p: 1.3,
-                        borderRadius: 4,
-                        bgcolor: alpha(theme.palette.background.paper, 0.42),
-                        borderColor: alpha(theme.palette.divider, 0.3),
+                        borderTop: "1px solid",
+                        borderBottom: "1px solid",
+                        borderColor: alpha(theme.palette.divider, 0.36),
                       }}
                     >
                       <Typography variant="caption" color="text.secondary">
@@ -573,15 +567,15 @@ export default function LanguageAdmin() {
                       >
                         {selectedLanguage.compilerCmd || "none"}
                       </Typography>
-                    </Paper>
+                    </Box>
 
-                    <Paper
-                      variant="outlined"
+                    <Box
+                      component="section"
                       sx={{
                         p: 1.3,
-                        borderRadius: 4,
-                        bgcolor: alpha(theme.palette.background.paper, 0.42),
-                        borderColor: alpha(theme.palette.divider, 0.3),
+                        borderTop: "1px solid",
+                        borderBottom: "1px solid",
+                        borderColor: alpha(theme.palette.divider, 0.36),
                       }}
                     >
                       <Typography variant="caption" color="text.secondary">
@@ -601,13 +595,13 @@ export default function LanguageAdmin() {
                       >
                         {selectedLanguage.runtimeCmd || "none"}
                       </Typography>
-                    </Paper>
+                    </Box>
                   </Box>
                 </Stack>
               ) : (
                 <Alert severity="info">Select a language from the directory to inspect its runtime settings.</Alert>
               )}
-            </Paper>
+            </Box>
           </Box>
         )}
 

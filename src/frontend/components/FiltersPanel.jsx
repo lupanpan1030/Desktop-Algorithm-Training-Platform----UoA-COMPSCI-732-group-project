@@ -45,12 +45,12 @@ export default function FiltersPanel({
       sx={{
         height: "100%",
         minHeight: 0,
-        p: 1.35,
-        borderRadius: 4.5,
-        border: "1px solid",
-        borderColor: alpha(theme.palette.divider, 0.34),
-        bgcolor: alpha(theme.palette.background.paper, 0.34),
-        backdropFilter: "blur(14px)",
+        py: 1.35,
+        pl: 1.35,
+        pr: 0.75,
+        borderLeft: "1px solid",
+        borderColor: alpha(theme.palette.divider, 0.38),
+        bgcolor: alpha(theme.palette.background.default, 0.16),
       }}
       spacing={1.35}
     >

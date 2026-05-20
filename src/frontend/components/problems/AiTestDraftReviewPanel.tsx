@@ -184,13 +184,10 @@ export default function AiTestDraftReviewPanel({
   const generationStrategy = requestOptions.generationStrategy ?? "balanced";
 
   return (
-    <Paper
-      variant="outlined"
+    <Box
+      component="section"
       sx={{
-        p: { xs: 1.8, md: 2.1 },
-        borderRadius: 6,
-        bgcolor: alpha(theme.palette.background.paper, 0.68),
-        borderColor: alpha(theme.palette.divider, 0.42),
+        py: { xs: 1.8, md: 2.1 },
       }}
     >
       <Stack spacing={1.5}>
@@ -272,12 +269,13 @@ export default function AiTestDraftReviewPanel({
           input/output. Low-confidence or flagged drafts must be reviewed and saved one by one.
         </Alert>
 
-        <Paper
-          variant="outlined"
+        <Box
+          component="section"
           sx={{
             p: 1.3,
-            borderRadius: 4,
             bgcolor: alpha(theme.palette.background.default, 0.24),
+            borderTop: "1px solid",
+            borderBottom: "1px solid",
             borderColor: alpha(theme.palette.divider, 0.3),
           }}
         >
@@ -381,7 +379,7 @@ export default function AiTestDraftReviewPanel({
               </Stack>
             )}
           </Stack>
-        </Paper>
+        </Box>
 
         {error && <Alert severity="error">{error}</Alert>}
         {warnings.length > 0 && (
@@ -448,7 +446,7 @@ export default function AiTestDraftReviewPanel({
                   variant="outlined"
                   sx={{
                     p: 1.4,
-                    borderRadius: 4,
+                    borderRadius: 2,
                     bgcolor: alpha(theme.palette.background.paper, 0.42),
                     borderColor: alpha(theme.palette.divider, 0.34),
                   }}
@@ -575,6 +573,6 @@ export default function AiTestDraftReviewPanel({
           </Stack>
         )}
       </Stack>
-    </Paper>
+    </Box>
   );
 }

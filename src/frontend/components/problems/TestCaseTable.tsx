@@ -38,7 +38,7 @@ export default function TestCaseTable({ testcases, onEdit, onDelete }: Props) {
           variant="outlined"
           sx={{
             p: 1.4,
-            borderRadius: 4,
+            borderRadius: 2,
             bgcolor: alpha(theme.palette.background.paper, 0.44),
             borderColor: alpha(theme.palette.divider, 0.34),
             "& .testcase-row-actions": {

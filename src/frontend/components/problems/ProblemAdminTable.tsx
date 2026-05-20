@@ -66,7 +66,7 @@ export default function ProblemAdminTable({
             onClick={() => onSelect(problem.problemId)}
             sx={{
               p: 1.05,
-              borderRadius: 3.5,
+              borderRadius: 2,
               cursor: "pointer",
               borderColor: selected
                 ? alpha(theme.palette.primary.main, 0.42)

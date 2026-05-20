@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Divider,
   MenuItem,
-  Paper,
   Snackbar,
   Stack,
   TextField,
@@ -111,13 +110,13 @@ function MetaFact({
   value: string;
 }) {
   return (
-    <Paper
-      variant="outlined"
+    <Box
       sx={(theme) => ({
-        p: 1.1,
-        borderRadius: 3,
-        bgcolor: alpha(theme.palette.background.paper, 0.42),
-        borderColor: alpha(theme.palette.divider, 0.3),
+        py: 0.85,
+        pl: 1,
+        pr: 0.8,
+        borderLeft: "2px solid",
+        borderColor: alpha(theme.palette.divider, 0.5),
       })}
     >
       <Typography variant="caption" color="text.secondary">
@@ -126,7 +125,7 @@ function MetaFact({
       <Typography variant="body2" sx={{ mt: 0.2, fontWeight: 600 }}>
         {value}
       </Typography>
-    </Paper>
+    </Box>
   );
 }
 
@@ -878,13 +877,12 @@ export default function ProblemAdmin() {
   return (
     <Box sx={{ minHeight: "100%" }}>
       <Stack spacing={2.2}>
-        <Paper
-          variant="outlined"
+        <Box
+          component="section"
           sx={{
             p: { xs: 1.55, md: 1.8 },
-            borderRadius: 6,
-            bgcolor: alpha(theme.palette.background.paper, 0.72),
-            borderColor: alpha(theme.palette.divider, 0.42),
+            borderBottom: "1px solid",
+            borderColor: alpha(theme.palette.divider, 0.38),
           }}
         >
           <Stack spacing={1.6}>
@@ -946,7 +944,7 @@ export default function ProblemAdmin() {
               <Chip label={`Sample ref ${curationMetrics.withSampleReference}`} variant="outlined" />
             </Stack>
           </Stack>
-        </Paper>
+        </Box>
 
         {pageError && <Alert severity="error">{pageError}</Alert>}
 
@@ -960,14 +958,13 @@ export default function ProblemAdmin() {
             },
           }}
         >
-          <Paper
-            variant="outlined"
+          <Box
+            component="section"
             sx={{
               p: 1.8,
-              borderRadius: 6,
-              bgcolor: alpha(theme.palette.background.paper, 0.68),
-              borderColor: alpha(theme.palette.divider, 0.42),
               minHeight: 0,
+              borderRight: { xl: "1px solid" },
+              borderColor: alpha(theme.palette.divider, 0.36),
             }}
           >
             <Stack spacing={1.5}>
@@ -1111,16 +1108,15 @@ export default function ProblemAdmin() {
                 <Alert severity="info">No problems match the current search.</Alert>
               )}
             </Stack>
-          </Paper>
+          </Box>
 
           <Stack spacing={2.2} sx={{ minWidth: 0 }}>
-            <Paper
-              variant="outlined"
+            <Box
+              component="section"
               sx={{
                 p: { xs: 1.8, md: 2.1 },
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
+                borderBottom: "1px solid",
+                borderColor: alpha(theme.palette.divider, 0.34),
               }}
             >
               {detailLoading ? (
@@ -1266,15 +1262,14 @@ export default function ProblemAdmin() {
                   Select a problem from the catalog to inspect and curate it.
                 </Alert>
               )}
-            </Paper>
+            </Box>
 
-            <Paper
-              variant="outlined"
+            <Box
+              component="section"
               sx={{
                 p: { xs: 1.8, md: 2.1 },
-                borderRadius: 6,
-                bgcolor: alpha(theme.palette.background.paper, 0.68),
-                borderColor: alpha(theme.palette.divider, 0.42),
+                borderBottom: "1px solid",
+                borderColor: alpha(theme.palette.divider, 0.34),
               }}
             >
               <Stack spacing={1.5}>
@@ -1359,7 +1354,7 @@ export default function ProblemAdmin() {
                   onSelectBatchReady={handleSelectBatchReadyAiDrafts}
                 />
               </Stack>
-            </Paper>
+            </Box>
 
             {selectedProblem && (
               <Box
@@ -1372,13 +1367,10 @@ export default function ProblemAdmin() {
                   },
                 }}
               >
-                <Paper
-                  variant="outlined"
+                <Box
+                  component="section"
                   sx={{
                     p: 1.8,
-                    borderRadius: 6,
-                    bgcolor: alpha(theme.palette.background.paper, 0.68),
-                    borderColor: alpha(theme.palette.divider, 0.42),
                   }}
                 >
                   <Stack spacing={1.2}>
@@ -1393,14 +1385,15 @@ export default function ProblemAdmin() {
                         Review the current localized prompt before editing metadata or tests.
                       </Typography>
                     </Box>
-                    <Paper
-                      variant="outlined"
+                    <Box
+                      component="section"
                       sx={{
                         p: 1.6,
-                        borderRadius: 4,
                         maxHeight: 320,
                         overflow: "auto",
                         bgcolor: alpha(theme.palette.background.default, 0.4),
+                        borderLeft: "2px solid",
+                        borderColor: alpha(theme.palette.divider, 0.5),
                       }}
                     >
                       <Box
@@ -1454,19 +1447,18 @@ export default function ProblemAdmin() {
                           __html: renderedProblemDescription,
                         }}
                       />
-                    </Paper>
+                    </Box>
                   </Stack>
-                </Paper>
+                </Box>
 
                 <Stack spacing={2.2}>
                   {selectedProblem.sampleTestcase && (
-                    <Paper
-                      variant="outlined"
+                    <Box
+                      component="section"
                       sx={{
                         p: 1.8,
-                        borderRadius: 6,
-                        bgcolor: alpha(theme.palette.background.paper, 0.68),
-                        borderColor: alpha(theme.palette.divider, 0.42),
+                        borderBottom: "1px solid",
+                        borderColor: alpha(theme.palette.divider, 0.34),
                       }}
                     >
                       <Stack spacing={1.1}>
@@ -1481,33 +1473,29 @@ export default function ProblemAdmin() {
                             Imported reference content you can turn into public or hidden testcases.
                           </Typography>
                         </Box>
-                        <Paper
-                          variant="outlined"
+                        <Box
+                          component="pre"
                           sx={{
+                            m: 0,
                             p: 1.3,
-                            borderRadius: 4,
                             bgcolor: alpha(theme.palette.background.default, 0.4),
+                            borderLeft: "2px solid",
+                            borderColor: alpha(theme.palette.primary.main, 0.34),
+                            whiteSpace: "pre-wrap",
+                            fontFamily: "monospace",
                           }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}
-                          >
-                            {selectedProblem.sampleTestcase}
-                          </Typography>
-                        </Paper>
+                          {selectedProblem.sampleTestcase}
+                        </Box>
                       </Stack>
-                    </Paper>
+                    </Box>
                   )}
 
                   {selectedProblem.starterCodes.length > 0 && (
-                    <Paper
-                      variant="outlined"
+                    <Box
+                      component="section"
                       sx={{
                         p: 1.8,
-                        borderRadius: 6,
-                        bgcolor: alpha(theme.palette.background.paper, 0.68),
-                        borderColor: alpha(theme.palette.divider, 0.42),
                       }}
                     >
                       <Stack spacing={1.2}>
@@ -1527,13 +1515,12 @@ export default function ProblemAdmin() {
                             const preview = buildStarterCodePreview(starterCode.template);
 
                             return (
-                              <Paper
+                              <Box
                                 key={starterCode.languageSlug}
-                                variant="outlined"
                                 sx={{
-                                  p: 1.2,
-                                  borderRadius: 4,
-                                  bgcolor: alpha(theme.palette.background.default, 0.34),
+                                  pt: 1.2,
+                                  borderTop: "1px solid",
+                                  borderColor: alpha(theme.palette.divider, 0.34),
                                 }}
                               >
                                 <Stack spacing={0.7}>
@@ -1558,38 +1545,31 @@ export default function ProblemAdmin() {
                                       />
                                     )}
                                   </Stack>
-                                  <Paper
-                                    variant="outlined"
+                                  <Box
+                                    component="pre"
                                     sx={{
+                                      m: 0,
                                       p: 1.2,
-                                      borderRadius: 3,
                                       maxHeight: 220,
                                       overflow: "auto",
                                       bgcolor: alpha(theme.palette.background.default, 0.52),
-                                      borderColor: alpha(theme.palette.divider, 0.34),
+                                      borderLeft: "2px solid",
+                                      borderColor: alpha(theme.palette.divider, 0.5),
+                                      whiteSpace: "pre-wrap",
+                                      wordBreak: "break-word",
+                                      fontFamily:
+                                        '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
                                     }}
                                   >
-                                    <Typography
-                                      component="pre"
-                                      variant="body2"
-                                      sx={{
-                                        m: 0,
-                                        whiteSpace: "pre-wrap",
-                                        wordBreak: "break-word",
-                                        fontFamily:
-                                          '"JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", monospace',
-                                      }}
-                                    >
-                                      {preview.preview}
-                                    </Typography>
-                                  </Paper>
+                                    {preview.preview}
+                                  </Box>
                                 </Stack>
-                              </Paper>
+                              </Box>
                             );
                           })}
                         </Stack>
                       </Stack>
-                    </Paper>
+                    </Box>
                   )}
                 </Stack>
               </Box>
