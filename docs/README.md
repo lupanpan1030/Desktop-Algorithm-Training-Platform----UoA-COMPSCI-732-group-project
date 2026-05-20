@@ -12,6 +12,7 @@ This directory keeps the non-code project material out of the repository root.
 ## Plans
 - [plans/ai-assistant-v1.md](./plans/ai-assistant-v1.md): global AI assistant product plan
 - [plans/ai-testcase-drafts.md](./plans/ai-testcase-drafts.md): AI-assisted testcase drafting workflow
+- [plans/judge-sandbox-hardening.md](./plans/judge-sandbox-hardening.md): staged local judge diagnostics and sandbox hardening plan
 - [plans/ui-redesign.md](./plans/ui-redesign.md): UI redesign direction and design goals
 
 ## Assets
